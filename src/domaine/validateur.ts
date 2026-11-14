@@ -1,6 +1,7 @@
 // Le validateur (cahier technique, 4.2) répond à une seule question :
 // « ce placement est-il permis ? ». Il renvoie la liste des règles enfreintes,
 // vide si le placement est permis.
+import { TOLERANCE_CONTACT } from './constantes'
 import { encombrement } from './encombrement'
 import type { Camion, Placement, RegleEnfreinte, Unite } from './types'
 
@@ -47,6 +48,15 @@ function seChevauchent(a: Boite, b: Boite): boolean {
 }
 
 /**
+ * Règle 3, cas « contre une paroi » : l'unité touche la paroi gauche ou la
+ * paroi droite, à `TOLERANCE_CONTACT` près. Sa grande face est tournée vers
+ * les côtés (voir `encombrement`) : seules les parois latérales comptent.
+ */
+function toucheUneParoiLaterale(b: Boite, camion: Camion): boolean {
+  return b.y0 <= TOLERANCE_CONTACT || camion.largeur - b.y1 <= TOLERANCE_CONTACT
+}
+
+/**
  * Vérifie le placement `p` par rapport au reste du `plan` et à la caisse.
  * `unites` fournit les dimensions et les orientations autorisées de chaque unité.
  * Si `plan` contient déjà un placement de la même unité, il est ignoré.
@@ -63,6 +73,12 @@ export function valider(
 
   if (!estDansLaCaisse(boite, camion)) {
     enfreintes.push({ regle: 'RG-06', motif: 'horsCaisse', uniteId: unite.id })
+  }
+
+  if (!unite.orientations.includes(p.orientation)) {
+    enfreintes.push({ regle: 'RG-04', motif: 'orientationInterdite', uniteId: unite.id })
+  } else if (p.orientation === 'contreParoi' && !toucheUneParoiLaterale(boite, camion)) {
+    enfreintes.push({ regle: 'RG-04', motif: 'paroiAbsente', uniteId: unite.id })
   }
 
   for (const autre of plan) {

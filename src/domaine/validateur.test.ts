@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
+import { TOLERANCE_CONTACT } from './constantes'
 import type { Camion, Placement, Unite } from './types'
 import { valider } from './validateur'
 
@@ -81,6 +83,69 @@ describe('valider : sans chevauchement (RG-06)', () => {
     expect(valider(poser('P2', 0, 180), [debout], [...unites, fenetre], camion)).toEqual([])
     expect(valider(poser('P2', 0, 179), [debout], [...unites, fenetre], camion)).toHaveLength(1)
   })
+})
+
+describe('valider : orientation autorisée (RG-04)', () => {
+  /** Une plaque 2 500 × 1 200 × 250, à plat ou contre une paroi. */
+  const plaque: Unite = {
+    ...palette('B1'),
+    dims: { l: 2500, w: 1200, h: 250 },
+    orientations: ['aPlat', 'contreParoi'],
+  }
+  const unites = [palette('P1'), plaque]
+
+  function plaqueEn(orientation: Placement['orientation'], y: number): Placement {
+    return { uniteId: 'B1', x: 0, y, z: 0, orientation, rang: 1 }
+  }
+
+  it('RG-04 : refuse une orientation que l’unité n’autorise pas', () => {
+    expect(valider(plaqueEn('debout', 1000), [], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'orientationInterdite', uniteId: 'B1' },
+    ])
+  })
+
+  it('RG-04 : refuse une palette posée debout', () => {
+    const p: Placement = { ...poser('P1', 0, 0), orientation: 'debout' }
+    expect(valider(p, [], unites, camion)).toContainEqual({
+      regle: 'RG-04',
+      motif: 'orientationInterdite',
+      uniteId: 'P1',
+    })
+  })
+
+  it('RG-04 : accepte une plaque contre la paroi gauche', () => {
+    expect(valider(plaqueEn('contreParoi', 0), [], unites, camion)).toEqual([])
+  })
+
+  it('RG-04 : accepte une plaque contre la paroi droite', () => {
+    // Contre une paroi, la plaque fait 250 mm de large : 2 400 − 250 = 2 150.
+    expect(valider(plaqueEn('contreParoi', 2150), [], unites, camion)).toEqual([])
+  })
+
+  it(`RG-04 : tolère un écart de ${TOLERANCE_CONTACT} mm avec la paroi`, () => {
+    expect(valider(plaqueEn('contreParoi', TOLERANCE_CONTACT), [], unites, camion)).toEqual([])
+    expect(valider(plaqueEn('contreParoi', 2150 - TOLERANCE_CONTACT), [], unites, camion)).toEqual(
+      [],
+    )
+  })
+
+  it('RG-04 : refuse une plaque « contre une paroi » qui ne touche aucune paroi', () => {
+    expect(valider(plaqueEn('contreParoi', TOLERANCE_CONTACT + 1), [], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'paroiAbsente', uniteId: 'B1' },
+    ])
+  })
+})
+
+describe("valider : jeux d'essai de référence, règles 1 à 3", () => {
+  it.each(['couloirs', 'fenetres-isolees'] as const)(
+    'RG-04 et RG-06 : chaque placement du jeu « %s » est dans la caisse, sans chevauchement et bien orienté',
+    (nom) => {
+      const jeu = chargerJeuEssai(nom)
+      for (const p of jeu.placements) {
+        expect(valider(p, jeu.placements, jeu.unites, jeu.camion), p.uniteId).toEqual([])
+      }
+    },
+  )
 })
 
 describe('valider : unité inconnue', () => {
