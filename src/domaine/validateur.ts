@@ -10,7 +10,7 @@ import {
   surfaceCommuneXY,
   surfaceCommuneYZ,
 } from './geometrie'
-import type { Camion, Placement, RegleEnfreinte, Unite } from './types'
+import type { Camion, MotifRegle, NumeroRegle, Placement, RegleEnfreinte, Unite } from './types'
 
 /** Règle 1 : l'unité ne dépasse d'aucune paroi, ni du plancher, ni du plafond. */
 function estDansLaCaisse(b: Boite, camion: Camion): boolean {
@@ -44,6 +44,39 @@ function estBienAppuyee(b: Boite, dessous: Occupation[]): boolean {
   const base = (b.x1 - b.x0) * (b.y1 - b.y0)
   const appui = dessous.reduce((somme, v) => somme + surfaceCommuneXY(b, v.boite), 0)
   return appui >= SEUIL_APPUI * base
+}
+
+/** Ce qui ne va pas quand un article est posé sur un autre (règles 5 et 6). */
+type DefautPile = 'dessousFragile' | 'dessousNonPorteur' | 'dessousPlusLeger'
+
+/**
+ * Règles 5 et 6 pour une pile de deux articles : rien sur un fragile (RG-04)
+ * ni sur un dessus non porteur (RG-18), pas de lourd sur un léger (RG-04 ;
+ * le poids ne sert qu'au placement, RG-05).
+ */
+function defautsDePile(dessus: Unite, dessous: Unite): DefautPile[] {
+  const defauts: DefautPile[] = []
+  if (dessous.fragile) defauts.push('dessousFragile')
+  if (!dessous.porteur) defauts.push('dessousNonPorteur')
+  if (dessous.poids < dessus.poids) defauts.push('dessousPlusLeger')
+  return defauts
+}
+
+/**
+ * Un même défaut se dit de deux façons selon l'article validé : celui du
+ * dessus (« posé sur un fragile ») ou celui du dessous (« fragile chargé »).
+ */
+const MOTIFS_PILE: Record<
+  DefautPile,
+  { regle: NumeroRegle; vuDuDessus: MotifRegle; vuDuDessous: MotifRegle }
+> = {
+  dessousFragile: { regle: 'RG-04', vuDuDessus: 'surFragile', vuDuDessous: 'fragileCharge' },
+  dessousNonPorteur: {
+    regle: 'RG-18',
+    vuDuDessus: 'surNonPorteur',
+    vuDuDessous: 'nonPorteurCharge',
+  },
+  dessousPlusLeger: { regle: 'RG-04', vuDuDessus: 'surPlusLeger', vuDuDessous: 'sousPlusLourd' },
 }
 
 /**
@@ -104,19 +137,19 @@ export function valider(
     enfreintes.push({ regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: unite.id })
   }
 
-  // Règles 5 et 6 : on regarde ce qui porte `p`. Ce que `p` porte lui-même
-  // sera contrôlé en validant chacun de ces articles du dessus.
+  // Règles 5 et 6, dans les deux sens : les articles qui portent `p`, puis
+  // ceux que `p` porte. Le second cas arrive quand on glisse `p` sous un
+  // article déjà posé (déplacement manuel, échange d'`optimiser`).
   for (const v of dessous) {
-    const autreUniteId = v.unite.id
-    if (v.unite.fragile) {
-      enfreintes.push({ regle: 'RG-04', motif: 'surFragile', uniteId: unite.id, autreUniteId })
+    for (const defaut of defautsDePile(unite, v.unite)) {
+      const { regle, vuDuDessus } = MOTIFS_PILE[defaut]
+      enfreintes.push({ regle, motif: vuDuDessus, uniteId: unite.id, autreUniteId: v.unite.id })
     }
-    if (!v.unite.porteur) {
-      enfreintes.push({ regle: 'RG-18', motif: 'surNonPorteur', uniteId: unite.id, autreUniteId })
-    }
-    // Lourds en bas (RG-04) : le poids ne sert qu'au placement (RG-05).
-    if (v.unite.poids < unite.poids) {
-      enfreintes.push({ regle: 'RG-04', motif: 'surPlusLeger', uniteId: unite.id, autreUniteId })
+  }
+  for (const v of voisins.filter((v) => estPoseSur(v.boite, boite))) {
+    for (const defaut of defautsDePile(v.unite, unite)) {
+      const { regle, vuDuDessous } = MOTIFS_PILE[defaut]
+      enfreintes.push({ regle, motif: vuDuDessous, uniteId: unite.id, autreUniteId: v.unite.id })
     }
   }
 

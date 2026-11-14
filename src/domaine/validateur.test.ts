@@ -211,6 +211,41 @@ describe('valider : fragiles, dessus non porteurs et lourds en bas (règles 5 et
   it('RG-04 : accepte un fragile qui touche un autre article sans le porter', () => {
     expect(valider(poser('P2', 1200, 0), [poser('F1', 0, 0)], unites, camion)).toEqual([])
   })
+
+  // Vu du dessous : `p` est glissé sous un article déjà posé. C'est ce que
+  // fera un déplacement manuel (prototype 2) ou un échange d'`optimiser`.
+
+  it('RG-04 : refuse un fragile glissé sous un article déjà posé', () => {
+    expect(valider(poser('F1', 0, 0), [poser('P2', 0, 0, 1000)], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'fragileCharge', uniteId: 'F1', autreUniteId: 'P2' },
+    ])
+  })
+
+  it('RG-18 : refuse un dessus non porteur glissé sous un article déjà posé', () => {
+    expect(valider(poser('N1', 0, 0), [poser('P2', 0, 0, 1000)], unites, camion)).toEqual([
+      { regle: 'RG-18', motif: 'nonPorteurCharge', uniteId: 'N1', autreUniteId: 'P2' },
+    ])
+  })
+
+  it('RG-04 : refuse un article léger glissé sous un plus lourd', () => {
+    expect(valider(poser('L1', 0, 0), [poser('P2', 0, 0, 1000)], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'sousPlusLourd', uniteId: 'L1', autreUniteId: 'P2' },
+    ])
+  })
+
+  it('RG-04 : refuse l’échange d’une pile qui met le léger sous le lourd', () => {
+    // Avant : L1 sur P1, permis. Après l'échange des deux positions, P1 est
+    // sur L1 : chacun des deux placements échangés est refusé.
+    const lourdDessus = poser('P1', 0, 0, 1000)
+    const legerDessous = poser('L1', 0, 0)
+    const apres = [legerDessous, lourdDessus]
+    expect(valider(lourdDessus, apres, unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'surPlusLeger', uniteId: 'P1', autreUniteId: 'L1' },
+    ])
+    expect(valider(legerDessous, apres, unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'sousPlusLourd', uniteId: 'L1', autreUniteId: 'P1' },
+    ])
+  })
 })
 
 describe('valider : accès au déchargement (règle 7, RG-07)', () => {
