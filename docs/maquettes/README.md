@@ -57,6 +57,7 @@ CF = cahier fonctionnel, CT = cahier technique, P1 à P4 = prototype concerné.
 Relevés en relisant les captures. On ne retouche pas la maquette : on corrige directement à l'implémentation.
 
 - **05, mode quai, vue Arrière** : les libellés « Paroi gauche », « Vu depuis les portes » et « Paroi droite » se superposent au-dessus de la vue.
+- **04, vue Côté gauche** : le bandeau annonce « 5 articles cachés », dont A02. Or A02 (1 100 mm de haut) dépasse de 50 mm au-dessus de A01 (1 050 mm), qui est devant lui : il reste visible. Il y a 4 articles cachés : A04, A05, A10 et A12. Le décompte vient de `projeterPlan`, jamais d'une liste écrite en dur.
 - **08e, fiche article** : le cadre d'erreur des orientations autorisées est très arrondi. La charte limite les rayons à 8 px : appliquer le contour d'erreur standard de 2 px.
 - **08 et 08e** : « Fragile » et « Dessus porteur » peuvent être cochés ensemble. Un article fragile ne supporte rien (RG-04) : l'interface doit le montrer, par exemple en désactivant « Dessus porteur » avec une explication quand « Fragile » est coché.
 - **Renvois de règles** : vérifier dans chaque message que le numéro de RG cité est le bon. L'appui relève de RG-04, et non de RG-08.

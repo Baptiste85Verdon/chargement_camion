@@ -75,7 +75,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 - [x] Fait — branche `feat/p1-projections`
 - Cahier technique : sections 5.8 et 5.13.
-- `projeter(placement, vue)` pour les cinq vues, avec la profondeur et l'ordre de dessin ; détection des articles cachés ; `coter(placement, vue)`. En TDD sur le jeu « couloirs ».
+- `projeter(placement, unite, camion, vue)` pour les cinq vues, avec la profondeur et l'ordre de dessin ; détection des articles cachés ; `coter(placement, unite, camion, vue)`. En TDD sur le jeu « couloirs ».
 
 ## Étape 6 · Données et validations de saisie
 
