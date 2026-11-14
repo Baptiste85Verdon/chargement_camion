@@ -38,7 +38,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 1 · Socle du projet
 
-- [ ] Fait — branche `chore/p1-socle-projet`
+- [x] Fait — branche `chore/p1-socle-projet`
 - Cahier technique : sections 2, 5.15, 8 (outils), 9.2.
 - Créer le projet Vite + Vue 3 + TypeScript strict à la racine sans écraser `docs/`, `src/styles/`, `tests/`, `CLAUDE.md`, `README.md`, `.gitignore` (à compléter) et `.env.example`. Ajouter Vue Router, Pinia, ESLint, Prettier, Stylelint (couleurs en dur et ombres interdites hors jetons), Vitest, Playwright avec axe-core.
 - Script `npm run tokens` : convertit `plan-de-chargement.tokens.json` en variables CSS, avec un test qui vérifie les contrastes minimaux.
