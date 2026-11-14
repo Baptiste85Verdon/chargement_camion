@@ -12,3 +12,9 @@ export const TOLERANCE_CONTACT = 20
  * avoir en appui sur d'autres articles (règle 4 du validateur).
  */
 export const SEUIL_APPUI = 0.6
+
+/**
+ * Part minimale d'une grande face d'un article debout qui doit être couverte
+ * par les articles contre lesquels il s'appuie (RG-19).
+ */
+export const SEUIL_CALAGE = 0.5

@@ -72,6 +72,7 @@ export type MotifRegle =
   | 'surPlusLeger'
   | 'accesBloque'
   | 'bloqueAcces'
+  | 'deboutNonCale'
 
 /** Une règle enfreinte par un placement : ce que renvoie le validateur. */
 export interface RegleEnfreinte {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
-import { SEUIL_APPUI, TOLERANCE_CONTACT } from './constantes'
+import { SEUIL_APPUI, SEUIL_CALAGE, TOLERANCE_CONTACT } from './constantes'
 import type { Camion, Placement, Unite } from './types'
 import { valider } from './validateur'
 
@@ -140,18 +140,6 @@ describe('valider : orientation autorisée (RG-04)', () => {
   })
 })
 
-describe("valider : jeux d'essai de référence, règles 1 à 3", () => {
-  it.each(['couloirs', 'fenetres-isolees'] as const)(
-    'RG-04 et RG-06 : chaque placement du jeu « %s » est dans la caisse, sans chevauchement et bien orienté',
-    (nom) => {
-      const jeu = chargerJeuEssai(nom)
-      for (const p of jeu.placements) {
-        expect(valider(p, jeu.placements, jeu.unites, jeu.camion), p.uniteId).toEqual([])
-      }
-    },
-  )
-})
-
 describe('valider : unité inconnue', () => {
   it('lève une erreur si le placement désigne une unité absente', () => {
     expect(() => valider(poser('X', 0, 0), [], [], camion)).toThrow('X')
@@ -271,5 +259,97 @@ describe('valider : accès au déchargement (règle 7, RG-07)', () => {
 
   it('RG-07 : accepte deux articles de la même commande l’un devant l’autre', () => {
     expect(valider(poser('T1', 0, 0), [poser('T2', 1200, 0)], unites, camion)).toEqual([])
+  })
+})
+
+describe('valider : calage des articles debout (règle 8, RG-19)', () => {
+  /** Fenêtre 1 500 × 1 350 × 180 à plat, soit 1 500 × 180 × 1 350 debout. */
+  function fenetre(id: string): Unite {
+    return {
+      ...palette(id),
+      dims: { l: 1500, w: 1350, h: 180 },
+      poids: 45,
+      fragile: true,
+      orientations: ['debout'],
+    }
+  }
+  /** Palette basse : 1 200 × 600 = 36 % de la grande face d'une fenêtre. */
+  const basse: Unite = { ...palette('B1'), dims: { l: 1200, w: 1000, h: 600 } }
+  const unites = [palette('P1'), basse, fenetre('F1'), fenetre('F2')]
+
+  function deboutEn(uniteId: string, y: number, x = 0): Placement {
+    return { uniteId, x, y, z: 0, orientation: 'debout', rang: 1 }
+  }
+
+  it('RG-19 : accepte une fenêtre debout contre une paroi', () => {
+    expect(valider(deboutEn('F1', 0), [], unites, camion)).toEqual([])
+    expect(valider(deboutEn('F1', 2400 - 180), [], unites, camion)).toEqual([])
+  })
+
+  it(`RG-19 : tolère un écart de ${TOLERANCE_CONTACT} mm avec la paroi`, () => {
+    expect(valider(deboutEn('F1', TOLERANCE_CONTACT), [], unites, camion)).toEqual([])
+  })
+
+  it('RG-19 : refuse une fenêtre debout seule au milieu de la caisse', () => {
+    expect(valider(deboutEn('F1', 1000), [], unites, camion)).toEqual([
+      { regle: 'RG-19', motif: 'deboutNonCale', uniteId: 'F1' },
+    ])
+  })
+
+  it(`RG-19 : accepte une fenêtre appuyée contre un article qui couvre ${SEUIL_CALAGE * 100} % de sa face ou plus`, () => {
+    // La palette couvre 1 200 × 1 000 mm de la face de 1 500 × 1 350 : 59 %.
+    const plan = [poser('P1', 0, 0)]
+    expect(valider(deboutEn('F1', 1000), plan, unites, camion)).toEqual([])
+    expect(valider(deboutEn('F1', 1000 + TOLERANCE_CONTACT), plan, unites, camion)).toEqual([])
+  })
+
+  it('RG-19 : refuse une fenêtre appuyée contre un article qui couvre moins du seuil', () => {
+    expect(valider(deboutEn('F1', 1000), [poser('B1', 0, 0)], unites, camion)).toEqual([
+      { regle: 'RG-19', motif: 'deboutNonCale', uniteId: 'F1' },
+    ])
+  })
+
+  it('RG-19 : accepte une fenêtre appuyée contre une fenêtre calée par une paroi', () => {
+    const f1 = deboutEn('F1', 0)
+    const f2 = deboutEn('F2', 180)
+    expect(valider(f2, [f1, f2], unites, camion)).toEqual([])
+  })
+
+  it('RG-19 : accepte un groupe de fenêtres dont l’une s’appuie contre un article qui n’est pas debout', () => {
+    const plan = [poser('P1', 0, 0), deboutEn('F1', 1000), deboutEn('F2', 1180)]
+    expect(valider(deboutEn('F2', 1180), plan, unites, camion)).toEqual([])
+  })
+
+  it('RG-19 : refuse deux fenêtres face à face, seules au milieu de la caisse', () => {
+    const f1 = deboutEn('F1', 1000)
+    const f2 = deboutEn('F2', 1180)
+    expect(valider(f1, [f1, f2], unites, camion)).toEqual([
+      { regle: 'RG-19', motif: 'deboutNonCale', uniteId: 'F1' },
+    ])
+    expect(valider(f2, [f1, f2], unites, camion)).toEqual([
+      { regle: 'RG-19', motif: 'deboutNonCale', uniteId: 'F2' },
+    ])
+  })
+})
+
+describe("valider : jeux d'essai de référence", () => {
+  /** Valide chaque placement du jeu contre tout le plan et regroupe les refus. */
+  function refusDuJeu(nom: 'couloirs' | 'fenetres-isolees') {
+    const jeu = chargerJeuEssai(nom)
+    const refus = jeu.placements.flatMap((p) => valider(p, jeu.placements, jeu.unites, jeu.camion))
+    return { jeu, refus }
+  }
+
+  it('RG-04, RG-06, RG-07, RG-18 et RG-19 : le jeu « couloirs » n’enfreint aucune règle', () => {
+    const { jeu, refus } = refusDuJeu('couloirs')
+    expect(jeu.attendu.reglesEnfreintes).toEqual([])
+    expect(refus).toEqual([])
+  })
+
+  it('RG-19 : la variante « fenêtres isolées » refuse A10 et A11, articles debout sans calage', () => {
+    const { jeu, refus } = refusDuJeu('fenetres-isolees')
+    const attendus = jeu.attendu.reglesEnfreintes.map((r) => ({ uniteId: r.unite, regle: r.regle }))
+    expect(refus.map((r) => ({ uniteId: r.uniteId, regle: r.regle }))).toEqual(attendus)
+    expect(refus.every((r) => r.motif === 'deboutNonCale')).toBe(true)
   })
 })

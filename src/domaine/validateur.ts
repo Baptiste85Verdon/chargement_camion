@@ -1,23 +1,16 @@
 // Le validateur (cahier technique, 4.2) répond à une seule question :
 // « ce placement est-il permis ? ». Il renvoie la liste des règles enfreintes,
 // vide si le placement est permis.
+import { estDebout, estDeboutCale, type Occupation, occupationDe } from './calage'
 import { SEUIL_APPUI, TOLERANCE_CONTACT } from './constantes'
 import {
   type Boite,
-  boiteDe,
   estPoseSur,
   seChevauchent,
   surfaceCommuneXY,
   surfaceCommuneYZ,
-  trouverUnite,
 } from './geometrie'
 import type { Camion, Placement, RegleEnfreinte, Unite } from './types'
-
-/** Un autre article du plan, avec ce qu'il faut savoir de lui pour le comparer. */
-interface Voisin {
-  unite: Unite
-  boite: Boite
-}
 
 /** Règle 1 : l'unité ne dépasse d'aucune paroi, ni du plancher, ni du plafond. */
 function estDansLaCaisse(b: Boite, camion: Camion): boolean {
@@ -46,7 +39,7 @@ function toucheUneParoiLaterale(b: Boite, camion: Camion): boolean {
  * Ces unités ne peuvent pas se chevaucher entre elles : leurs surfaces
  * d'appui s'additionnent sans double compte.
  */
-function estBienAppuyee(b: Boite, dessous: Voisin[]): boolean {
+function estBienAppuyee(b: Boite, dessous: Occupation[]): boolean {
   if (b.z0 <= 0) return true
   const base = (b.x1 - b.x0) * (b.y1 - b.y0)
   const appui = dessous.reduce((somme, v) => somme + surfaceCommuneXY(b, v.boite), 0)
@@ -75,14 +68,11 @@ export function valider(
   unites: Unite[],
   camion: Camion,
 ): RegleEnfreinte[] {
-  const unite = trouverUnite(p.uniteId, unites)
-  const boite = boiteDe(p, unite)
-  const voisins: Voisin[] = plan
+  const cible = occupationDe(p, unites)
+  const { unite, boite } = cible
+  const voisins = plan
     .filter((autre) => autre.uniteId !== p.uniteId)
-    .map((autre) => {
-      const u = trouverUnite(autre.uniteId, unites)
-      return { unite: u, boite: boiteDe(autre, u) }
-    })
+    .map((autre) => occupationDe(autre, unites))
   const enfreintes: RegleEnfreinte[] = []
 
   if (!estDansLaCaisse(boite, camion)) {
@@ -93,6 +83,9 @@ export function valider(
     enfreintes.push({ regle: 'RG-04', motif: 'orientationInterdite', uniteId: unite.id })
   } else if (p.orientation === 'contreParoi' && !toucheUneParoiLaterale(boite, camion)) {
     enfreintes.push({ regle: 'RG-04', motif: 'paroiAbsente', uniteId: unite.id })
+  } else if (estDebout(cible) && !estDeboutCale(cible, [cible, ...voisins], camion)) {
+    // Règle 8 : calage des articles debout.
+    enfreintes.push({ regle: 'RG-19', motif: 'deboutNonCale', uniteId: unite.id })
   }
 
   for (const v of voisins) {
