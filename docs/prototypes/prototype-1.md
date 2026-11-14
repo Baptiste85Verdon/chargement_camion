@@ -77,7 +77,7 @@ Le prototype 1 est accepté quand :
 
 - [ ] Pour le jeu d'essai « couloirs », le validateur n'enfreint aucune règle et ne signale aucun article mal calé. L'équilibre vaut 55 / 45 au départ et 59 / 41 après C1, statut « À surveiller ».
 - [ ] Pour la variante « fenêtres isolées », A10 et A11 sont refusés (RG-19) et le bandeau signale A10, A11 et A12.
-- [ ] Deux fenêtres debout face à face, seules au milieu de la caisse, sont refusées.
+- [x] Deux fenêtres debout face à face, seules au milieu de la caisse, sont refusées.
 - [ ] À partir des commandes du jeu « couloirs », `optimiser` trouve un plan sans article en trop, sans règle enfreinte, et au moins aussi équilibré au pire moment de la tournée.
 - [ ] Pour une tournée d'essai de plusieurs commandes saisies dans l'application, le plan ne présente aucun chevauchement et respecte les règles de placement et l'ordre de livraison.
 - [ ] Un dépassement est signalé, et le report de la commande entière ou des seuls articles en trop vers la liste d'attente fonctionne.

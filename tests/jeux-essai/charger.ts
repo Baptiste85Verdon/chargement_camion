@@ -4,6 +4,16 @@ import type { Camion, Dimensions, Orientation, Placement, Unite } from '@/domain
 import couloirs from './couloirs.json'
 import fenetresIsolees from './fenetres-isolees.json'
 
+/** Résultats attendus d'un jeu d'essai (cahier technique, section 8). */
+export interface AttenduJeuEssai {
+  /** Placements refusés par le validateur : unité, numéro de règle, motif en clair. */
+  reglesEnfreintes: { unite: string; regle: string; motif: string }[]
+  /** Unités signalées par `diagnostiquerCalage`. */
+  malCales: string[]
+  /** Autres attendus (équilibre, bandeau…), lus par les étapes suivantes. */
+  [cle: string]: unknown
+}
+
 /** Forme d'un fichier de jeu d'essai, telle qu'écrite dans le JSON. */
 interface JeuEssaiJson {
   nom: string
@@ -22,7 +32,7 @@ interface JeuEssaiJson {
     position: { x: number; y: number; z: number }
     rangChargement: number
   }[]
-  attendu: unknown
+  attendu: AttenduJeuEssai
 }
 
 export interface JeuEssai {
@@ -32,7 +42,7 @@ export interface JeuEssai {
   placements: Placement[]
   /** Code de commande (C1, C2…) de chaque unité, pour les messages. */
   commandeDe: Record<string, string>
-  attendu: unknown
+  attendu: AttenduJeuEssai
 }
 
 const jeux = {

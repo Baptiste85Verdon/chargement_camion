@@ -82,7 +82,7 @@ Pour un article placé à une position et dans une orientation données, le vali
 1. **Dans la caisse** : l'article ne dépasse d'aucune paroi (RG-06).
 2. **Sans chevauchement** : il n'occupe le volume d'aucun autre article (RG-06).
 3. **Orientation autorisée** : à plat, debout ou contre une paroi selon l'article (RG-04). « Contre une paroi » exige un contact avec un côté de la caisse.
-4. **Appui** : s'il n'est pas au plancher, il repose sur au moins `SEUIL_APPUI` de sa base, soit 60 % à titre provisoire (voir les points ouverts).
+4. **Appui** : s'il n'est pas au plancher, il repose sur au moins `SEUIL_APPUI` de sa base, soit 60 % à titre provisoire, voir les points ouverts (RG-04).
 5. **Fragiles et dessus non porteurs** : rien n'est posé sur un article fragile ou dont le dessus n'est pas porteur (RG-04, RG-18).
 6. **Lourds en bas** : un article ne repose pas sur un article plus léger que lui (RG-04, RG-05).
 7. **Accès au déchargement (RG-07)** : pour un article A, tout article situé entre A et les portes dans le même couloir, c'est-à-dire qui chevauche A en largeur et en hauteur, doit être livré au plus tard en même temps que A. C'est aussi le cas de tout article posé sur A. Un article livré tôt peut donc être plus au fond dans un autre couloir, ou posé sur des articles livrés plus tard.
@@ -142,7 +142,7 @@ interface Placement { uniteId: string; x: number; y: number; z: number; orientat
 
 function valider(p: Placement, plan: Placement[], unites: Unite[], camion: Camion): RegleEnfreinte[] // unites : dimensions et orientations autorisées de chaque unité du plan
 function placer(unites: Unite[], camion: Camion, fixes?: Placement[]): { placements: Placement[]; enTrop: Unite[] }
-function diagnostiquerCalage(plan: Placement[], camion: Camion): string[] // unités mal calées : avertissement, pas un refus
+function diagnostiquerCalage(plan: Placement[], unites: Unite[], camion: Camion): string[] // unités mal calées : avertissement, pas un refus ; unites comme pour valider
 function mesurerEquilibre(plan: Placement[], unites: Unite[], camion: Camion): { etapes: { apres: number | null; partGauche: number; cgX: number; cgY: number }[]; statut: 'equilibre' | 'aSurveiller' | 'desequilibre' } // apres : rang de la dernière commande livrée (null au départ)
 function optimiser(unites: Unite[], camion: Camion, fixes?: Placement[]): { placements: Placement[]; enTrop: Unite[] } // variantes, comparaison, échanges (4.4)
 ```
