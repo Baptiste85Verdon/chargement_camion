@@ -224,3 +224,52 @@ describe('valider : fragiles, dessus non porteurs et lourds en bas (règles 5 et
     expect(valider(poser('P2', 1200, 0), [poser('F1', 0, 0)], unites, camion)).toEqual([])
   })
 })
+
+describe('valider : accès au déchargement (règle 7, RG-07)', () => {
+  /** Une palette de la commande livrée au rang `rang`. */
+  function livree(id: string, rang: number): Unite {
+    return { ...palette(id), commandeRang: rang }
+  }
+  const unites = [livree('T1', 1), livree('T2', 1), livree('R2', 2)]
+
+  it('RG-07 : refuse un article bloqué par un article livré plus tard, devant lui dans son couloir', () => {
+    expect(valider(poser('T1', 0, 0), [poser('R2', 1200, 0)], unites, camion)).toEqual([
+      { regle: 'RG-07', motif: 'accesBloque', uniteId: 'T1', autreUniteId: 'R2' },
+    ])
+  })
+
+  it('RG-07 : refuse un article livré plus tard qui bloque la sortie d’un article livré plus tôt', () => {
+    expect(valider(poser('R2', 1200, 0), [poser('T1', 0, 0)], unites, camion)).toEqual([
+      { regle: 'RG-07', motif: 'bloqueAcces', uniteId: 'R2', autreUniteId: 'T1' },
+    ])
+  })
+
+  it('RG-07 : refuse un article livré plus tard posé sur un article livré plus tôt', () => {
+    const t1 = poser('T1', 0, 0)
+    const r2 = poser('R2', 0, 0, 1000)
+    expect(valider(r2, [t1, r2], unites, camion)).toEqual([
+      { regle: 'RG-07', motif: 'bloqueAcces', uniteId: 'R2', autreUniteId: 'T1' },
+    ])
+    expect(valider(t1, [t1, r2], unites, camion)).toEqual([
+      { regle: 'RG-07', motif: 'accesBloque', uniteId: 'T1', autreUniteId: 'R2' },
+    ])
+  })
+
+  it('RG-07 : accepte un article livré tôt au fond d’un autre couloir', () => {
+    const t1 = poser('T1', 0, 0)
+    const r2 = poser('R2', 1200, 1000)
+    expect(valider(t1, [t1, r2], unites, camion)).toEqual([])
+    expect(valider(r2, [t1, r2], unites, camion)).toEqual([])
+  })
+
+  it('RG-07 : accepte un article livré tôt posé sur un article livré plus tard', () => {
+    const r2 = poser('R2', 0, 0)
+    const t1 = poser('T1', 0, 0, 1000)
+    expect(valider(r2, [r2, t1], unites, camion)).toEqual([])
+    expect(valider(t1, [r2, t1], unites, camion)).toEqual([])
+  })
+
+  it('RG-07 : accepte deux articles de la même commande l’un devant l’autre', () => {
+    expect(valider(poser('T1', 0, 0), [poser('T2', 1200, 0)], unites, camion)).toEqual([])
+  })
+})

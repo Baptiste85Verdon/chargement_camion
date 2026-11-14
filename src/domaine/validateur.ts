@@ -8,6 +8,7 @@ import {
   estPoseSur,
   seChevauchent,
   surfaceCommuneXY,
+  surfaceCommuneYZ,
   trouverUnite,
 } from './geometrie'
 import type { Camion, Placement, RegleEnfreinte, Unite } from './types'
@@ -50,6 +51,17 @@ function estBienAppuyee(b: Boite, dessous: Voisin[]): boolean {
   const base = (b.x1 - b.x0) * (b.y1 - b.y0)
   const appui = dessous.reduce((somme, v) => somme + surfaceCommuneXY(b, v.boite), 0)
   return appui >= SEUIL_APPUI * base
+}
+
+/**
+ * Règle 7 (RG-07) : `b` gêne la sortie de `a` par les portes. C'est le cas
+ * s'il est entre `a` et les portes dans le même couloir, c'est-à-dire plus
+ * près des portes et en recouvrement avec `a` en largeur et en hauteur, ou
+ * s'il est posé sur `a`.
+ */
+function gene(b: Boite, a: Boite): boolean {
+  const devant = b.x0 >= a.x1 && surfaceCommuneYZ(a, b) > 0
+  return devant || estPoseSur(b, a)
 }
 
 /**
@@ -112,6 +124,18 @@ export function valider(
     // Lourds en bas (RG-04) : le poids ne sert qu'au placement (RG-05).
     if (v.unite.poids < unite.poids) {
       enfreintes.push({ regle: 'RG-04', motif: 'surPlusLeger', uniteId: unite.id, autreUniteId })
+    }
+  }
+
+  // Règle 7 : on regarde dans les deux sens, car `p` peut aussi bien être
+  // bloqué par un article déjà placé que bloquer lui-même un article.
+  for (const v of voisins) {
+    const autreUniteId = v.unite.id
+    if (gene(v.boite, boite) && v.unite.commandeRang > unite.commandeRang) {
+      enfreintes.push({ regle: 'RG-07', motif: 'accesBloque', uniteId: unite.id, autreUniteId })
+    }
+    if (gene(boite, v.boite) && unite.commandeRang > v.unite.commandeRang) {
+      enfreintes.push({ regle: 'RG-07', motif: 'bloqueAcces', uniteId: unite.id, autreUniteId })
     }
   }
 
