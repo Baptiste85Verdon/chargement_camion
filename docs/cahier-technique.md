@@ -135,17 +135,19 @@ Ces trois étapes forment la fonction `optimiser`, appelée par le calcul du pla
 ### 4.7 Les signatures des fonctions
 
 ```ts
-type Orientation = 'aPlat' | 'debout' | 'contreParoi' // une rotation précise est calculée à partir de ce choix
+type Orientation = 'aPlat' | 'debout' | 'contreParoi' // la rotation qui en découle est décrite sous ce bloc
 
-interface Unite { id: string; commandeRang: number; dims: { l: number; w: number; h: number }; poids: number; fragile: boolean; porteur: boolean; orientations: Orientation[] } // dims : boîte englobante (RG-18)
+interface Unite { id: string; commandeRang: number; dims: { l: number; w: number; h: number }; poids: number; fragile: boolean; porteur: boolean; orientations: Orientation[] } // dims : boîte englobante (RG-18) en pose à plat
 interface Placement { uniteId: string; x: number; y: number; z: number; orientation: Orientation; rang: number }
 
-function valider(p: Placement, plan: Placement[], camion: Camion): RegleEnfreinte[]
+function valider(p: Placement, plan: Placement[], unites: Unite[], camion: Camion): RegleEnfreinte[] // unites : dimensions et orientations autorisées de chaque unité du plan
 function placer(unites: Unite[], camion: Camion, fixes?: Placement[]): { placements: Placement[]; enTrop: Unite[] }
 function diagnostiquerCalage(plan: Placement[], camion: Camion): string[] // unités mal calées : avertissement, pas un refus
 function mesurerEquilibre(plan: Placement[], unites: Unite[], camion: Camion): { etapes: { apres: number | null; partGauche: number; cgX: number; cgY: number }[]; statut: 'equilibre' | 'aSurveiller' | 'desequilibre' } // apres : rang de la dernière commande livrée (null au départ)
 function optimiser(unites: Unite[], camion: Camion, fixes?: Placement[]): { placements: Placement[]; enTrop: Unite[] } // variantes, comparaison, échanges (4.4)
 ```
+
+**Orientation et encombrement** : `Unite.dims` décrit la boîte englobante de l'article posé à plat, longueur selon x, largeur selon y, hauteur selon z. Mettre une unité debout revient à la faire pivoter d'un quart de tour autour de sa longueur. La longueur reste selon x, la largeur et la hauteur s'échangent. « Contre une paroi » est la même pose que « debout », avec en plus un contact obligatoire avec la paroi gauche ou la paroi droite, à `TOLERANCE_CONTACT` près. Par exemple, une fenêtre de 1 500 × 1 350 × 180 mm à plat occupe 1 500 × 180 × 1 350 mm debout.
 
 Ces fonctions sont **pures** : elles ne lisent et n'écrivent rien en dehors de leurs paramètres. C'est ce qui permet de les développer en TDD, avec un test par règle de gestion.
 

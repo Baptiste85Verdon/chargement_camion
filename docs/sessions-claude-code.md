@@ -49,7 +49,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 2 · Domaine : types et premières règles du validateur
 
-- [ ] Fait — branche `feat/p1-validateur-base`
+- [x] Fait — branche `feat/p1-validateur-base`
 - Cahier technique : sections 3, 4.1, 4.2 (règles 1 à 3), 4.7.
 - Types `Unite`, `Placement`, `Camion`, `Orientation`, `RegleEnfreinte`. Chargement des jeux d'essai JSON dans les tests.
 - Validateur : dans la caisse et sans chevauchement (RG-06), orientation autorisée (RG-04). Il renvoie la liste des règles enfreintes.
