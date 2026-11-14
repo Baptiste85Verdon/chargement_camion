@@ -1,0 +1,239 @@
+// Le placeur (cahier technique, 4.3) : une méthode gloutonne. Il range les
+// unités une par une, dans un ordre réfléchi, chacune à la meilleure place que
+// le validateur accepte parmi une liste de points candidats. Il ne revient
+// jamais sur une unité déjà placée.
+import { ECART_COMPACITE, TOLERANCE_CONTACT } from './constantes'
+import { encombrement } from './encombrement'
+import { type Boite, boiteDe, surfaceCommuneXZ, surfaceCommuneYZ, trouverUnite } from './geometrie'
+import type { Camion, Placement, Unite } from './types'
+import { valider } from './validateur'
+
+/** Sens de parcours en largeur : depuis la paroi gauche ou depuis la paroi droite. */
+export type Sens = 'gaucheDroite' | 'droiteGauche'
+
+/** Résultat du placeur : l'ordre des placements est l'ordre de chargement. */
+export interface ResultatPlaceur<U extends Unite = Unite> {
+  placements: Placement[]
+  /** Unités qui n'ont trouvé aucune place (RG-10). */
+  enTrop: U[]
+}
+
+/**
+ * Un coin où l'on peut essayer de poser une unité. Son ancrage dit quel bord
+ * de l'unité vient sur ce coin : avec l'ancrage `gauche`, l'unité part du
+ * point vers la droite (son y vaut celui du point) ; avec l'ancrage `droite`,
+ * elle s'étend vers la gauche et son bord droit vient sur le point.
+ */
+interface PointCandidat {
+  x: number
+  y: number
+  z: number
+  ancrage: 'gauche' | 'droite'
+}
+
+/** Un essai accepté par le validateur, avec les trois critères de son score. */
+interface Essai {
+  placement: Placement
+  boite: Boite
+  /** Compacité : bord avant de toute la charge, côté portes. Plus petit, mieux c'est. */
+  front: number
+  /** Calage : surface de contact latérale avec les parois et les articles. */
+  contact: number
+  /** Équilibre : écart du centre de gravité à l'axe du camion. */
+  ecartAxe: number
+}
+
+const volume = (u: Unite) => u.dims.l * u.dims.w * u.dims.h
+
+/**
+ * Ordre de placement (4.3, étape 2) : la commande livrée en dernier d'abord,
+ * puisqu'elle va au fond (RG-07) ; dans une commande, les plus lourds d'abord
+ * pour qu'ils soient en bas (RG-04, RG-05) ; à poids égal, les plus
+ * volumineux. Le tri est stable : à égalité, l'ordre reçu est gardé.
+ */
+export function trierUnites<U extends Unite>(unites: U[]): U[] {
+  return [...unites].sort(
+    (a, b) => b.commandeRang - a.commandeRang || b.poids - a.poids || volume(b) - volume(a),
+  )
+}
+
+/** Le coin du fond, au plancher, du côté où commence le parcours. */
+function coinDeDepart(sens: Sens, camion: Camion): PointCandidat {
+  return sens === 'gaucheDroite'
+    ? { x: 0, y: 0, z: 0, ancrage: 'gauche' }
+    : { x: 0, y: camion.largeur, z: 0, ancrage: 'droite' }
+}
+
+/**
+ * Les trois nouveaux points autour d'une unité qu'on vient de placer (4.3,
+ * étape 5) : devant elle côté portes, à côté d'elle dans le sens de parcours,
+ * et au-dessus. En sens droite-gauche, tout est vu en miroir.
+ */
+function pointsAutourDe(b: Boite, sens: Sens): PointCandidat[] {
+  if (sens === 'gaucheDroite') {
+    return [
+      { x: b.x1, y: b.y0, z: b.z0, ancrage: 'gauche' },
+      { x: b.x0, y: b.y1, z: b.z0, ancrage: 'gauche' },
+      { x: b.x0, y: b.y0, z: b.z1, ancrage: 'gauche' },
+    ]
+  }
+  return [
+    { x: b.x1, y: b.y1, z: b.z0, ancrage: 'droite' },
+    { x: b.x0, y: b.y0, z: b.z0, ancrage: 'droite' },
+    { x: b.x0, y: b.y1, z: b.z1, ancrage: 'droite' },
+  ]
+}
+
+const cleDe = (p: PointCandidat) => `${p.x};${p.y};${p.z};${p.ancrage}`
+
+/**
+ * Parcours des points (4.3, étape 4) : du fond vers les portes, puis du bas
+ * vers le haut, puis en largeur dans le sens de parcours.
+ */
+function ordonner(points: PointCandidat[], sens: Sens): PointCandidat[] {
+  const signe = sens === 'gaucheDroite' ? 1 : -1
+  return [...points].sort((a, b) => a.x - b.x || a.z - b.z || signe * (a.y - b.y))
+}
+
+/**
+ * Surface des faces verticales de `b` en contact, à `TOLERANCE_CONTACT` près,
+ * avec le fond, les parois latérales et les autres articles. Le plancher et
+ * le dessus ne comptent pas : le calage empêche de glisser sur les côtés.
+ */
+function surfaceDeContact(b: Boite, autres: Boite[], camion: Camion): number {
+  const longueur = b.x1 - b.x0
+  const largeur = b.y1 - b.y0
+  const hauteur = b.z1 - b.z0
+  let surface = 0
+  if (b.x0 <= TOLERANCE_CONTACT) surface += largeur * hauteur
+  if (b.y0 <= TOLERANCE_CONTACT) surface += longueur * hauteur
+  if (camion.largeur - b.y1 <= TOLERANCE_CONTACT) surface += longueur * hauteur
+  for (const a of autres) {
+    const ecartX = Math.max(b.x0 - a.x1, a.x0 - b.x1)
+    const ecartY = Math.max(b.y0 - a.y1, a.y0 - b.y1)
+    if (ecartX >= 0 && ecartX <= TOLERANCE_CONTACT) surface += surfaceCommuneYZ(b, a)
+    if (ecartY >= 0 && ecartY <= TOLERANCE_CONTACT) surface += surfaceCommuneXZ(b, a)
+  }
+  return surface
+}
+
+/**
+ * Choisit le meilleur essai (4.3, étape 4) : on garde ceux dont la compacité
+ * est à moins de `ECART_COMPACITE` de la meilleure, puis le mieux calé, puis
+ * le mieux équilibré. À égalité complète, le premier dans l'ordre de parcours.
+ */
+function meilleurEssai(essais: Essai[]): Essai {
+  const meilleurFront = Math.min(...essais.map((e) => e.front))
+  return essais
+    .filter((e) => e.front - meilleurFront < ECART_COMPACITE)
+    .reduce((retenu, e) =>
+      e.contact > retenu.contact || (e.contact === retenu.contact && e.ecartAxe < retenu.ecartAxe)
+        ? e
+        : retenu,
+    )
+}
+
+/**
+ * Le placeur, pour une variante donnée (4.4) : les unités sont placées dans
+ * l'ordre reçu, sans nouveau tri, et `sensDe` donne le sens de parcours en
+ * largeur pour chaque rang de livraison.
+ *
+ * `unites` contient toutes les unités, y compris celles des placements
+ * `fixes` : celles-ci gardent leur place et servent d'obstacles.
+ */
+export function placerVariante<U extends Unite>(
+  unites: U[],
+  camion: Camion,
+  fixes: Placement[],
+  sensDe: (rang: number) => Sens,
+): ResultatPlaceur<U> {
+  const plan: Placement[] = [...fixes]
+  const boites: Boite[] = fixes.map((p) => boiteDe(p, trouverUnite(p.uniteId, unites)))
+  const points = new Map<string, PointCandidat>()
+  const ajouterPoints = (nouveaux: PointCandidat[]) => {
+    for (const p of nouveaux) points.set(cleDe(p), p)
+  }
+  // Les placements fixes ont pu être trouvés dans un sens ou dans l'autre.
+  for (const b of boites)
+    ajouterPoints([...pointsAutourDe(b, 'gaucheDroite'), ...pointsAutourDe(b, 'droiteGauche')])
+
+  let front = Math.max(0, ...boites.map((b) => b.x1))
+  let sommePoids = 0
+  let sommePoidsY = 0
+  for (const [i, p] of fixes.entries()) {
+    const poids = trouverUnite(p.uniteId, unites).poids
+    const b = boites[i] as Boite
+    sommePoids += poids
+    sommePoidsY += poids * ((b.y0 + b.y1) / 2)
+  }
+  let rang = Math.max(0, ...fixes.map((p) => p.rang)) + 1
+
+  const dejaPlacees = new Set(fixes.map((p) => p.uniteId))
+  const enTrop: U[] = []
+
+  for (const unite of unites) {
+    if (dejaPlacees.has(unite.id)) continue
+    const sens = sensDe(unite.commandeRang)
+    const candidats = ordonner([...points.values(), coinDeDepart(sens, camion)], sens)
+
+    const essais: Essai[] = []
+    for (const point of candidats) {
+      for (const orientation of unite.orientations) {
+        const { l, w, h } = encombrement(unite.dims, orientation)
+        const y = point.ancrage === 'gauche' ? point.y : point.y - w
+        const placement: Placement = {
+          uniteId: unite.id,
+          x: point.x,
+          y,
+          z: point.z,
+          orientation,
+          rang,
+        }
+        if (valider(placement, plan, unites, camion).length > 0) continue
+        const boite: Boite = {
+          x0: point.x,
+          x1: point.x + l,
+          y0: y,
+          y1: y + w,
+          z0: point.z,
+          z1: point.z + h,
+        }
+        const cgY = (sommePoidsY + unite.poids * (y + w / 2)) / (sommePoids + unite.poids)
+        essais.push({
+          placement,
+          boite,
+          front: Math.max(front, boite.x1),
+          contact: surfaceDeContact(boite, boites, camion),
+          ecartAxe: Math.abs(cgY - camion.largeur / 2),
+        })
+      }
+    }
+
+    if (essais.length === 0) {
+      enTrop.push(unite) // RG-10 : aucune place trouvée
+      continue
+    }
+    const retenu = meilleurEssai(essais)
+    plan.push(retenu.placement)
+    boites.push(retenu.boite)
+    ajouterPoints(pointsAutourDe(retenu.boite, sens))
+    front = retenu.front
+    sommePoids += unite.poids
+    sommePoidsY += unite.poids * ((retenu.boite.y0 + retenu.boite.y1) / 2)
+    rang++
+  }
+
+  return { placements: plan, enTrop }
+}
+
+/**
+ * Calcule un plan de chargement (cahier technique, 4.3 et 4.7) : tri des
+ * unités, puis placement glouton en partant de la paroi gauche.
+ */
+export function placer<U extends Unite>(
+  unites: U[],
+  camion: Camion,
+  fixes: Placement[] = [],
+): ResultatPlaceur<U> {
+  return placerVariante(trierUnites(unites), camion, fixes, () => 'gaucheDroite')
+}

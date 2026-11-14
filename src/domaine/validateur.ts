@@ -167,3 +167,12 @@ export function valider(
 
   return enfreintes
 }
+
+/**
+ * Valide chaque placement du plan contre tout le reste du plan : la liste
+ * regroupe toutes les règles enfreintes, vide si le plan est permis. Chaque
+ * conflit entre deux unités apparaît donc une fois pour chacune.
+ */
+export function validerPlan(plan: Placement[], unites: Unite[], camion: Camion): RegleEnfreinte[] {
+  return plan.flatMap((p) => valider(p, plan, unites, camion))
+}
