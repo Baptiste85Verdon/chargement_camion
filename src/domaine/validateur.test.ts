@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
-import { TOLERANCE_CONTACT } from './constantes'
+import { SEUIL_APPUI, TOLERANCE_CONTACT } from './constantes'
 import type { Camion, Placement, Unite } from './types'
 import { valider } from './validateur'
 
@@ -24,26 +24,30 @@ function poser(uniteId: string, x: number, y: number, z = 0): Placement {
 }
 
 describe('valider : dans la caisse (RG-06)', () => {
-  const unites = [palette('P1')]
+  /** Des colis aussi hauts que la caisse, puis 1 mm de trop. */
+  const pleineHauteur: Unite = { ...palette('H0'), dims: { l: 1200, w: 1000, h: 2500 } }
+  const tropHaut: Unite = { ...palette('H1'), dims: { l: 1200, w: 1000, h: 2501 } }
+  const unites = [palette('P1'), pleineHauteur, tropHaut]
 
   it('RG-06 : accepte une unité posée dans le coin du fond', () => {
     expect(valider(poser('P1', 0, 0), [], unites, camion)).toEqual([])
   })
 
-  it('RG-06 : accepte une unité qui touche exactement les parois', () => {
-    expect(valider(poser('P1', 6000, 1400, 1500), [], unites, camion)).toEqual([])
+  it('RG-06 : accepte une unité qui touche exactement les parois et le plafond', () => {
+    expect(valider(poser('P1', 6000, 1400), [], unites, camion)).toEqual([])
+    expect(valider(poser('H0', 0, 0), [], unites, camion)).toEqual([])
   })
 
   it.each([
     ['côté portes', poser('P1', 6001, 0)],
     ['côté paroi droite', poser('P1', 0, 1401)],
-    ['par le haut', poser('P1', 0, 0, 1501)],
+    ['par le haut', poser('H1', 0, 0)],
     ['côté fond', poser('P1', -1, 0)],
     ['côté paroi gauche', poser('P1', 0, -1)],
     ['sous le plancher', poser('P1', 0, 0, -1)],
   ])('RG-06 : refuse une unité qui dépasse %s', (_cote, p) => {
     expect(valider(p, [], unites, camion)).toEqual([
-      { regle: 'RG-06', motif: 'horsCaisse', uniteId: 'P1' },
+      { regle: 'RG-06', motif: 'horsCaisse', uniteId: p.uniteId },
     ])
   })
 })
@@ -151,5 +155,38 @@ describe("valider : jeux d'essai de référence, règles 1 à 3", () => {
 describe('valider : unité inconnue', () => {
   it('lève une erreur si le placement désigne une unité absente', () => {
     expect(() => valider(poser('X', 0, 0), [], [], camion)).toThrow('X')
+  })
+})
+
+describe('valider : appui (règle 4, RG-04)', () => {
+  const unites = [palette('P1'), palette('P2'), palette('P3')]
+  const p1 = poser('P1', 0, 0)
+
+  it('RG-04 : accepte une unité posée entièrement sur une autre', () => {
+    expect(valider(poser('P2', 0, 0, 1000), [p1], unites, camion)).toEqual([])
+  })
+
+  it(`RG-04 : accepte une unité appuyée sur ${SEUIL_APPUI * 100} % de sa base`, () => {
+    // Décalée de 480 mm, la palette repose sur 720 mm de ses 1 200 : 60 %.
+    expect(valider(poser('P2', 480, 0, 1000), [p1], unites, camion)).toEqual([])
+  })
+
+  it('RG-04 : refuse une unité appuyée sur moins du seuil de sa base', () => {
+    // Décalée de 492 mm : 708 / 1 200 = 59 %.
+    expect(valider(poser('P2', 492, 0, 1000), [p1], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: 'P2' },
+    ])
+  })
+
+  it('RG-04 : refuse une unité suspendue en l’air', () => {
+    expect(valider(poser('P2', 0, 0, 1001), [p1], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: 'P2' },
+    ])
+  })
+
+  it('RG-04 : additionne l’appui de plusieurs unités', () => {
+    // À cheval sur P1 et P3 : 50 % sur chacune, 100 % en tout.
+    const p3 = poser('P3', 1200, 0)
+    expect(valider(poser('P2', 600, 0, 1000), [p1, p3], unites, camion)).toEqual([])
   })
 })

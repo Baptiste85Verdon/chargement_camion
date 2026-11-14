@@ -1,9 +1,22 @@
 // Le validateur (cahier technique, 4.2) répond à une seule question :
 // « ce placement est-il permis ? ». Il renvoie la liste des règles enfreintes,
 // vide si le placement est permis.
-import { TOLERANCE_CONTACT } from './constantes'
-import { type Boite, boiteDe, seChevauchent, trouverUnite } from './geometrie'
+import { SEUIL_APPUI, TOLERANCE_CONTACT } from './constantes'
+import {
+  type Boite,
+  boiteDe,
+  estPoseSur,
+  seChevauchent,
+  surfaceCommuneXY,
+  trouverUnite,
+} from './geometrie'
 import type { Camion, Placement, RegleEnfreinte, Unite } from './types'
+
+/** Un autre article du plan, avec ce qu'il faut savoir de lui pour le comparer. */
+interface Voisin {
+  unite: Unite
+  boite: Boite
+}
 
 /** Règle 1 : l'unité ne dépasse d'aucune paroi, ni du plancher, ni du plafond. */
 function estDansLaCaisse(b: Boite, camion: Camion): boolean {
@@ -27,6 +40,19 @@ function toucheUneParoiLaterale(b: Boite, camion: Camion): boolean {
 }
 
 /**
+ * Règle 4 : une unité qui n'est pas au plancher repose, sur au moins
+ * `SEUIL_APPUI` de sa base, sur les unités qu'elle touche par-dessous.
+ * Ces unités ne peuvent pas se chevaucher entre elles : leurs surfaces
+ * d'appui s'additionnent sans double compte.
+ */
+function estBienAppuyee(b: Boite, dessous: Voisin[]): boolean {
+  if (b.z0 <= 0) return true
+  const base = (b.x1 - b.x0) * (b.y1 - b.y0)
+  const appui = dessous.reduce((somme, v) => somme + surfaceCommuneXY(b, v.boite), 0)
+  return appui >= SEUIL_APPUI * base
+}
+
+/**
  * Vérifie le placement `p` par rapport au reste du `plan` et à la caisse.
  * `unites` fournit les dimensions et les orientations autorisées de chaque unité.
  * Si `plan` contient déjà un placement de la même unité, il est ignoré.
@@ -39,6 +65,12 @@ export function valider(
 ): RegleEnfreinte[] {
   const unite = trouverUnite(p.uniteId, unites)
   const boite = boiteDe(p, unite)
+  const voisins: Voisin[] = plan
+    .filter((autre) => autre.uniteId !== p.uniteId)
+    .map((autre) => {
+      const u = trouverUnite(autre.uniteId, unites)
+      return { unite: u, boite: boiteDe(autre, u) }
+    })
   const enfreintes: RegleEnfreinte[] = []
 
   if (!estDansLaCaisse(boite, camion)) {
@@ -51,17 +83,20 @@ export function valider(
     enfreintes.push({ regle: 'RG-04', motif: 'paroiAbsente', uniteId: unite.id })
   }
 
-  for (const autre of plan) {
-    if (autre.uniteId === p.uniteId) continue
-    const autreBoite = boiteDe(autre, trouverUnite(autre.uniteId, unites))
-    if (seChevauchent(boite, autreBoite)) {
+  for (const v of voisins) {
+    if (seChevauchent(boite, v.boite)) {
       enfreintes.push({
         regle: 'RG-06',
         motif: 'chevauchement',
         uniteId: unite.id,
-        autreUniteId: autre.uniteId,
+        autreUniteId: v.unite.id,
       })
     }
+  }
+
+  const dessous = voisins.filter((v) => estPoseSur(boite, v.boite))
+  if (!estBienAppuyee(boite, dessous)) {
+    enfreintes.push({ regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: unite.id })
   }
 
   return enfreintes

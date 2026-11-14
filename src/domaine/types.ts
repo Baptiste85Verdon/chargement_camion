@@ -61,7 +61,8 @@ export type NumeroRegle = 'RG-04' | 'RG-06'
  * Motif précis, sous forme de code : l'interface le traduit en message
  * grâce au fichier de textes.
  */
-export type MotifRegle = 'horsCaisse' | 'chevauchement' | 'orientationInterdite' | 'paroiAbsente'
+export type MotifRegle =
+  'horsCaisse' | 'chevauchement' | 'orientationInterdite' | 'paroiAbsente' | 'appuiInsuffisant'
 
 /** Une règle enfreinte par un placement : ce que renvoie le validateur. */
 export interface RegleEnfreinte {
