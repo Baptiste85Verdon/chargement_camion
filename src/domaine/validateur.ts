@@ -2,29 +2,8 @@
 // « ce placement est-il permis ? ». Il renvoie la liste des règles enfreintes,
 // vide si le placement est permis.
 import { TOLERANCE_CONTACT } from './constantes'
-import { encombrement } from './encombrement'
+import { type Boite, boiteDe, seChevauchent, trouverUnite } from './geometrie'
 import type { Camion, Placement, RegleEnfreinte, Unite } from './types'
-
-/** Boîte occupée dans la caisse : de (x0, y0, z0) à (x1, y1, z1), bornes exclues. */
-interface Boite {
-  x0: number
-  x1: number
-  y0: number
-  y1: number
-  z0: number
-  z1: number
-}
-
-function trouverUnite(uniteId: string, unites: Unite[]): Unite {
-  const unite = unites.find((u) => u.id === uniteId)
-  if (!unite) throw new Error(`Unité inconnue : ${uniteId}`)
-  return unite
-}
-
-function boiteDe(p: Placement, unite: Unite): Boite {
-  const { l, w, h } = encombrement(unite.dims, p.orientation)
-  return { x0: p.x, x1: p.x + l, y0: p.y, y1: p.y + w, z0: p.z, z1: p.z + h }
-}
 
 /** Règle 1 : l'unité ne dépasse d'aucune paroi, ni du plancher, ni du plafond. */
 function estDansLaCaisse(b: Boite, camion: Camion): boolean {
@@ -36,15 +15,6 @@ function estDansLaCaisse(b: Boite, camion: Camion): boolean {
     b.y1 <= camion.largeur &&
     b.z1 <= camion.hauteur
   )
-}
-
-/**
- * Règle 2 : deux boîtes se chevauchent si elles se recouvrent sur les trois
- * axes à la fois. Des faces qui se touchent (a.x1 === b.x0) ne se chevauchent
- * pas : d'où les inégalités strictes.
- */
-function seChevauchent(a: Boite, b: Boite): boolean {
-  return a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1 && a.z0 < b.z1 && b.z0 < a.z1
 }
 
 /**
