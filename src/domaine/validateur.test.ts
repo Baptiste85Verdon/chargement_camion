@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
 import { SEUIL_APPUI, SEUIL_CALAGE, TOLERANCE_CONTACT } from './constantes'
 import type { Camion, Placement, Unite } from './types'
-import { valider } from './validateur'
+import { valider, validerPlan } from './validateur'
 
 const camion: Camion = { longueur: 7200, largeur: 2400, hauteur: 2500 }
 
@@ -386,5 +386,21 @@ describe("valider : jeux d'essai de référence", () => {
     const attendus = jeu.attendu.reglesEnfreintes.map((r) => ({ uniteId: r.unite, regle: r.regle }))
     expect(refus.map((r) => ({ uniteId: r.uniteId, regle: r.regle }))).toEqual(attendus)
     expect(refus.every((r) => r.motif === 'deboutNonCale')).toBe(true)
+  })
+})
+
+describe('validerPlan', () => {
+  it('RG-06 : regroupe les refus de chaque placement du plan', () => {
+    const unites = [palette('P1'), palette('P2')]
+    const plan = [poser('P1', 0, 0), poser('P2', 600, 0)]
+    expect(validerPlan(plan, unites, camion)).toEqual([
+      { regle: 'RG-06', motif: 'chevauchement', uniteId: 'P1', autreUniteId: 'P2' },
+      { regle: 'RG-06', motif: 'chevauchement', uniteId: 'P2', autreUniteId: 'P1' },
+    ])
+  })
+
+  it('accepte le jeu « couloirs »', () => {
+    const jeu = chargerJeuEssai('couloirs')
+    expect(validerPlan(jeu.placements, jeu.unites, jeu.camion)).toEqual([])
   })
 })

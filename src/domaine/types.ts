@@ -47,6 +47,54 @@ export interface Placement {
   rang: number
 }
 
+/**
+ * Ce que le domaine retient d'un article du catalogue pour le placer
+ * (cahier technique, section 3). Dimensions de la boîte englobante (RG-18).
+ */
+export interface Article {
+  id: string
+  dimsEmballees: Dimensions
+  /** Taille nue, pour un article qui peut être livré nu (RG-02). */
+  dimsNues?: Dimensions
+  poids: number
+  fragile: boolean
+  porteur: boolean
+  orientations: Orientation[]
+}
+
+/** Une ligne de commande : un article, une quantité, et ses valeurs propres (RG-03). */
+export interface LigneCommande {
+  id: string
+  articleId: string
+  quantite: number
+  /** Livré nu plutôt qu'emballé (RG-02). */
+  nu: boolean
+  /** Dimensions propres à cette commande : elles ne modifient jamais le catalogue. */
+  dimsPropres?: Dimensions
+  /** Poids propre à cette commande, saisi ou estimé au prorata (RG-03). */
+  poidsPropre?: number
+}
+
+/** Une commande de la tournée, avec son rang de livraison (RG-07). */
+export interface CommandeAPlacer {
+  id: string
+  /** 1 = livrée en premier. */
+  rangLivraison: number
+  lignes: LigneCommande[]
+}
+
+/**
+ * Une unité préparée à partir d'une ligne de commande : c'est une `Unite`,
+ * plus de quoi retrouver sa ligne et sa commande (tableau des placements,
+ * articles en trop, RG-10).
+ */
+export interface UnitePreparee extends Unite {
+  commandeId: string
+  ligneCommandeId: string
+  /** Numéro de l'unité dans sa ligne : 1 à la quantité. */
+  numero: number
+}
+
 /** Dimensions utiles de la caisse. */
 export interface Camion {
   longueur: number

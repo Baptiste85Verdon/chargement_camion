@@ -100,7 +100,7 @@ Le validateur ne renvoie pas un simple oui ou non. Il renvoie la liste des règl
 1. **Préparer les unités** : chaque ligne de commande est éclatée en autant d'unités que sa quantité. Chaque unité reçoit ses dimensions effectives : celles de la commande si elles existent, sinon celles du catalogue, nues ou emballées. Son poids effectif suit la même règle : celui de la ligne de commande s'il existe, sinon celui du catalogue.
 2. **Trier** : d'abord par rang de livraison décroissant, puisque la dernière commande livrée va au fond. Puis, à l'intérieur d'une commande, les plus lourds d'abord, et à poids égal les plus volumineux.
 3. **Tenir une liste de points candidats** : au départ, il n'y en a qu'un, le coin du fond au plancher (0, 0, 0).
-4. **Chercher une place** pour chaque unité : on essaie chaque orientation autorisée sur chaque point candidat, en parcourant les points du fond vers les portes, puis du bas vers le haut. Parmi les essais que le validateur accepte, on retient celui qui a le meilleur score. Le premier critère est la **compacité** : on préfère la position qui laisse le plus de longueur libre côté portes, donc celle qui comble les espaces vides au fond et sur les côtés. Le deuxième critère est le **calage** : il départage les positions de compacité égale ou proche (moins de 100 mm d'écart, valeur provisoire), en préférant la plus grande surface de contact avec les parois et les autres articles. Le troisième critère, en cas d'égalité, est l'équilibre du poids entre la gauche et la droite.
+4. **Chercher une place** pour chaque unité : on essaie chaque orientation autorisée sur chaque point candidat, en parcourant les points du fond vers les portes, puis du bas vers le haut. Parmi les essais que le validateur accepte, on retient celui qui a le meilleur score. Le premier critère est la **compacité** : on préfère la position qui laisse le plus de longueur libre côté portes, donc celle qui comble les espaces vides au fond et sur les côtés. Le deuxième critère est le **calage** : il départage les positions de compacité égale ou proche (moins de 100 mm d'écart, valeur provisoire), en préférant la plus grande surface de contact avec les parois et les autres articles. Seules les faces verticales comptent : le fond, les parois latérales et les autres articles, à `TOLERANCE_CONTACT` près ; ni le plancher ni le dessus, puisque le calage empêche de glisser sur les côtés. Le troisième critère, en cas d'égalité, est l'équilibre du poids entre la gauche et la droite.
 5. **Mettre à jour les points** : une fois l'unité placée, on ajoute trois nouveaux points candidats à ses coins. Le premier est devant elle, côté portes, le deuxième à sa droite, le troisième au-dessus.
 6. **Gérer le dépassement** : une unité qui ne trouve aucune place est mise dans la liste des articles en trop (RG-10).
 7. **Produire le résultat** : la liste des placements, dans l'ordre où ils ont été trouvés, est aussi l'ordre de chargement. Le résultat comprend en plus la liste des articles en trop.
@@ -112,14 +112,18 @@ Un seul passage du placeur ne regarde l'équilibre qu'en dernier recours. On che
 1. **Plusieurs variantes** : le placeur est lancé plusieurs fois, huit fois à titre provisoire. Chaque variante change une seule chose :
    - le sens de parcours en largeur, de la gauche vers la droite ou l'inverse, pour tout le plan ou commande par commande ;
    - l'ordre des unités de même rang et de poids proche.
+
+   Les huit variantes croisent quatre sens de parcours (tout depuis la gauche, tout depuis la droite, en alternant commande par commande à partir de la gauche, puis à partir de la droite) avec deux ordres (l'ordre du tri, puis l'ordre inversé dans chaque groupe d'unités consécutives de même rang et de poids proche). Deux unités sont de poids proche quand la plus légère pèse au moins 90 % de la plus lourde (`ECART_POIDS_PROCHE`, provisoire).
 2. **Comparer les variantes**, dans cet ordre :
    - le moins d'articles en trop ;
    - le moins d'articles mal calés (`diagnostiquerCalage`) ;
    - le meilleur équilibre, mesuré au pire moment de la tournée (`mesurerEquilibre`) ;
    - la compacité.
 
-   Une fois que tout rentre, un plan équilibré vaut mieux qu'un plan plus compact.
-3. **Améliorer par échanges** : sur le meilleur plan, on essaie d'échanger deux unités de même encombrement (à 20 mm près) situées de part et d'autre de l'axe, ou deux couloirs entiers de même longueur. Un échange est gardé si le validateur l'accepte, s'il ne crée aucun article mal calé et s'il améliore l'équilibre. On recommence jusqu'à ne plus rien améliorer, dans la limite d'un nombre maximal d'essais.
+   Une fois que tout rentre, un plan équilibré vaut mieux qu'un plan plus compact. Pour comparer deux plans, l'équilibre se mesure sur la part brute, sans arrondi, afin de départager des plans proches ; le statut affiché reste jugé sur les pourcentages arrondis (4.5).
+3. **Améliorer par échanges** : sur le meilleur plan, on essaie d'échanger deux unités de même encombrement (à 20 mm près) situées de part et d'autre de l'axe, ou deux couloirs entiers de même longueur. Un échange est gardé si le validateur l'accepte, s'il ne crée aucun article mal calé et s'il améliore l'équilibre. On recommence jusqu'à ne plus rien améliorer, dans la limite d'un nombre maximal d'essais (`MAX_ESSAIS_ECHANGES`, 500, provisoire).
+   - **Couloir** : pour les échanges, c'est l'ensemble des unités qui occupent exactement la même bande en largeur. Deux couloirs s'échangent s'ils sont de part et d'autre de l'axe et de même forme : autant d'unités, de même encombrement, aux mêmes positions relatives, à 20 mm près. Chaque unité prend alors la place de son homologue, empilements compris.
+   - **Ce qui bouge** : un échange ne déplace aucune position et ne change aucun rang de chargement ; seules les unités changent de place. L'ordre de chargement reste donc réalisable.
 
 Ces trois étapes forment la fonction `optimiser`, appelée par le calcul du plan et par la nouvelle simulation.
 
@@ -129,6 +133,7 @@ Ces trois étapes forment la fonction `optimiser`, appelée par le calcul du pla
 - La part portée par chaque côté s'en déduit : `partGauche = (largeur − cgY) / largeur` et `partDroite = cgY / largeur`, puisque y part de la paroi gauche.
 - La mesure est faite au départ, puis après chaque livraison, en retirant les unités des commandes déjà livrées.
 - Le statut retient la plus forte part d'un côté sur toute la tournée : « Équilibré » jusqu'à 55 %, « À surveiller » jusqu'à 60 %, « Déséquilibré » au-delà (`SEUILS_EQUILIBRE`, provisoires). Le statut se juge sur les pourcentages arrondis à l'unité, tels qu'ils sont affichés : un plan affiché à 55 / 45 est donc « Équilibré ». Les tonnes sont arrondies séparément, si bien que leur somme peut différer du total de 0,1 t.
+- Un plan vide n'a aucune étape mesurée, et son statut vaut « Équilibré ». Une étape sans poids, après la dernière livraison, n'est pas mesurée.
 
 ### 4.6 Revérification et nouvelle simulation
 
@@ -302,6 +307,7 @@ Les trois états se distinguent par leur forme et peuvent se cumuler sans se mas
   - la distance du centre de gravité au fond, en `repere`.
 
   Le marqueur ne gêne pas le glisser-déposer et ne compte pas comme un article.
+- **Plan vide** : la carte affiche « Aucun article » à la place du statut, sans jauge ni tableau. `mesurerEquilibre` ne renvoie alors aucune étape (4.5) : l'interface teste ce cas avant d'afficher le statut.
 - **Mise à jour** : à chaque calcul, déplacement ou revérification. Un changement de statut est annoncé dans la zone `aria-live`.
 - **Mode quai** : le statut seul, en `quai-corps`.
 
@@ -513,7 +519,7 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
 - [ ] **Hébergeur statique** : à choisir au premier déploiement.
 - [ ] **Hypothèse** : une seule tablette suit une tournée à la fois.
 - [ ] **Seuils de calage** : `SEUIL_CALAGE` (0,5), `TOLERANCE_CONTACT` (20 mm) et l'écart de compacité du placeur (100 mm), provisoires, à confirmer avec un professionnel.
-- [ ] **Seuils d'équilibre et variantes** : `SEUILS_EQUILIBRE` (55 % et 60 %) et nombre de variantes du placeur (8), provisoires.
+- [ ] **Seuils d'équilibre et variantes** : `SEUILS_EQUILIBRE` (55 % et 60 %), nombre de variantes du placeur (8), poids proches (`ECART_POIDS_PROCHE` : la plus légère pèse au moins 90 % de la plus lourde) et nombre maximal d'essais d'échange (`MAX_ESSAIS_ECHANGES`, 500), provisoires.
 
 ## 11. État du projet
 

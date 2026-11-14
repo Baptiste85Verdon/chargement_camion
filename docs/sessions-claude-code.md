@@ -64,7 +64,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 4 · Placeur, équilibre et choix du meilleur plan
 
-- [ ] Fait — branche `feat/p1-placeur-optimiser`
+- [x] Fait — branche `feat/p1-placeur-optimiser`
 - Cahier technique : sections 4.3, 4.4, 4.5.
 - Dimensions et poids effectifs (RG-02, RG-03), placeur glouton avec score compacité, calage puis équilibre, articles en trop (RG-10).
 - `mesurerEquilibre` : 55 / 45 au départ et 59 / 41 après C1 pour « couloirs », statut sur pourcentages arrondis.
