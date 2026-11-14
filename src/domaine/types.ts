@@ -55,14 +55,21 @@ export interface Camion {
 }
 
 /** Numéro de la règle de gestion enfreinte. */
-export type NumeroRegle = 'RG-04' | 'RG-06'
+export type NumeroRegle = 'RG-04' | 'RG-06' | 'RG-07' | 'RG-18' | 'RG-19'
 
 /**
  * Motif précis, sous forme de code : l'interface le traduit en message
  * grâce au fichier de textes.
  */
 export type MotifRegle =
-  'horsCaisse' | 'chevauchement' | 'orientationInterdite' | 'paroiAbsente' | 'appuiInsuffisant'
+  | 'horsCaisse'
+  | 'chevauchement'
+  | 'orientationInterdite'
+  | 'paroiAbsente'
+  | 'appuiInsuffisant'
+  | 'surFragile'
+  | 'surNonPorteur'
+  | 'surPlusLeger'
 
 /** Une règle enfreinte par un placement : ce que renvoie le validateur. */
 export interface RegleEnfreinte {

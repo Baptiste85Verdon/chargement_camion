@@ -190,3 +190,37 @@ describe('valider : appui (règle 4, RG-04)', () => {
     expect(valider(poser('P2', 600, 0, 1000), [p1, p3], unites, camion)).toEqual([])
   })
 })
+
+describe('valider : fragiles, dessus non porteurs et lourds en bas (règles 5 et 6)', () => {
+  const fragile: Unite = { ...palette('F1'), fragile: true }
+  const nonPorteur: Unite = { ...palette('N1'), porteur: false }
+  const legere: Unite = { ...palette('L1'), poids: 300 }
+  const unites = [palette('P1'), palette('P2'), fragile, nonPorteur, legere]
+
+  it('RG-04 : refuse un article posé sur un article fragile', () => {
+    expect(valider(poser('P2', 0, 0, 1000), [poser('F1', 0, 0)], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'surFragile', uniteId: 'P2', autreUniteId: 'F1' },
+    ])
+  })
+
+  it('RG-18 : refuse un article posé sur un dessus non porteur', () => {
+    expect(valider(poser('P2', 0, 0, 1000), [poser('N1', 0, 0)], unites, camion)).toEqual([
+      { regle: 'RG-18', motif: 'surNonPorteur', uniteId: 'P2', autreUniteId: 'N1' },
+    ])
+  })
+
+  it('RG-04 : refuse un article posé sur un article plus léger', () => {
+    expect(valider(poser('P2', 0, 0, 1000), [poser('L1', 0, 0)], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'surPlusLeger', uniteId: 'P2', autreUniteId: 'L1' },
+    ])
+  })
+
+  it('RG-04 : accepte un article posé sur un article plus lourd ou de même poids', () => {
+    expect(valider(poser('L1', 0, 0, 1000), [poser('P1', 0, 0)], unites, camion)).toEqual([])
+    expect(valider(poser('P2', 0, 0, 1000), [poser('P1', 0, 0)], unites, camion)).toEqual([])
+  })
+
+  it('RG-04 : accepte un fragile qui touche un autre article sans le porter', () => {
+    expect(valider(poser('P2', 1200, 0), [poser('F1', 0, 0)], unites, camion)).toEqual([])
+  })
+})

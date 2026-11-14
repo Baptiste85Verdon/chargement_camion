@@ -99,5 +99,21 @@ export function valider(
     enfreintes.push({ regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: unite.id })
   }
 
+  // Règles 5 et 6 : on regarde ce qui porte `p`. Ce que `p` porte lui-même
+  // sera contrôlé en validant chacun de ces articles du dessus.
+  for (const v of dessous) {
+    const autreUniteId = v.unite.id
+    if (v.unite.fragile) {
+      enfreintes.push({ regle: 'RG-04', motif: 'surFragile', uniteId: unite.id, autreUniteId })
+    }
+    if (!v.unite.porteur) {
+      enfreintes.push({ regle: 'RG-18', motif: 'surNonPorteur', uniteId: unite.id, autreUniteId })
+    }
+    // Lourds en bas (RG-04) : le poids ne sert qu'au placement (RG-05).
+    if (v.unite.poids < unite.poids) {
+      enfreintes.push({ regle: 'RG-04', motif: 'surPlusLeger', uniteId: unite.id, autreUniteId })
+    }
+  }
+
   return enfreintes
 }
