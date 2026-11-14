@@ -1,0 +1,35 @@
+/*
+ * Styles de base : polices, fond, texte et focus.
+ * Uniquement des variables issues des jetons (src/styles/jetons.css).
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font: var(--typo-corps);
+  color: var(--encre);
+  background: var(--fond-page);
+}
+
+h1 {
+  margin: 0;
+  font: var(--typo-titre-page);
+  letter-spacing: var(--typo-titre-page-interlettrage);
+}
+
+/* Données (dimensions, poids, codes) : toujours en IBM Plex Mono. */
+.donnees {
+  font: var(--typo-donnees);
+}
+
+/* Focus visible : double anneau décalé, 2 px surface puis 2 px action. */
+:focus-visible {
+  outline: var(--focus) solid var(--action);
+  outline-offset: var(--focus);
+  box-shadow: 0 0 0 var(--focus) var(--surface);
+}

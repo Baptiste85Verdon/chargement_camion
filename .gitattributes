@@ -1,0 +1,4 @@
+# Fins de ligne LF partout, y compris sous Windows : Prettier les exige.
+* text=auto eol=lf
+*.png binary
+*.zip binary

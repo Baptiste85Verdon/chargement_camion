@@ -23,3 +23,6 @@ Thumbs.db
 *.log
 .vscode/*
 !.vscode/extensions.json
+
+# Généré par npm run tokens
+src/styles/jetons.css

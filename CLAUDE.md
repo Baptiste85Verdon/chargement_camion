@@ -27,16 +27,24 @@ Si un document et la maquette se contredisent, **le cahier l'emporte** : signale
 
 ## Commandes
 
-À compléter à l'étape 1 (socle), puis à tenir à jour :
+Node 22.12 ou plus récent. Après un `git clone` : `npm install` puis `npx playwright install chromium`.
 
 ```
-npm run dev         # serveur de développement
-npm run test        # Vitest
-npm run test:e2e    # Playwright (+ axe-core)
-npm run lint        # ESLint + Stylelint
+npm run dev         # jetons -> CSS, puis serveur de développement (http://localhost:5173)
+npm run build       # jetons -> CSS, vérification des types, construction dans dist/
+npm run test        # Vitest (tests/unitaires/ et src/**/*.test.ts)
+npm run test:watch  # Vitest en continu, pendant le TDD
+npm run test:e2e    # Playwright + axe-core (construit puis sert l'application sur le port 4173)
+npm run lint        # ESLint + Stylelint + vérification Prettier
+npm run format      # Prettier : remet en forme tous les fichiers
 npm run typecheck   # vue-tsc
-npm run tokens      # jetons JSON -> variables CSS
+npm run tokens      # jetons JSON -> src/styles/jetons.css (fichier généré, non versionné)
 ```
+
+- `src/styles/jetons.css` est généré : ne le modifiez pas, modifiez `plan-de-chargement.tokens.json` puis relancez `npm run tokens`. Les variables portent le nom de la charte (`--encre`, `--cmd1-bord`, `--rayon-carte`) ; les typographies s'emploient avec `font: var(--typo-corps)` (plus `letter-spacing: var(--typo-titre-page-interlettrage)` quand il existe).
+- Stylelint refuse les couleurs en dur, les rayons hors jetons `rayon-*` et toute ombre qui n'est pas `var(--ombre-flottant)` ou l'anneau de focus.
+- ESLint refuse tout import de Vue, Pinia ou Supabase, et de toute autre couche, dans `src/domaine/`.
+- Textes de l'interface : `src/textes/fr.ts`.
 
 ## Architecture (cahier technique, sections 1, 2 et 9.2)
 

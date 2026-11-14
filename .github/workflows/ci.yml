@@ -1,0 +1,54 @@
+# Intégration continue : à chaque envoi de code et à chaque demande de fusion.
+# Vérification des types, contrôle du style, tests Vitest puis Playwright.
+name: Intégration continue
+
+on:
+  push:
+  pull_request:
+
+# Une nouvelle exécution sur la même branche annule la précédente.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    name: Types, style et tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Générer les variables CSS depuis les jetons
+        run: npm run tokens
+
+      - name: Vérifier les types
+        run: npm run typecheck
+
+      - name: Contrôler le style
+        run: npm run lint
+
+      - name: Tests unitaires (Vitest)
+        run: npm run test
+
+      - name: Installer Chromium pour Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Tests de bout en bout et accessibilité (Playwright + axe-core)
+        run: npm run test:e2e
+
+      - name: Conserver le rapport Playwright en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-playwright
+          path: playwright-report/
+          retention-days: 7
