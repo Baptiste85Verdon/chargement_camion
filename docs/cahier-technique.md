@@ -85,6 +85,9 @@ Pour un article placé à une position et dans une orientation données, le vali
 4. **Appui** : s'il n'est pas au plancher, il repose sur au moins `SEUIL_APPUI` de sa base, soit 60 % à titre provisoire, voir les points ouverts (RG-04).
 5. **Fragiles et dessus non porteurs** : rien n'est posé sur un article fragile ou dont le dessus n'est pas porteur (RG-04, RG-18).
 6. **Lourds en bas** : un article ne repose pas sur un article plus léger que lui (RG-04, RG-05).
+
+   Les règles 5 et 6 sont contrôlées dans les deux sens : ce qui porte l'article, et ce qui est posé sur lui.
+
 7. **Accès au déchargement (RG-07)** : pour un article A, tout article situé entre A et les portes dans le même couloir, c'est-à-dire qui chevauche A en largeur et en hauteur, doit être livré au plus tard en même temps que A. C'est aussi le cas de tout article posé sur A. Un article livré tôt peut donc être plus au fond dans un autre couloir, ou posé sur des articles livrés plus tard.
 8. **Calage des articles debout (RG-19)** : un article debout a au moins une grande face en contact avec une paroi, ou avec des articles qui couvrent au moins `SEUIL_CALAGE` de cette face (0,5 provisoire). Deux faces sont en contact quand leur écart ne dépasse pas `TOLERANCE_CONTACT` (20 mm provisoire). Les articles debout en contact forment un groupe, calculé de proche en proche : au moins l'un d'eux doit s'appuyer contre une paroi ou contre un article qui n'est pas debout.
 
