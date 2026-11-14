@@ -307,6 +307,7 @@ Les trois états se distinguent par leur forme et peuvent se cumuler sans se mas
   - la distance du centre de gravité au fond, en `repere`.
 
   Le marqueur ne gêne pas le glisser-déposer et ne compte pas comme un article.
+- **Plan vide** : la carte affiche « Aucun article » à la place du statut, sans jauge ni tableau. `mesurerEquilibre` ne renvoie alors aucune étape (4.5) : l'interface teste ce cas avant d'afficher le statut.
 - **Mise à jour** : à chaque calcul, déplacement ou revérification. Un changement de statut est annoncé dans la zone `aria-live`.
 - **Mode quai** : le statut seul, en `quai-corps`.
 
