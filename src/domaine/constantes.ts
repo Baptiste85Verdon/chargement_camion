@@ -18,3 +18,10 @@ export const SEUIL_APPUI = 0.6
  * par les articles contre lesquels il s'appuie (RG-19).
  */
 export const SEUIL_CALAGE = 0.5
+
+/**
+ * Part maximale d'un côté, en pourcentage arrondi, pour chaque statut
+ * d'équilibre (RG-20, cahier technique 4.5) : « Équilibré » jusqu'à 55 %,
+ * « À surveiller » jusqu'à 60 %, « Déséquilibré » au-delà.
+ */
+export const SEUILS_EQUILIBRE = { equilibre: 55, aSurveiller: 60 } as const
