@@ -1,0 +1,10 @@
+dist
+coverage
+playwright-report
+test-results
+package-lock.json
+src/styles/jetons.css
+docs
+*.md
+src/styles/plan-de-chargement.tokens.json
+tests/jeux-essai
