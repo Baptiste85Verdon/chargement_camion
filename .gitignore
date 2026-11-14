@@ -1,0 +1,25 @@
+# Dépendances et constructions
+node_modules/
+dist/
+coverage/
+
+# Tests
+playwright-report/
+test-results/
+blob-report/
+
+# Secrets : ne jamais versionner
+.env
+.env.local
+.env.*.local
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# Système et éditeurs
+.DS_Store
+Thumbs.db
+*.log
+.vscode/*
+!.vscode/extensions.json

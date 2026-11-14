@@ -1,0 +1,356 @@
+{
+  "nom": "couloirs",
+  "tournee": "T-2026-118",
+  "source": "Cahier des charges technique V3.8, section 8",
+  "description": "Jeu de référence : couloir de C1 le long de la paroi droite (RG-07), fenêtres de C2 calées contre les poutres (RG-19).",
+  "repere": "x du fond vers les portes, y depuis la paroi gauche, z depuis le plancher ; position = coin de l'unité le plus proche de l'origine ; millimètres entiers et kilogrammes",
+  "camion": {
+    "nom": "Porteur 7,2 m",
+    "longueur": 7200,
+    "largeur": 2400,
+    "hauteur": 2500
+  },
+  "commandes": [
+    {
+      "code": "C1",
+      "client": "Menuiserie Dubois",
+      "rangLivraison": 1
+    },
+    {
+      "code": "C2",
+      "client": "Chantier Les Ormeaux",
+      "rangLivraison": 2
+    },
+    {
+      "code": "C3",
+      "client": "SCI Martin",
+      "rangLivraison": 3
+    },
+    {
+      "code": "C4",
+      "client": "Maçonnerie Pereira",
+      "rangLivraison": 4
+    }
+  ],
+  "unites": [
+    {
+      "id": "A01",
+      "article": "Palette de parpaings 20 cm",
+      "commande": "C4",
+      "dims": {
+        "l": 1200,
+        "w": 1000,
+        "h": 1050
+      },
+      "poids": 1225,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rangChargement": 1
+    },
+    {
+      "id": "A02",
+      "article": "Palette de sacs de ciment",
+      "commande": "C4",
+      "dims": {
+        "l": 1200,
+        "w": 1000,
+        "h": 1100
+      },
+      "poids": 1425,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 1400,
+        "z": 0
+      },
+      "rangChargement": 2
+    },
+    {
+      "id": "A03",
+      "article": "Palette de parpaings 20 cm",
+      "commande": "C4",
+      "dims": {
+        "l": 1200,
+        "w": 1000,
+        "h": 1050
+      },
+      "poids": 1225,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 1200,
+        "y": 0,
+        "z": 0
+      },
+      "rangChargement": 3
+    },
+    {
+      "id": "A04",
+      "article": "Paquet de plaques BA13",
+      "commande": "C3",
+      "dims": {
+        "l": 2500,
+        "w": 1200,
+        "h": 250
+      },
+      "poids": 500,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat",
+        "contreParoi"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 1200,
+        "y": 1000,
+        "z": 0
+      },
+      "rangChargement": 4
+    },
+    {
+      "id": "A05",
+      "article": "Paquet de plaques BA13",
+      "commande": "C3",
+      "dims": {
+        "l": 2500,
+        "w": 1200,
+        "h": 250
+      },
+      "poids": 500,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat",
+        "contreParoi"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 1200,
+        "y": 1000,
+        "z": 250
+      },
+      "rangChargement": 5
+    },
+    {
+      "id": "A06",
+      "article": "Botte de planches de pin",
+      "commande": "C3",
+      "dims": {
+        "l": 4000,
+        "w": 1000,
+        "h": 400
+      },
+      "poids": 800,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 2400,
+        "y": 0,
+        "z": 0
+      },
+      "rangChargement": 6
+    },
+    {
+      "id": "A07",
+      "article": "Botte de planches de pin",
+      "commande": "C3",
+      "dims": {
+        "l": 4000,
+        "w": 1000,
+        "h": 400
+      },
+      "poids": 800,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 2400,
+        "y": 0,
+        "z": 400
+      },
+      "rangChargement": 7
+    },
+    {
+      "id": "A08",
+      "article": "Poutre lamellé-collé",
+      "commande": "C1",
+      "dims": {
+        "l": 6000,
+        "w": 200,
+        "h": 400
+      },
+      "poids": 220,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 1200,
+        "y": 2200,
+        "z": 0
+      },
+      "rangChargement": 8
+    },
+    {
+      "id": "A09",
+      "article": "Poutre lamellé-collé",
+      "commande": "C1",
+      "dims": {
+        "l": 6000,
+        "w": 200,
+        "h": 400
+      },
+      "poids": 220,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 1200,
+        "y": 2200,
+        "z": 400
+      },
+      "rangChargement": 9
+    },
+    {
+      "id": "A10",
+      "article": "Fenêtre PVC 2 vantaux, emballée",
+      "commande": "C2",
+      "dims": {
+        "l": 1500,
+        "w": 180,
+        "h": 1350
+      },
+      "poids": 45,
+      "fragile": true,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "debout"
+      ],
+      "orientation": "debout",
+      "position": {
+        "x": 3700,
+        "y": 2020,
+        "z": 0
+      },
+      "rangChargement": 10
+    },
+    {
+      "id": "A11",
+      "article": "Fenêtre PVC 2 vantaux, emballée",
+      "commande": "C2",
+      "dims": {
+        "l": 1500,
+        "w": 180,
+        "h": 1350
+      },
+      "poids": 45,
+      "fragile": true,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "debout"
+      ],
+      "orientation": "debout",
+      "position": {
+        "x": 3700,
+        "y": 1840,
+        "z": 0
+      },
+      "rangChargement": 11
+    },
+    {
+      "id": "A12",
+      "article": "Carton de quincaillerie",
+      "commande": "C2",
+      "dims": {
+        "l": 600,
+        "w": 600,
+        "h": 600
+      },
+      "poids": 30,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 3700,
+        "y": 1240,
+        "z": 0
+      },
+      "rangChargement": 12
+    }
+  ],
+  "attendu": {
+    "reglesEnfreintes": [],
+    "malCales": [],
+    "equilibre": {
+      "partsGaucheDroite": {
+        "depart": [
+          55,
+          45
+        ],
+        "apresC1": [
+          59,
+          41
+        ],
+        "apresC2": [
+          59,
+          41
+        ],
+        "apresC3": [
+          58,
+          42
+        ]
+      },
+      "centreDeGraviteDepart": {
+        "distanceAuFondMm": 2230,
+        "ecartAxeMm": -124
+      },
+      "statut": "aSurveiller"
+    }
+  }
+}

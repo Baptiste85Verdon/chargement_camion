@@ -1,0 +1,553 @@
+{
+  "couleur": {
+    "base": {
+      "fond-page": {
+        "$type": "color",
+        "$value": "#F4F5F7",
+        "$description": "Fond général de la page, derrière les cartes. Aussi fond des touches de clavier (kbd)."
+      },
+      "surface": {
+        "$type": "color",
+        "$value": "#FFFFFF",
+        "$description": "Cartes, en-tête, barre d'outils, boutons secondaires, bandeaux d'alerte, fond des silhouettes d'étapes à venir. Texte des boutons principaux (sur encre). Anneau intérieur du focus."
+      },
+      "encre": {
+        "$type": "color",
+        "$value": "#1B1F24",
+        "$description": "Texte principal et titres. Fond des boutons principaux (Passer en mode quai, Tout placer) et du bouton de vue actif. Contour de l'article sélectionné (3 px). Texte posé sur les blocs d'articles. 16,6:1 sur surface."
+      },
+      "texte-fort": {
+        "$type": "color",
+        "$value": "#3B434D",
+        "$description": "Texte secondaire appuyé : libellés des repères Fond / Portes, lignes de cote, légende des commandes, badge de statut, pourcentage de zoom, case Étapes en silhouette. 10:1 sur surface."
+      },
+      "texte-doux": {
+        "$type": "color",
+        "$value": "#59616C",
+        "$description": "Texte secondaire : fil d'Ariane, sous-titres de vues, légendes, en-têtes de tableau, intitulés du panneau de détail, numéros d'étape, statuts « À faire ». 6,3:1 sur surface, 5,7:1 sur fond-page. Code de commande des articles atténués (5,5:1 sur attenue-fond) et des silhouettes."
+      },
+      "texte-desactive": {
+        "$type": "color",
+        "$value": "#8A929C",
+        "$description": "Vue déjà affichée dans l'autre cadre (bouton désactivé, contour en pointillés). Piste de l'interrupteur d'aimantation désactivé. 3,2:1 : réservé aux éléments désactivés, jamais à du texte actif."
+      },
+      "bordure": {
+        "$type": "color",
+        "$value": "#D9DDE3",
+        "$description": "Bordures des cartes, séparation sous l'en-tête et la barre d'outils, bordure du tableau, bouton de commande non pressé, bordure du badge de statut."
+      },
+      "bordure-controle": {
+        "$type": "color",
+        "$value": "#B9C0C9",
+        "$description": "Contour des boutons secondaires, des boutons de vue et de zoom, des touches kbd. 1,8:1 sur surface : acceptable pour un bouton identifié par son texte, à foncer pour un champ ou une case à cocher (3:1 exigé)."
+      },
+      "bordure-zone": {
+        "$type": "color",
+        "$value": "#9AA3AE",
+        "$description": "Pointillés (2 px) de la zone « Articles à placer », zone de dépôt du glisser-déposer."
+      },
+      "ligne-tableau": {
+        "$type": "color",
+        "$value": "#EEF0F3",
+        "$description": "Séparateurs entre les lignes du tableau des placements."
+      },
+      "statut-fond": {
+        "$type": "color",
+        "$value": "#EEF1F5",
+        "$description": "Fond du badge de statut de la tournée (« En préparation »)."
+      },
+      "bordure-forte": {
+        "$type": "color",
+        "$value": "#7A828C",
+        "$description": "Contour d'un bouton secondaire au survol, contour des champs, curseurs et cases à cocher (3,9:1), contour en pointillés des silhouettes d'étapes à venir. Même valeur que camion-contour."
+      }
+    },
+    "camion": {
+      "camion-fond": {
+        "$type": "color",
+        "$value": "#FBFBFC",
+        "$description": "Fond intérieur de la caisse du camion dans chaque vue."
+      },
+      "camion-grille": {
+        "$type": "color",
+        "$value": "#E6E9ED",
+        "$description": "Quadrillage de 1 m dans la caisse (lignes de 1 px)."
+      },
+      "camion-contour": {
+        "$type": "color",
+        "$value": "#7A828C",
+        "$description": "Contour de la caisse (2 px) et plancher (6 px) dans les vues de côté, avant et arrière. Remplacé par action en pointillés quand un filtre de profondeur est actif."
+      },
+      "cote": {
+        "$type": "color",
+        "$value": "#3B434D",
+        "$description": "Lignes de cote (1 px) et leurs flèches le long de la caisse ; trait reliant une étiquette de code à un petit bloc. Même valeur que texte-fort, 9,7:1 sur camion-fond."
+      }
+    },
+    "interaction": {
+      "action": {
+        "$type": "color",
+        "$value": "#1F4FA8",
+        "$description": "Couleur d'interaction : liens, anneau extérieur du focus (double anneau décalé), interrupteur d'aimantation activé, contour de l'article de l'étape en cours (4 px), flèche du pictogramme de vue, curseur d'étape, case à cocher, contour pointillé du camion quand un filtre est actif, cotes de l'article sélectionné, boutons texte. 7,7:1 sur surface."
+      },
+      "action-fonce": {
+        "$type": "color",
+        "$value": "#163A7C",
+        "$description": "Texte sur les fonds info (bandeau de filtre actif, bouton de profondeur pressé). Survol des liens."
+      },
+      "info-fond": {
+        "$type": "color",
+        "$value": "#EAF0FB",
+        "$description": "Fond du bandeau « Filtre de profondeur actif », de la description d'étape, de la ligne sélectionnée dans l'ordre de chargement, des boutons pressés (profondeur, mise en évidence d'une commande)."
+      },
+      "info-bordure": {
+        "$type": "color",
+        "$value": "#B8C8EC",
+        "$description": "Bordure de la description d'étape (« Étape 7 sur 12 : … »)."
+      },
+      "encre-survol": {
+        "$type": "color",
+        "$value": "#343A42",
+        "$description": "fond d'un bouton principal au survol. Texte surface dessus : 11,5:1."
+      },
+      "encre-appui": {
+        "$type": "color",
+        "$value": "#0E1114",
+        "$description": "fond d'un bouton principal pendant l'appui."
+      },
+      "surface-survol": {
+        "$type": "color",
+        "$value": "#F4F5F7",
+        "$description": "fond d'un bouton secondaire, d'un bouton de vue ou d'une ligne de liste au survol."
+      },
+      "surface-appui": {
+        "$type": "color",
+        "$value": "#EEF1F5",
+        "$description": "fond d'un bouton secondaire pendant l'appui."
+      }
+    },
+    "alerte": {
+      "alerte-bordure": {
+        "$type": "color",
+        "$value": "#A06B12",
+        "$description": "Contour de 1 px, sur tout le pourtour, des messages du validateur, des articles en trop et de la liste des articles cachés, posés sur surface (plus de fond crème, pas de barre sur un seul côté). Contour des blocs dont la position est interdite pendant un glisser. 4,6:1 sur surface."
+      },
+      "alerte-texte": {
+        "$type": "color",
+        "$value": "#5C3A00",
+        "$description": "Titre des messages d'alerte. 10,2:1 sur surface. Le corps du message reste en encre."
+      },
+      "alerte-icone": {
+        "$type": "color",
+        "$value": "#8A5300",
+        "$description": "Icône triangle des alertes. 6,3:1 sur surface."
+      }
+    },
+    "commandes": {
+      "cmd1-bord": {
+        "$type": "color",
+        "$value": "#B03A64",
+        "$description": "Commande 1 (framboise, à la place du bleu #3A6EA5 de la maquette, trop proche d'action) : contour 3 px de ses blocs, cartouches de code (légende, ordre, tableau). 5,8:1 sur surface."
+      },
+      "cmd1-fond": {
+        "$type": "color",
+        "$value": "#F6DCE5",
+        "$description": "Commande 1 : remplissage de ses blocs. Texte encre dessus : 12,8:1. (Maquette : #DCE7F3.)"
+      },
+      "cmd2-bord": {
+        "$type": "color",
+        "$value": "#C26A1E",
+        "$description": "Commande 2 (orange) : contour 3 px de ses blocs, cartouches de code. 3,9:1 sur surface."
+      },
+      "cmd2-fond": {
+        "$type": "color",
+        "$value": "#F6E3D2",
+        "$description": "Commande 2 : remplissage de ses blocs. Texte encre dessus : 13,3:1."
+      },
+      "cmd3-bord": {
+        "$type": "color",
+        "$value": "#2C8A7E",
+        "$description": "Commande 3 (vert d'eau) : contour 3 px de ses blocs, cartouches de code. 4,2:1 sur surface."
+      },
+      "cmd3-fond": {
+        "$type": "color",
+        "$value": "#D5EDEA",
+        "$description": "Commande 3 : remplissage de ses blocs. Texte encre dessus : 13,5:1."
+      },
+      "cmd4-bord": {
+        "$type": "color",
+        "$value": "#7656B0",
+        "$description": "Commande 4 (violet) : contour 3 px de ses blocs, cartouches de code. 5,6:1 sur surface."
+      },
+      "cmd4-fond": {
+        "$type": "color",
+        "$value": "#E7E0F3",
+        "$description": "Commande 4 : remplissage de ses blocs. Texte encre dessus : 12,9:1."
+      },
+      "cmd5-bord": {
+        "$type": "color",
+        "$value": "#1A7FA0",
+        "$description": "Commande 5 (bleu canard, remplace l'olive #6B7A1E de la maquette, confondu avec C2 en protanopie) : contour 3 px de ses blocs, cartouches de code. 4,6:1 sur surface, 4,4:1 sur camion-fond."
+      },
+      "cmd5-fond": {
+        "$type": "color",
+        "$value": "#D4EAF2",
+        "$description": "Commande 5 : remplissage de ses blocs et cartouches. Texte encre dessus : 13,3:1."
+      },
+      "cmd6-bord": {
+        "$type": "color",
+        "$value": "#8B5A3C",
+        "$description": "Commande 6 (brun) : contour 3 px de ses blocs, cartouches de code. 5,8:1 sur surface."
+      },
+      "cmd6-fond": {
+        "$type": "color",
+        "$value": "#EEDFD4",
+        "$description": "Commande 6 : remplissage. Texte encre dessus : 12,7:1. Les commandes 7 à 12 reprennent les teintes 1 à 6 avec un fond hachuré (voir le composant Bloc d'article)."
+      }
+    },
+    "attenue": {
+      "attenue-fond": {
+        "$type": "color",
+        "$value": "#EEF0F3",
+        "$description": "Fond des articles des autres commandes quand une commande est mise en évidence. Remplace l'opacité de 0,28 de la maquette, qui rendait le code illisible (1,7:1). Aussi fond du cartouche de code des lignes atténuées de l'ordre de chargement (texte en texte-doux, plus d'opacité de 0,5)."
+      },
+      "attenue-bord": {
+        "$type": "color",
+        "$value": "#8A929C",
+        "$description": "Contour 2 px des articles atténués. 3,1:1 sur camion-fond."
+      }
+    },
+    "erreur": {
+      "erreur": {
+        "$type": "color",
+        "$value": "#B42318",
+        "$description": "Contour de 2 px d'un champ en erreur, contour du résumé des erreurs, icône d'erreur, fond du bouton de suppression. 6,6:1 sur surface, texte surface dessus 6,6:1."
+      },
+      "erreur-texte": {
+        "$type": "color",
+        "$value": "#8A1C12",
+        "$description": "Message d'erreur sous un champ, titre du résumé des erreurs. 9,3:1 sur surface."
+      },
+      "voile": {
+        "$type": "color",
+        "$value": "#1B1F2473",
+        "$description": "Voile derrière une fenêtre de confirmation (encre à 45 %)."
+      }
+    }
+  },
+  "typo": {
+    "titre-page": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "24px",
+        "fontWeight": 700,
+        "letterSpacing": "-0.01em",
+        "lineHeight": 1.2
+      },
+      "$description": "Titre de la page (h1)."
+    },
+    "titre-article": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "17px",
+        "fontWeight": 600,
+        "lineHeight": 1.3
+      },
+      "$description": "Nom de l'article sélectionné dans le panneau de détail."
+    },
+    "titre-section": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "16px",
+        "fontWeight": 600,
+        "lineHeight": 1.3
+      },
+      "$description": "Titres des cartes et des cadres de vue (h2)."
+    },
+    "corps": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "14px",
+        "fontWeight": 400,
+        "lineHeight": 1.5
+      },
+      "$description": "Messages du validateur, description d'étape, nom des articles à placer."
+    },
+    "bouton-principal": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "14px",
+        "fontWeight": 600,
+        "lineHeight": 1.2
+      },
+      "$description": "Boutons principaux et boutons du panneau de détail."
+    },
+    "interface": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "13px",
+        "fontWeight": 400,
+        "lineHeight": 1.45
+      },
+      "$description": "Texte courant de l'interface : fil d'Ariane, tableau, ordre de chargement, aides."
+    },
+    "bouton": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "13px",
+        "fontWeight": 600,
+        "lineHeight": 1.2
+      },
+      "$description": "Boutons secondaires, sélecteurs de vue, barre d'outils."
+    },
+    "legende": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "12px",
+        "fontWeight": 400,
+        "lineHeight": 1.4
+      },
+      "$description": "Sous-titres de vues, légende des commandes, intitulés de filtres."
+    },
+    "badge": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "12px",
+        "fontWeight": 600,
+        "lineHeight": 1.2
+      },
+      "$description": "Badge de statut, boutons de profondeur."
+    },
+    "surtitre": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "12px",
+        "fontWeight": 600,
+        "letterSpacing": "0.06em",
+        "lineHeight": 1.2
+      },
+      "$description": "Surtitre en capitales au-dessus du panneau de détail."
+    },
+    "donnees": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Mono",
+        "fontSize": "13px",
+        "fontWeight": 400,
+        "lineHeight": 1.45
+      },
+      "$description": "Dimensions, positions, poids, numéro d'étape « Étape 7 / 12 »."
+    },
+    "code-commande": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Mono",
+        "fontSize": "11px",
+        "fontWeight": 600,
+        "lineHeight": 1
+      },
+      "$description": "Code de commande (C1, C2…) dans les blocs et les cartouches, partout sous la même forme. Jamais en dessous de 11 px : pour un bloc de moins de 24 px de côté, le code passe dans une étiquette reliée par un trait cote."
+    },
+    "repere": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Mono",
+        "fontSize": "11px",
+        "fontWeight": 400,
+        "lineHeight": 1.2
+      },
+      "$description": "Repères sous les vues (Fond / Portes, Paroi gauche / droite), valeurs des lignes de cote, touches kbd, pourcentage de zoom. Le repère côté portes est en 600."
+    },
+    "quai-titre": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "28px",
+        "fontWeight": 700,
+        "lineHeight": 1.2
+      },
+      "$description": "Mode quai : étape en cours (« Étape 7 sur 12 »)."
+    },
+    "quai-corps": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "18px",
+        "fontWeight": 400,
+        "lineHeight": 1.5
+      },
+      "$description": "Mode quai : description de l'article et de son emplacement."
+    },
+    "quai-bouton": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Sans",
+        "fontSize": "18px",
+        "fontWeight": 600,
+        "lineHeight": 1.2
+      },
+      "$description": "Mode quai : boutons Valider l'étape, Signaler un problème."
+    },
+    "quai-donnees": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Mono",
+        "fontSize": "16px",
+        "fontWeight": 400,
+        "lineHeight": 1.4
+      },
+      "$description": "Mode quai : dimensions, distance au fond."
+    },
+    "quai-code": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "IBM Plex Mono",
+        "fontSize": "14px",
+        "fontWeight": 600,
+        "lineHeight": 1
+      },
+      "$description": "Mode quai : code de commande dans les blocs."
+    }
+  },
+  "espace": {
+    "espace-1": {
+      "$type": "dimension",
+      "$value": "4px",
+      "$description": "Écart entre les boutons du sélecteur de vue."
+    },
+    "espace-2": {
+      "$type": "dimension",
+      "$value": "8px",
+      "$description": "Écart entre boutons d'un même groupe ; marge intérieure verticale des bandeaux."
+    },
+    "espace-3": {
+      "$type": "dimension",
+      "$value": "12px",
+      "$description": "Écart entre éléments d'un en-tête de carte ; marge intérieure des cartes d'articles."
+    },
+    "espace-4": {
+      "$type": "dimension",
+      "$value": "16px",
+      "$description": "Écart entre les cartes ; marge intérieure verticale des cartes."
+    },
+    "espace-5": {
+      "$type": "dimension",
+      "$value": "20px",
+      "$description": "Marge intérieure horizontale des cartes."
+    },
+    "espace-6": {
+      "$type": "dimension",
+      "$value": "24px",
+      "$description": "Écart entre la colonne des vues et le panneau de droite."
+    },
+    "espace-7": {
+      "$type": "dimension",
+      "$value": "32px",
+      "$description": "Marge latérale de la page, de l'en-tête et de la barre d'outils."
+    }
+  },
+  "rayon": {
+    "rayon-code": {
+      "$type": "dimension",
+      "$value": "2px",
+      "$description": "Cartouches de code de commande, pastilles."
+    },
+    "rayon-bloc": {
+      "$type": "dimension",
+      "$value": "3px",
+      "$description": "Blocs d'articles dans les vues, touches kbd."
+    },
+    "rayon-controle": {
+      "$type": "dimension",
+      "$value": "4px",
+      "$description": "Boutons, champs, bandeaux, badges, caisse du camion, cartes d'articles à placer."
+    },
+    "rayon-carte": {
+      "$type": "dimension",
+      "$value": "8px",
+      "$description": "Cartes et cadres de vue. Volontairement franc : pas de cartes très arrondies."
+    },
+    "rayon-pilule": {
+      "$type": "dimension",
+      "$value": "999px",
+      "$description": "Interrupteurs uniquement."
+    }
+  },
+  "taille": {
+    "cible-principale": {
+      "$type": "dimension",
+      "$value": "44px",
+      "$description": "Hauteur des boutons principaux et du panneau de détail. Minimum en mode quai."
+    },
+    "cible-barre": {
+      "$type": "dimension",
+      "$value": "40px",
+      "$description": "Boutons de la barre d'outils et du mode d'affichage."
+    },
+    "cible-compacte": {
+      "$type": "dimension",
+      "$value": "36px",
+      "$description": "Sélecteur de vue, zoom, boutons de commande, actions des articles à placer."
+    },
+    "cible-mini": {
+      "$type": "dimension",
+      "$value": "32px",
+      "$description": "Boutons de profondeur et boutons dans les listes, en préparation. Au-dessus du minimum WCAG de 24 px ; 44 px au minimum en mode quai."
+    },
+    "cible-quai": {
+      "$type": "dimension",
+      "$value": "56px",
+      "$description": "Boutons principaux du mode quai. Le reste du mode quai ne descend pas sous 44 px."
+    }
+  },
+  "epaisseur": {
+    "contour-bloc": {
+      "$type": "dimension",
+      "$value": "3px",
+      "$description": "Contour des blocs d'articles, couleur de leur commande. Jamais moins : c'est lui qui distingue les commandes, les fonds pâles étant très proches."
+    },
+    "contour-attenue": {
+      "$type": "dimension",
+      "$value": "2px",
+      "$description": "Contour des articles atténués et des silhouettes."
+    },
+    "anneau-selection": {
+      "$type": "dimension",
+      "$value": "3px",
+      "$description": "Anneau encre de l'article sélectionné, collé au bloc."
+    },
+    "contour-etape": {
+      "$type": "dimension",
+      "$value": "4px",
+      "$description": "Contour action de l'article de l'étape en cours, avec étiquette « Étape n »."
+    },
+    "focus": {
+      "$type": "dimension",
+      "$value": "2px",
+      "$description": "Double anneau de focus décalé de 2 px : 2 px surface puis 2 px action."
+    }
+  },
+  "ombre": {
+    "ombre-flottant": {
+      "$type": "shadow",
+      "$value": {
+        "color": "#1B1F2429",
+        "offsetX": "0px",
+        "offsetY": "4px",
+        "blur": "12px",
+        "spread": "0px"
+      },
+      "$description": "Seule ombre autorisée, pour ce qui flotte au-dessus du contenu : menus déroulants, info-bulles, panneau de raccourcis, fenêtre de confirmation, article en cours de glisser-déposer. Aucune ombre décorative sur les cartes, boutons, blocs ou bandeaux."
+    }
+  }
+}
