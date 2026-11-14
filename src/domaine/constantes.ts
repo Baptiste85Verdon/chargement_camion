@@ -28,7 +28,7 @@ export const ECART_COMPACITE = 100
 /**
  * `optimiser` (cahier technique, 4.4) : deux unités de même rang sont de
  * « poids proche » quand la plus légère pèse au moins 90 % de la plus lourde.
- * Valeur provisoire : le cahier ne la chiffre pas.
+ * Valeur provisoire (cahier technique, section 10).
  */
 export const ECART_POIDS_PROCHE = 0.1
 
@@ -39,8 +39,8 @@ export const ECART_POIDS_PROCHE = 0.1
 export const ECART_ENCOMBREMENT_ECHANGE = 20
 
 /**
- * `optimiser` (4.4) : nombre maximal d'échanges essayés. Valeur provisoire :
- * le cahier ne la chiffre pas.
+ * `optimiser` (4.4) : nombre maximal d'échanges essayés. Valeur provisoire
+ * (cahier technique, section 10).
  */
 export const MAX_ESSAIS_ECHANGES = 500
 
