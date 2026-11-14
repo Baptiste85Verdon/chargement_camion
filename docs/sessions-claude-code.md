@@ -56,7 +56,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 3 · Validateur complet et calage
 
-- [ ] Fait — branche `feat/p1-validateur-complet`
+- [x] Fait — branche `feat/p1-validateur-complet`
 - Cahier technique : section 4.2 (règles 4 à 8), section 8 (jeu d'essai).
 - Appui (`SEUIL_APPUI` 0,6), fragiles et dessus non porteurs (RG-04, RG-18), lourds en bas, accès au déchargement (RG-07), calage des articles debout avec la règle du groupe (RG-19).
 - `diagnostiquerCalage`.
