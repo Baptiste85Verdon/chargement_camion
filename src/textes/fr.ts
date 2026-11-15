@@ -12,6 +12,101 @@ export const textes = {
     vide: 'Aucune tournée pour le moment.',
   },
 
+  /** Textes communs aux composants de base (charte, design system). */
+  composants: {
+    obligatoire: '(obligatoire)',
+    /** Préfixes lus par les lecteurs d'écran devant un message : l'icône seule ne suffit pas. */
+    prefixeErreur: 'Erreur :',
+    prefixeAvertissement: 'Avertissement :',
+    champsACorriger: (nombre: number) =>
+      nombre === 1 ? '1 champ à corriger' : `${nombre} champs à corriger`,
+    annuler: 'Annuler',
+  },
+
+  /** Page /vitrine : chaque composant de base avec ses états. */
+  vitrine: {
+    titre: 'Vitrine des composants',
+    intro:
+      'Chaque composant de base avec ses états. Cette page sert à la relecture et au contrôle automatique de l’accessibilité.',
+    boutons: {
+      titre: 'Boutons',
+      principal: 'Passer en mode quai',
+      secondaire: 'Relancer la simulation',
+      presse: 'Tout',
+      texte: 'Au fil de la tournée',
+      danger: 'Supprimer l’article',
+      petit: 'Voir',
+      desactive: 'Masquer le premier plan',
+      raccourcis: 'Raccourcis clavier',
+      zoomer: 'Zoomer',
+      dezoomer: 'Dézoomer',
+    },
+    selecteurs: {
+      titre: 'Sélecteurs',
+      vue: 'Vue affichée',
+      profondeur: 'Profondeur',
+      mode: "Mode d'affichage",
+      dessus: 'Dessus',
+      gauche: 'Gauche',
+      droite: 'Droite',
+      avant: 'Avant',
+      arriere: 'Arrière',
+      tout: 'Tout',
+      unCouche: '−1 couche',
+      deuxCouches: '−2 couches',
+      planComplet: 'Plan complet',
+      parEtape: 'Par étape',
+      aimantation: 'Aimantation',
+      pas: 'pas de 100 mm',
+      interrupteurDesactive: 'Aimantation (prototype 2)',
+    },
+    bandeaux: {
+      titre: 'Bandeaux',
+      alerteTitre: '3 articles cachés derrière d’autres',
+      alerteCorps: 'A04 (C3) · A06 (C3) · A08 (C1)',
+      alerteAction: 'Masquer le premier plan',
+      infoCorps: 'Filtre actif : les articles des deux premières couches sont masqués.',
+      infoAction: 'Tout afficher',
+    },
+    codes: {
+      titre: 'Codes de commande',
+      sousTitre: 'C1 à C6 pleins, C7 à C12 hachurés',
+    },
+    cartes: {
+      titre: 'Cartes, badges et touches',
+      zone: 'Articles à placer',
+      zoneVide: 'Aucun article. Les articles en trop apparaîtront ici.',
+      badge: 'En préparation',
+      touches: 'Faire pivoter',
+    },
+    champs: {
+      titre: 'Champs',
+      enregistrer: 'Enregistrer',
+      nom: 'Nom',
+      reference: 'Référence',
+      longueur: 'Longueur',
+      poids: 'Poids emballé',
+      famille: 'Famille',
+      desactive: 'Poids nu',
+      aide: 'Facultative, mais unique parmi les articles actifs.',
+    },
+    fenetres: {
+      titre: 'Fenêtres de confirmation',
+      ouvrirDanger: 'Supprimer',
+      ouvrirNeutre: 'Archiver',
+      dangerTitre: 'Supprimer « Poutre lamellé-collé » ?',
+      dangerConsequence:
+        'Cet article n’est utilisé dans aucune commande. Il sera définitivement supprimé.',
+      dangerAction: 'Supprimer l’article',
+      neutreTitre: 'Archiver « Palette de parpaings 20 cm » ?',
+      neutreConsequence:
+        'Cet article est utilisé dans 2 commandes. Archivez-le : il ne sera plus proposé, et restera visible dans ces commandes.',
+      neutreAction: 'Archiver l’article',
+      resultatConfirme: (action: string) => `Action confirmée : ${action}.`,
+      resultatAnnule: 'Action annulée.',
+    },
+  },
+
   /**
    * Messages de vérification des saisies (RG-21, cahier technique 6.1).
    * Chacun dit ce qui ne va pas et comment corriger, sans point d'exclamation.

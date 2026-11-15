@@ -112,7 +112,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 7 · Composants de base
 
-- [ ] Fait — branche `feat/p1-composants-base`
+- [x] Fait — branche `feat/p1-composants-base`
 - Charte graphique et `docs/design-system.md`.
 - Composants Vue :
   - `Bouton`, `Selecteur`, `Interrupteur`, `Bandeau`, `CodeCommande`, `Carte`, `Badge`, `Touche` ;

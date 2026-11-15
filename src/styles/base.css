@@ -33,3 +33,19 @@ h1 {
   outline-offset: var(--focus);
   box-shadow: 0 0 0 var(--focus) var(--surface);
 }
+
+/*
+ * Caché à l'œil, lu par les lecteurs d'écran : légendes implicites, préfixes
+ * « Erreur : » devant un message, radios des sélecteurs.
+ */
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}

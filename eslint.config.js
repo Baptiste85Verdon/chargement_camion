@@ -41,6 +41,14 @@ export default tseslint.config(
     },
   },
 
+  // Composants de base : noms d'un seul mot, fixés par le design system (Bouton,
+  // Champ, Carte…). La règle protège des conflits avec les balises HTML, qui
+  // sont en anglais : un nom français d'un mot ne risque rien.
+  {
+    files: ['src/composants/**/*.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
+  },
+
   // Désactive les règles de mise en forme : c'est le rôle de Prettier.
   prettier,
 )
