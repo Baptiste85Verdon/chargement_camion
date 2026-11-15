@@ -16,7 +16,8 @@
  * Les repères (Fond, Portes, parois) et les cotes de la caisse sont autour
  * du dessin. Le zoom vient du cadre (`v-model:cadrage`) ; la scène gère le
  * déplacement de la zone visible (glisser le fond, flèches du clavier) et le
- * zoom à la molette avec Ctrl, ou au pincement sur un pavé tactile.
+ * zoom à la molette avec Ctrl (aussi le pincement d'un pavé tactile), ou au
+ * pincement à deux doigts sur tablette.
  */
 import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { type BlocVue, type ContenuVue, recouvrants, zoneVisible } from '@/domaine/contenu-vue'
@@ -27,7 +28,7 @@ import type { Camion, Placement, Unite } from '@/domaine/types'
 import { textes } from '@/textes/fr'
 import Icone from './Icone.vue'
 import LigneCote from './LigneCote.vue'
-import { type Cadrage, deplacerCadrage, zoomAutour, zoomDe } from './cadrage'
+import { type Cadrage, centreDe, deplacerCadrage, pincer, zoomAutour, zoomDe } from './cadrage'
 import { formaterMillimetres } from './format'
 import type { InfoArticle } from './info-article'
 import { teinteCommande } from './teinte-commande'
@@ -304,13 +305,53 @@ const description = computed(() =>
 
 let glisse: { x: number; y: number; pointeur: number } | null = null
 
+/** Doigts posés sur la vue, pour le pincement (5.11). */
+const doigts = new Map<number, { x: number; y: number }>()
+let ecartPincement = 0
+
+/** Un point de l'écran, en mm dans la vue. */
+function versMm(clientX: number, clientY: number) {
+  const boite = toile.value?.getBoundingClientRect()
+  if (!boite || boite.width === 0) return centreDe(cadrage.value)
+  return {
+    x: cadrage.value.x + ((clientX - boite.left) / boite.width) * cadrage.value.largeur,
+    y: cadrage.value.y + ((clientY - boite.top) / boite.height) * cadrage.value.hauteur,
+  }
+}
+
+function ecartDoigts() {
+  const [a, b] = [...doigts.values()]
+  return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0
+}
+
 function commencerGlisse(e: PointerEvent) {
+  if (e.pointerType === 'touch') {
+    doigts.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (doigts.size === 2) {
+      // Deux doigts : un pincement commence, le glisser s'arrête.
+      ;(e.currentTarget as Element).setPointerCapture?.(e.pointerId)
+      ecartPincement = ecartDoigts()
+      glisse = null
+      return
+    }
+  }
   if (!zoomee.value || (e.target as Element).closest('button')) return
   glisse = { x: e.clientX, y: e.clientY, pointeur: e.pointerId }
   ;(e.currentTarget as Element).setPointerCapture?.(e.pointerId)
 }
 
 function glisser(e: PointerEvent) {
+  if (doigts.has(e.pointerId)) doigts.set(e.pointerId, { x: e.clientX, y: e.clientY })
+  if (doigts.size === 2 && ecartPincement > 0) {
+    const ecart = ecartDoigts()
+    const [a, b] = [...doigts.values()]
+    if (ecart > 0 && a && b) {
+      const milieu = versMm((a.x + b.x) / 2, (a.y + b.y) / 2)
+      cadrage.value = pincer(cadrage.value, taille.value, ecartPincement, ecart, milieu)
+      ecartPincement = ecart
+    }
+    return
+  }
   if (!glisse || e.pointerId !== glisse.pointeur) return
   const dx = enMm(glisse.x - e.clientX)
   const dy = enMm(glisse.y - e.clientY)
@@ -318,7 +359,9 @@ function glisser(e: PointerEvent) {
   cadrage.value = deplacerCadrage(cadrage.value, taille.value, dx, dy)
 }
 
-function finirGlisse() {
+function finirGlisse(e: PointerEvent) {
+  doigts.delete(e.pointerId)
+  if (doigts.size < 2) ecartPincement = 0
   glisse = null
 }
 
@@ -347,11 +390,7 @@ function molette(e: WheelEvent) {
   // Sans Ctrl, la molette fait défiler la page, comme ailleurs.
   if (!e.ctrlKey || !toile.value) return
   e.preventDefault()
-  const boite = toile.value.getBoundingClientRect()
-  const point = {
-    x: cadrage.value.x + ((e.clientX - boite.left) / boite.width) * cadrage.value.largeur,
-    y: cadrage.value.y + ((e.clientY - boite.top) / boite.height) * cadrage.value.hauteur,
-  }
+  const point = versMm(e.clientX, e.clientY)
   const apres = Math.min(Math.max(zoom.value * (e.deltaY < 0 ? 1.25 : 0.8), 1), 8)
   cadrage.value = zoomAutour(cadrage.value, taille.value, zoom.value, apres, point)
 }

@@ -1,6 +1,13 @@
 // Zoom et déplacement d'une vue du plan (cahier technique, 5.11).
 import { describe, expect, it } from 'vitest'
-import { cadrer, centreDe, deplacerCadrage, zoomAutour, zoomSuivant } from '@/composants/cadrage'
+import {
+  cadrer,
+  centreDe,
+  deplacerCadrage,
+  pincer,
+  zoomAutour,
+  zoomSuivant,
+} from '@/composants/cadrage'
 
 const caisse = { largeur: 7200, hauteur: 2400 }
 
@@ -57,5 +64,19 @@ describe('zoomAutour', () => {
 
   it('centreDe rend le centre du cadrage', () => {
     expect(centreDe(cadrer(caisse, 2, { x: 2000, y: 700 }))).toEqual({ x: 2000, y: 700 })
+  })
+})
+
+describe('pincer (5.11, pincement à deux doigts)', () => {
+  it('écarter les doigts deux fois plus zoome deux fois plus, autour de leur milieu', () => {
+    const c = cadrer(caisse, 1)
+    const zoome = pincer(c, caisse, 100, 200, { x: 3600, y: 1200 })
+    expect(zoome).toEqual({ x: 1800, y: 600, largeur: 3600, hauteur: 1200 })
+  })
+
+  it('rapprocher les doigts dézoome, sans descendre sous 100 % ni dépasser 800 %', () => {
+    const c = cadrer(caisse, 2)
+    expect(pincer(c, caisse, 200, 50, { x: 3600, y: 1200 })).toEqual(cadrer(caisse, 1))
+    expect(pincer(c, caisse, 10, 1000, { x: 3600, y: 1200 }).largeur).toBe(7200 / 8)
   })
 })

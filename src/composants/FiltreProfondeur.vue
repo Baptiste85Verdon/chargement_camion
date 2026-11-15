@@ -2,8 +2,10 @@
 /**
  * Filtre de profondeur d'un cadre de vue (cahier technique 5.10) : un
  * curseur à deux poignées, fait de deux curseurs natifs (`input type=range`),
- * « De » et « À ». Le navigateur fournit le clavier (flèches, Origine, Fin)
- * et l'annonce de la valeur ; `aria-valuetext` la redit en millimètres.
+ * « De » et « À », nommés « Profondeur, De » et « Profondeur, À » : le mot
+ * visible reste dans le nom. Le navigateur fournit le clavier (flèches,
+ * Origine, Fin) et l'annonce de la valeur ; `aria-valuetext` la redit en
+ * millimètres, avec ce qu'elle mesure (« 1 000 mm de la paroi gauche »).
  *
  * Les poignées ne se croisent pas : il reste toujours une tranche d'au moins
  * un pas. Toute la profondeur sélectionnée : pas de filtre.
@@ -13,7 +15,15 @@ import type { Tranche } from '@/domaine/contenu-vue'
 import { textes } from '@/textes/fr'
 import { formaterMillimetres } from './format'
 
-const props = withDefaults(defineProps<{ max: number; pas?: number }>(), { pas: 100 })
+const props = withDefaults(
+  defineProps<{
+    max: number
+    /** D'où se mesure la profondeur : « de la paroi gauche ». */
+    depuis: string
+    pas?: number
+  }>(),
+  { pas: 100 },
+)
 const tranche = defineModel<Tranche>({ required: true })
 
 const t = textes.plan
@@ -39,14 +49,16 @@ const valeur = computed(() =>
     formaterMillimetres(tranche.value.fin),
   ),
 )
-const mm = (v: number) => `${formaterMillimetres(v)} mm`
+const mm = (v: number) => `${formaterMillimetres(v)} mm ${props.depuis}`
 </script>
 
 <template>
   <fieldset class="filtre">
     <legend class="filtre__legende">{{ t.profondeur }}</legend>
     <label class="filtre__curseur">
-      <span class="filtre__libelle">{{ t.profondeurDe }}</span>
+      <span class="filtre__libelle"
+        ><span class="visuellement-cache">{{ t.profondeur }}, </span>{{ t.profondeurDe }}</span
+      >
       <input
         type="range"
         min="0"
@@ -59,7 +71,9 @@ const mm = (v: number) => `${formaterMillimetres(v)} mm`
       />
     </label>
     <label class="filtre__curseur">
-      <span class="filtre__libelle">{{ t.profondeurA }}</span>
+      <span class="filtre__libelle"
+        ><span class="visuellement-cache">{{ t.profondeur }}, </span>{{ t.profondeurA }}</span
+      >
       <input
         type="range"
         min="0"

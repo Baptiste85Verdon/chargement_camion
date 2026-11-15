@@ -110,3 +110,63 @@ test.describe('parcours du plan', () => {
     await expect(dessin).toHaveAttribute('viewBox', '0 0 7200 2400')
   })
 })
+
+test.describe('filtre de profondeur au clavier (5.10)', () => {
+  test('chaque poignée a son nom et se règle aux flèches', async ({ page }) => {
+    await ouvrirPlan(page)
+    const gauche = cadre(page, 'Côté gauche')
+    const de = gauche.getByRole('slider', { name: 'Profondeur, De' })
+    const a = gauche.getByRole('slider', { name: 'Profondeur, À' })
+    await expect(a).toHaveAttribute('aria-valuetext', /2\s400 mm de la paroi gauche/)
+
+    await a.focus()
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft')
+    await de.focus()
+    for (let i = 0; i < 2; i++) await page.keyboard.press('ArrowRight')
+    await expect(gauche.locator('.filtre__valeur')).toHaveText(/200 à 2\s100 mm/)
+    await expect(gauche.getByText('Filtre de profondeur actif')).toBeVisible()
+
+    // Les poignées ne se croisent pas : il reste au moins 100 mm.
+    await page.keyboard.press('End')
+    await expect(de).toHaveAttribute('aria-valuetext', /2\s000 mm/)
+  })
+})
+
+test.describe('zoom au pincement sur tablette (5.11)', () => {
+  test.use({ hasTouch: true, viewport: { width: 1194, height: 834 } })
+
+  test('écarter deux doigts zoome, les rapprocher dézoome', async ({ page, context }) => {
+    await ouvrirPlan(page)
+    const dessus = cadre(page, 'Vue de dessus')
+    const toile = dessus.locator('.scene__toile')
+    await toile.scrollIntoViewIfNeeded()
+    const boite = await toile.boundingBox()
+    if (!boite) throw new Error('Vue de dessus non affichée')
+    const cx = boite.x + boite.width / 2
+    const cy = boite.y + boite.height / 2
+    // Playwright n'a pas de geste à deux doigts : on passe par le protocole de Chromium.
+    const cdp = await context.newCDPSession(page)
+    async function pincer(depart: number, arrivee: number) {
+      const doigts = (d: number) => [
+        { x: cx - d, y: cy, id: 1 },
+        { x: cx + d, y: cy, id: 2 },
+      ]
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: doigts(depart),
+      })
+      for (let i = 1; i <= 6; i++) {
+        const d = depart + ((arrivee - depart) * i) / 6
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: doigts(d) })
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    }
+    const zoom = dessus.locator('.cadre__zoom-valeur')
+    await pincer(40, 120)
+    await expect(zoom).toHaveText(/300\s?%/)
+    await pincer(120, 60)
+    await expect(zoom).toHaveText(/150\s?%/)
+    // La page elle-même ne zoome pas : seul le plan change d'échelle.
+    expect(await page.evaluate(() => window.visualViewport?.scale)).toBe(1)
+  })
+})

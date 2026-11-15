@@ -79,3 +79,20 @@ export function zoomAutour(
     y: point.y + (centre.y - point.y) * rapport,
   })
 }
+
+/**
+ * Pincement à deux doigts : le zoom suit le rapport des écarts entre les
+ * doigts (deux fois plus écartés, deux fois plus de zoom), autour du point
+ * situé entre eux, borné de 100 % à 800 %.
+ */
+export function pincer(
+  c: Cadrage,
+  taille: Taille,
+  ecartAvant: number,
+  ecartApres: number,
+  point: Point,
+): Cadrage {
+  const avant = zoomDe(c, taille)
+  const apres = borner((avant * ecartApres) / ecartAvant, 1, ZOOM_MAX)
+  return zoomAutour(c, taille, avant, apres, point)
+}

@@ -148,7 +148,7 @@ const mm = (v: number) => formaterMillimetres(v)
     </template>
 
     <div class="cadre__outils">
-      <FiltreProfondeur v-model="tranche" :max="profondeurMax" />
+      <FiltreProfondeur v-model="tranche" :max="profondeurMax" :depuis="t.depuis[vue]" />
       <div class="cadre__zoom" role="group" :aria-label="t.zoomActuel">
         <Bouton
           taille="petite"
