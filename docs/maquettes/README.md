@@ -61,3 +61,4 @@ Relevés en relisant les captures. On ne retouche pas la maquette : on corrige d
 - **08e, fiche article** : le cadre d'erreur des orientations autorisées est très arrondi. La charte limite les rayons à 8 px : appliquer le contour d'erreur standard de 2 px.
 - **08 et 08e** : « Fragile » et « Dessus porteur » peuvent être cochés ensemble. Un article fragile ne supporte rien (RG-04) : l'interface doit le montrer, par exemple en désactivant « Dessus porteur » avec une explication quand « Fragile » est coché.
 - **Renvois de règles** : vérifier dans chaque message que le numéro de RG cité est le bon. L'appui relève de RG-04, et non de RG-08.
+- **08, fiche article** : pas de champ Poids nu (RG-05, poids maximal retenu).
