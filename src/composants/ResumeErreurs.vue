@@ -80,7 +80,11 @@ defineExpose({ focaliser })
   margin: 0;
 }
 
+/* Cible d'au moins 24 px de haut (WCAG 2.2, critère 2.5.8), même en liste serrée. */
 .resume__liste a {
+  display: inline-block;
+  min-height: var(--espace-6);
+  padding: calc((var(--espace-6) - 1lh) / 2) 0;
   color: var(--action);
 }
 
