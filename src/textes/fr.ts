@@ -59,6 +59,13 @@ export const textes = {
     date: 'Date de livraison',
     camion: 'Camion',
     caisseDe: (volume: string) => `Caisse de ${volume}`,
+    enregistre: 'Enregistré',
+    changerCamionTitre: 'Changer le camion de la tournée ?',
+    changerCamionConsequence: (version: number, actuel: string, nouveau: string) =>
+      `Le plan version ${version} a été calculé pour le ${actuel}. Avec le ${nouveau}, il sera marqué « à recalculer » : relancez le calcul.`,
+    changerCamionAction: 'Changer de camion',
+    aRecalculer: 'Plan à recalculer',
+    aRecalculerAide: 'Le camion a changé depuis le calcul. Relancez le calcul.',
     enregistreAuto: 'La date et le camion sont enregistrés dès que vous les changez.',
     commandes: '2. Commandes et ordre de livraison',
     ajouterAttente: "Ajouter depuis la liste d'attente",

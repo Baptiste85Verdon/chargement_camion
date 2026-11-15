@@ -110,6 +110,11 @@ export interface PlanChargement {
   version: number
   /** Date et heure du calcul, au format ISO. */
   calculeLe: string
+  /**
+   * Le plan ne correspond plus à la tournée : son camion a changé depuis le
+   * calcul (RG-22). Il reste lisible, mais un nouveau calcul est attendu.
+   */
+  aRecalculer: boolean
 }
 
 /** Statut d'une étape de chargement (section 3). */

@@ -556,6 +556,16 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
         await depots.plans.supprimer(plan.id)
         expect(await depots.plans.listerVersions(t.id)).toEqual([])
       })
+
+      it('RG-22 : marque une version « à recalculer » ; la version suivante repart à jour', async () => {
+        const t = await tournee()
+        const { plan } = await depots.plans.enregistrerVersion(t.id, [])
+        expect(plan.aRecalculer).toBe(false)
+        await depots.plans.marquerARecalculer(plan.id)
+        expect((await depots.plans.obtenirDernier(t.id))?.plan.aRecalculer).toBe(true)
+        const { plan: suivante } = await depots.plans.enregistrerVersion(t.id, [])
+        expect(suivante.aRecalculer).toBe(false)
+      })
     })
 
     describe('archivage (RG-21)', () => {

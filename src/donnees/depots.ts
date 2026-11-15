@@ -153,6 +153,8 @@ export interface PlanRepository {
     tourneeId: string,
     placements: PlacementAEnregistrer[],
   ): Promise<PlanAvecPlacements>
+  /** Marque une version « à recalculer » : le camion de la tournée a changé (RG-22). */
+  marquerARecalculer(planId: string): Promise<void>
   /** Change le statut d'une étape de chargement (mode quai). */
   changerStatutPlacement(placementId: string, statut: StatutPlacement): Promise<void>
   supprimer(planId: string): Promise<void>

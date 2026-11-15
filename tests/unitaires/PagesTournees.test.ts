@@ -56,8 +56,8 @@ describe('Préparation d’une tournée (capture 02)', () => {
     const premiere = page.findAll('tbody tr')[0]
     expect(premiere?.text()).toContain('1re')
     expect(premiere?.text()).toContain(p.dimensionsPropres)
-    // 2 poutres de 220 kg : poids propre à la commande (RG-03).
-    expect(premiere?.text()).toMatch(/440\s?kg/)
+    // 2 poutres de 219,8 kg : poids propre à la commande (RG-03).
+    expect(premiere?.text()).toMatch(/439,6\s?kg/)
     // Le camion choisi est coché.
     expect(page.get(`input[value="${PORTEUR_72}"]`).element).toHaveProperty('checked', true)
     expect(page.get('.calcul').text()).toContain('Porteur 7,2 m')
@@ -94,6 +94,35 @@ describe('Préparation d’une tournée (capture 02)', () => {
     await page.get(`input[value="${autre?.id}"]`).setValue(true)
     await flushPromises()
     expect((await depots.tournees.obtenir(T118))?.modeleCamionId).toBe(autre?.id)
+    // Retour visible, annoncé par la zone aria-live.
+    expect(page.get('.enregistre[role="status"]').text()).toContain(p.enregistre)
+  })
+
+  it('RG-22 : changer de camion quand un plan existe demande confirmation', async () => {
+    const { page, depots } = await monterPage(`/tournees/${T118}`)
+    await bouton(page, p.lancer).trigger('click')
+    await flushPromises()
+    const autre = (await depots.camions.lister()).find((c) => c.nom === 'Porteur 8,5 m')
+
+    // Annuler : rien ne change, le camion d'origine reste coché.
+    await page.get(`input[value="${autre?.id}"]`).setValue(true)
+    expect(document.querySelector('dialog[open]')?.textContent).toContain(p.changerCamionTitre)
+    await confirmer('Annuler')
+    expect((await depots.tournees.obtenir(T118))?.modeleCamionId).toBe(PORTEUR_72)
+    expect(page.get(`input[value="${PORTEUR_72}"]`).element).toHaveProperty('checked', true)
+
+    // Confirmer : le camion change, et le plan est marqué « à recalculer ».
+    await page.get(`input[value="${autre?.id}"]`).setValue(true)
+    await confirmer(p.changerCamionAction)
+    expect((await depots.tournees.obtenir(T118))?.modeleCamionId).toBe(autre?.id)
+    expect((await depots.plans.obtenirDernier(T118))?.plan.aRecalculer).toBe(true)
+    expect(page.text()).toContain(p.aRecalculer)
+
+    // Un plan déjà marqué ne redemande rien.
+    await page.get(`input[value="${PORTEUR_72}"]`).setValue(true)
+    await flushPromises()
+    expect(document.querySelector('dialog[open]')).toBeNull()
+    expect((await depots.tournees.obtenir(T118))?.modeleCamionId).toBe(PORTEUR_72)
   })
 
   it('RG-21 : une tournée vide ne se calcule pas ; trois champs à corriger (capture 02e)', async () => {

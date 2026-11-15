@@ -339,11 +339,17 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
           tourneeId,
           version: Math.max(0, ...versions.map((p) => p.version)) + 1,
           calculeLe: new Date().toISOString(),
+          aRecalculer: false,
         })
         const enregistres = nouveaux
           .map((p) => ecrire(placements, { ...p, planId: plan.id }))
           .sort((a, b) => a.rang - b.rang)
         return { plan, placements: enregistres }
+      },
+      async marquerARecalculer(planId) {
+        const plan = plans.get(planId)
+        if (!plan) throw new ErreurDonnees('introuvable')
+        plans.set(planId, { ...plan, aRecalculer: true })
       },
       async changerStatutPlacement(placementId, statut) {
         const placement = placements.get(placementId)

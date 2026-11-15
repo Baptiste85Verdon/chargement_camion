@@ -322,6 +322,17 @@ function depotPlans(client: SupabaseClient): PlanRepository {
       }
     },
 
+    async marquerARecalculer(planId) {
+      resultat(
+        await client
+          .from('plan_chargement')
+          .update({ a_recalculer: true })
+          .eq('id', planId)
+          .select('id')
+          .single(),
+      )
+    },
+
     async changerStatutPlacement(placementId, statut) {
       resultat(
         await client

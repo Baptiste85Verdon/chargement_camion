@@ -115,9 +115,10 @@ insert into public.ligne_commande (
   longueur_propre, largeur_propre, hauteur_propre, poids_propre, poids_estime, numero_ligne
 ) values
   -- C1 : deux poutres recoupées à 6 m pour cette commande (RG-03) ;
-  -- poids proposé au prorata du volume, 293 × 6 000 / 8 000 ≈ 220 kg, estimé.
+  -- poids proposé au prorata du volume, 293 × 6 000 / 8 000 = 219,75, arrondi au
+  -- dixième comme dans la saisie express : 219,8 kg, estimé (RG-03).
   ('e0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001',
-    'a0000000-0000-4000-8000-000000000014', 2, false, 6000, 200, 400, 220, true, 1),
+    'a0000000-0000-4000-8000-000000000014', 2, false, 6000, 200, 400, 219.8, true, 1),
   -- C2 : deux fenêtres PVC 2 vantaux emballées (A10, A11), un carton de quincaillerie (A12).
   ('e0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000002',
     'a0000000-0000-4000-8000-000000000001', 2, false, null, null, null, null, false, 1),

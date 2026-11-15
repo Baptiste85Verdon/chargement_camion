@@ -113,6 +113,7 @@ async function charger() {
     const archive = sien ? await depots.camions.obtenir(tr.modeleCamionId ?? '') : null
     camions.value = archive ? [...actifs, archive] : actifs
     form.value = { date: tr.date ?? '', modeleCamionId: tr.modeleCamionId ?? '' }
+    camionCoche.value = form.value.modeleCamionId
   } catch (e) {
     erreurChargement.value = e instanceof ErreurDonnees ? e.message : textes.donnees.reseau
   } finally {
@@ -126,6 +127,8 @@ onMounted(async () => {
 })
 
 const camion = computed(() => camions.value.find((c) => c.id === form.value.modeleCamionId))
+/** Camion coché mais pas encore confirmé (fenêtre de changement de camion). */
+const camionPropose = computed(() => camions.value.find((c) => c.id === camionCoche.value))
 const dateAffichee = computed(() =>
   tournee.value?.date ? formaterJour(tournee.value.date) : t.dateAFixer,
 )
@@ -162,21 +165,26 @@ const resume = ref<InstanceType<typeof ResumeErreurs> | null>(null)
 
 // --- Date et camion : enregistrés aussitôt ---------------------------------------
 
+/** Ce qui vient d'être enregistré, pour le retour « Enregistré » (aria-live). */
+const enregistre = ref<'date' | 'camion' | null>(null)
+
 /**
  * Enregistre la date et le camion tels que saisis. Une date vide ou
  * illisible n'est pas enregistrée : la tournée garde « Date à fixer », et
  * l'erreur reste affichée sous le champ.
  */
-async function enregistrerDateCamion() {
+async function enregistrerDateCamion(quoi: 'date' | 'camion') {
   const tr = tournee.value
   if (!tr) return
   const dateLisible = /^\d{4}-\d{2}-\d{2}$/.test(form.value.date) ? form.value.date : null
+  enregistre.value = null
   try {
     tournee.value = await depots.tournees.enregistrer({
       ...tr,
       date: dateLisible,
       modeleCamionId: form.value.modeleCamionId || null,
     })
+    enregistre.value = quoi
   } catch (e) {
     alerter(e)
   }
@@ -184,13 +192,49 @@ async function enregistrerDateCamion() {
 
 async function changerDate() {
   quitter('date')
-  await enregistrerDateCamion()
+  await enregistrerDateCamion('date')
 }
 
-async function choisirCamion(id: string) {
-  form.value.modeleCamionId = id
+/** Camion coché à l'écran ; il revient en arrière si le changement est annulé. */
+const camionCoche = ref('')
+
+/**
+ * Un plan déjà calculé l'a été pour la caisse du camion actuel : en changer
+ * demande confirmation (RG-22), puis le plan est marqué « à recalculer ».
+ * Un plan déjà marqué ne redemande rien.
+ */
+const confirmationCamion = ref(false)
+
+async function choisirCamion() {
+  if (camionCoche.value === form.value.modeleCamionId) return
+  if (dernierPlan.value && !dernierPlan.value.aRecalculer && form.value.modeleCamionId) {
+    confirmationCamion.value = true
+    return
+  }
+  await appliquerCamion()
+}
+
+async function appliquerCamion() {
+  confirmationCamion.value = false
+  const plan = dernierPlan.value
+  try {
+    if (plan && !plan.aRecalculer) {
+      await depots.plans.marquerARecalculer(plan.id)
+      dernierPlan.value = { ...plan, aRecalculer: true }
+    }
+  } catch (e) {
+    alerter(e)
+    camionCoche.value = form.value.modeleCamionId
+    return
+  }
+  form.value.modeleCamionId = camionCoche.value
   quitter('modeleCamionId')
-  await enregistrerDateCamion()
+  await enregistrerDateCamion('camion')
+}
+
+function annulerCamion() {
+  confirmationCamion.value = false
+  camionCoche.value = form.value.modeleCamionId
 }
 
 // --- Commandes ----------------------------------------------------------------
@@ -411,9 +455,9 @@ async function lancer() {
                 type="radio"
                 name="tournee-camion"
                 class="camion__radio"
+                v-model="camionCoche"
                 :value="c.id"
-                :checked="c.id === form.modeleCamionId"
-                @change="choisirCamion(c.id)"
+                @change="choisirCamion"
               />
               <span class="camion__nom">
                 {{ c.nom }}
@@ -434,6 +478,14 @@ async function lancer() {
           </span>
         </p>
         <p class="note">{{ t.enregistreAuto }}</p>
+        <!-- Zone présente dès l'affichage : le lecteur d'écran annonce le retour. -->
+        <p role="status" class="enregistre">
+          <template v-if="enregistre">
+            <Icone nom="coche" :taille="16" />
+            {{ t.enregistre }}
+            <span class="visuellement-cache">{{ enregistre === 'date' ? t.date : t.camion }}</span>
+          </template>
+        </p>
       </Carte>
 
       <!-- 2. Commandes et ordre de livraison -->
@@ -589,9 +641,31 @@ async function lancer() {
       <p v-if="dernierPlan" class="note">
         {{ t.dernierPlan(dernierPlan.version, formaterDate(dernierPlan.calculeLe)) }}
       </p>
+      <p v-if="dernierPlan?.aRecalculer" class="a-recalculer">
+        <Icone nom="alerte" :taille="16" />
+        <span>
+          <span class="a-recalculer__titre">{{ t.aRecalculer }}</span>
+          {{ t.aRecalculerAide }}
+        </span>
+      </p>
     </Carte>
   </div>
 
+  <ConfirmationDialog
+    :ouvert="confirmationCamion"
+    :titre="t.changerCamionTitre"
+    :consequence="
+      t.changerCamionConsequence(
+        dernierPlan?.version ?? 0,
+        camion?.nom ?? '',
+        camionPropose?.nom ?? '',
+      )
+    "
+    :libelle-action="t.changerCamionAction"
+    ton="neutre"
+    @confirmer="appliquerCamion"
+    @annuler="annulerCamion"
+  />
   <ConfirmationDialog
     :ouvert="confirmationTournee"
     :titre="t.supprimerTitre(tournee?.reference ?? '')"
@@ -915,6 +989,33 @@ async function lancer() {
 
 .calcul__fort {
   font: var(--typo-bouton);
+}
+
+.enregistre {
+  display: flex;
+  gap: var(--espace-1);
+  align-items: center;
+  min-height: var(--espace-5);
+  margin: var(--espace-2) 0 0;
+  font: var(--typo-legende);
+  color: var(--texte-fort);
+}
+
+.a-recalculer {
+  display: flex;
+  gap: var(--espace-2);
+  align-items: flex-start;
+  padding: var(--espace-2) var(--espace-3);
+  margin: var(--espace-3) 0 0;
+  font: var(--typo-legende);
+  border: 1px solid var(--alerte-bordure);
+  border-radius: var(--rayon-controle);
+}
+
+.a-recalculer__titre {
+  display: block;
+  font: var(--typo-bouton);
+  color: var(--alerte-texte);
 }
 
 .calcul__bouton {

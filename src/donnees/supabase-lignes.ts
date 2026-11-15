@@ -323,6 +323,7 @@ export interface LignePlan {
   tournee_id: string
   version: number
   calcule_le: string
+  a_recalculer: boolean
 }
 
 export function planDepuisLigne(ligne: LignePlan): PlanChargement {
@@ -331,6 +332,7 @@ export function planDepuisLigne(ligne: LignePlan): PlanChargement {
     tourneeId: ligne.tournee_id,
     version: ligne.version,
     calculeLe: ligne.calcule_le,
+    aRecalculer: ligne.a_recalculer,
   }
 }
 
