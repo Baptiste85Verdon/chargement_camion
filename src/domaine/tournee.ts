@@ -3,10 +3,12 @@
 // - `referenceSuivante` : la référence d'une nouvelle tournée (T-2026-119) ;
 // - `deplacer` : l'ordre de livraison, changé aux flèches ou par glisser (RG-07) ;
 // - `calculerPlan` : « Lancer le calcul », de la tournée enregistrée au plan à
-//   enregistrer, en passant par `optimiser` (cahier technique, 4.4).
+//   enregistrer, en passant par `optimiser` (cahier technique, 4.4) ;
+// - `lirePlan` : le chemin inverse, du plan enregistré aux unités et aux
+//   placements que dessinent les vues (cahier technique, 5).
 import type { Commande, FicheArticle, LigneDeCommande, PlacementEnregistre } from './modele'
 import { optimiser } from './optimiser'
-import type { Camion, UnitePreparee } from './types'
+import type { Camion, Placement, UnitePreparee } from './types'
 import { preparerUnites } from './unites'
 
 /**
@@ -33,6 +35,21 @@ export function deplacer<T>(liste: readonly T[], depuis: number, decalage: numbe
   return copie
 }
 
+/** Les commandes d'une tournée, avec leurs lignes, telles que les rend le dépôt. */
+type CommandesTournee = { commande: Commande; lignes: LigneDeCommande[] }[]
+
+/** Éclate les commandes de la tournée en unités (RG-02, RG-03). */
+function unitesDeTournee(commandes: CommandesTournee, catalogue: FicheArticle[]): UnitePreparee[] {
+  return preparerUnites(
+    commandes.map(({ commande, lignes }) => ({
+      id: commande.id,
+      rangLivraison: commande.rangLivraison ?? 0,
+      lignes,
+    })),
+    catalogue,
+  )
+}
+
 /** Un placement prêt à être enregistré avec une nouvelle version du plan. */
 export type PlacementCalcule = Omit<PlacementEnregistre, 'id' | 'planId'>
 
@@ -44,18 +61,11 @@ export type PlacementCalcule = Omit<PlacementEnregistre, 'id' | 'planId'>
  * rendues à part (RG-10).
  */
 export function calculerPlan(
-  commandes: { commande: Commande; lignes: LigneDeCommande[] }[],
+  commandes: CommandesTournee,
   catalogue: FicheArticle[],
   camion: Camion,
 ): { placements: PlacementCalcule[]; enTrop: UnitePreparee[] } {
-  const unites = preparerUnites(
-    commandes.map(({ commande, lignes }) => ({
-      id: commande.id,
-      rangLivraison: commande.rangLivraison ?? 0,
-      lignes,
-    })),
-    catalogue,
-  )
+  const unites = unitesDeTournee(commandes, catalogue)
   const parId = new Map(unites.map((u) => [u.id, u]))
   const { placements, enTrop } = optimiser(unites, camion)
   return {
@@ -75,4 +85,38 @@ export function calculerPlan(
     }),
     enTrop,
   }
+}
+
+/**
+ * Relit un plan enregistré : les unités de la tournée, éclatées comme pour le
+ * calcul, et la position de chacune. Un placement enregistré désigne son
+ * unité par sa ligne et son numéro ; l'identifiant de l'unité est justement
+ * `<ligne>-<numéro>` (voir `preparerUnites`).
+ *
+ * - `placements` : dans l'ordre de chargement (rang croissant) ;
+ * - `aPlacer` : les unités sans position, en trop ou dont la ligne a changé
+ *   depuis le calcul (RG-10, zone « Articles à placer », 5.7) ;
+ * - un placement qui ne correspond plus à aucune unité (ligne supprimée,
+ *   quantité réduite) est ignoré.
+ */
+export function lirePlan(
+  commandes: CommandesTournee,
+  catalogue: FicheArticle[],
+  enregistres: PlacementEnregistre[],
+): { unites: UnitePreparee[]; placements: Placement[]; aPlacer: UnitePreparee[] } {
+  const unites = unitesDeTournee(commandes, catalogue)
+  const ids = new Set(unites.map((u) => u.id))
+  const placements = enregistres
+    .map((p) => ({
+      uniteId: `${p.ligneCommandeId}-${p.numeroUnite}`,
+      x: p.x,
+      y: p.y,
+      z: p.z,
+      orientation: p.orientation,
+      rang: p.rang,
+    }))
+    .filter((p) => ids.has(p.uniteId))
+    .sort((a, b) => a.rang - b.rang)
+  const places = new Set(placements.map((p) => p.uniteId))
+  return { unites, placements, aPlacer: unites.filter((u) => !places.has(u.id)) }
 }
