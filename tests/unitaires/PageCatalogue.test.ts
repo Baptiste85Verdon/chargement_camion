@@ -27,6 +27,13 @@ describe('Catalogue des articles (capture 07)', () => {
     expect(ligne?.text()).toContain('1 500 × 1 350 × 180')
   })
 
+  it('affiche le nom de la famille, et non sa valeur de tri', async () => {
+    const { page } = await monterPage('/catalogue')
+    const ligne = page.findAll('.catalogue tbody tr').find((tr) => tr.text().includes('PLQ-BA13'))
+    const cellules = ligne?.findAll('td').map((td) => td.text())
+    expect(cellules).toContain('Plaques de plâtre')
+  })
+
   it('cherche par nom ou par référence', async () => {
     const { page } = await monterPage('/catalogue')
     await page.get('#recherche-catalogue').setValue('velux')
@@ -55,7 +62,10 @@ describe('Catalogue des articles (capture 07)', () => {
     await afficher?.trigger('click')
     expect(page.get('#articles-archives').text()).toContain(premier?.nom)
 
-    await page.get('#articles-archives button').trigger('click')
+    await page
+      .findAll('#articles-archives button')
+      .find((b) => b.text().startsWith(textes.referentiels.reactiver))
+      ?.trigger('click')
     await flushPromises()
     expect(noms(page)).toHaveLength(24)
     expect(page.get('[role="status"]').text()).toContain(t.reactive(premier?.nom ?? ''))
@@ -71,7 +81,10 @@ describe('Catalogue des articles (capture 07)', () => {
 
     const afficher = page.findAll('button').find((b) => b.text() === t.archives.afficher(1))
     await afficher?.trigger('click')
-    await page.get('#articles-archives button').trigger('click')
+    await page
+      .findAll('#articles-archives button')
+      .find((b) => b.text().startsWith(textes.referentiels.reactiver))
+      ?.trigger('click')
     await flushPromises()
     expect(page.get('[role="status"]').text()).toContain(
       t.referenceReprise(ba13.nom, 'PLQ-BA13', 'BA13 nouvelle gamme'),

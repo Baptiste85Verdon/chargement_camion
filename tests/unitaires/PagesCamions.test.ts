@@ -51,7 +51,10 @@ describe('Modèles de camions (capture 09)', () => {
     expect(page.findAll('.tableau')[0]?.findAll('tbody tr')).toHaveLength(3)
 
     await bouton(page, textes.camions.archives.afficher(1)).trigger('click')
-    await page.get('#camions-archives button').trigger('click')
+    await page
+      .findAll('#camions-archives button')
+      .find((b) => b.text().startsWith(textes.referentiels.reactiver))
+      ?.trigger('click')
     await flushPromises()
     expect(page.findAll('.tableau')[0]?.findAll('tbody tr')).toHaveLength(4)
   })

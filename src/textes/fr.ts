@@ -28,7 +28,6 @@ export const textes = {
     archive: 'archivé',
     archiveLe: (date: string) => `Archivé le ${date}`,
     reactiver: 'Réactiver',
-    ouvrirLaFiche: 'Ouvrir la fiche',
     aucun: '—',
     quitterTitre: 'Quitter sans enregistrer ?',
     quitterConsequence: 'Vos modifications seront perdues.',
@@ -126,8 +125,17 @@ export const textes = {
     orientationsParDefaut: (famille: string) =>
       `Orientations proposées pour la famille ${famille} (RG-04). Vous pouvez les modifier.`,
     apercu: 'Aperçu coté',
-    apercuVue: 'à plat, vue de dessus',
-    apercuDescription: (dims: string) => `Article à plat, vu de dessus : ${dims} millimètres.`,
+    apercuVue: 'article posé à plat',
+    faces: 'Face montrée',
+    dessus: 'Dessus',
+    face: 'Face',
+    cote: 'Côté',
+    vueDessus: 'Vue de dessus · longueur × largeur',
+    vueFace: 'Vue de face · longueur × hauteur',
+    vueCote: 'Vue de côté · largeur × hauteur',
+    apercuDescription: (vue: string, a: string, b: string) =>
+      `Article à plat, ${vue} : ${a} sur ${b}.`,
+    apercuIncomplet: 'Indiquez les trois dimensions emballées pour voir l’aperçu.',
     emballe: 'emballé',
     nu: 'nu',
     commandesEnCours: 'Commandes en cours',
@@ -165,7 +173,6 @@ export const textes = {
     echelle: (longueur: string) => `Caisse de ${longueur} mm de long`,
     fond: 'Fond',
     portes: 'Portes',
-    ouvrir: (nom: string) => `Ouvrir la fiche ${nom}`,
     archives: {
       afficher: (n: number) => `Afficher les modèles archivés (${n})`,
       masquer: 'Masquer les modèles archivés',
@@ -239,6 +246,16 @@ export const textes = {
       nombre === 1 ? '1 champ à corriger' : `${nombre} champs à corriger`,
     annuler: 'Annuler',
     enMillimetres: 'en millimètres',
+    /** Formulaire modifié depuis le dernier enregistrement (RG-21, RG-22). */
+    modificationsNonEnregistrees: 'Modifications non enregistrées',
+  },
+
+  /** Tableaux triables. */
+  tableau: {
+    /** En-tête, lu seulement, de la colonne du chevron. */
+    fiche: 'Fiche',
+    trieePar: (colonne: string, sens: 'croissant' | 'decroissant') =>
+      `, triée par ${colonne}, ordre ${sens === 'croissant' ? 'croissant' : 'décroissant'}`,
   },
 
   /** Page /vitrine : chaque composant de base avec ses états. */

@@ -12,7 +12,7 @@
  *   `erreur-texte` ; `aria-invalid` et `aria-describedby` relient le message ;
  * - avertissement : contour inchangé, icône triangle et message en ambre.
  *
- * `donnees` passe la saisie en IBM Plex Mono, alignée à droite (dimensions, poids).
+ * `donnees` passe la saisie en IBM Plex Mono, alignée à gauche (dimensions, poids).
  */
 import { computed, useId } from 'vue'
 import { textes } from '@/textes/fr'
@@ -158,9 +158,13 @@ const descriptions = computed(() => {
   border-radius: var(--rayon-controle);
 }
 
+/*
+ * Données (dimensions, poids) : en IBM Plex Mono, alignées à gauche comme
+ * tout champ de saisie. Les nombres ne sont alignés à droite que dans les
+ * tableaux, où ils se comparent d'une ligne à l'autre.
+ */
 .champ__saisie--donnees {
   font: var(--typo-donnees);
-  text-align: right;
 }
 
 /* Laisse la place de l'unité, posée à droite dans le champ. */

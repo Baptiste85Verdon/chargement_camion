@@ -33,13 +33,14 @@ import Annonce from '@/composants/Annonce.vue'
 import Badge from '@/composants/Badge.vue'
 import Bandeau from '@/composants/Bandeau.vue'
 import Bouton from '@/composants/Bouton.vue'
+import BoutonEnregistrer from '@/composants/BoutonEnregistrer.vue'
 import Carte from '@/composants/Carte.vue'
 import Champ from '@/composants/Champ.vue'
 import ConfirmationDialog from '@/composants/ConfirmationDialog.vue'
 import EntetePage from '@/composants/EntetePage.vue'
-import PlanCaisse from '@/composants/PlanCaisse.vue'
+import PlanCote from '@/composants/PlanCote.vue'
 import ResumeErreurs, { type ErreurResumee } from '@/composants/ResumeErreurs.vue'
-import { formaterVolume } from '@/composants/format'
+import { formaterMillimetres, formaterVolume } from '@/composants/format'
 import { utiliserConfirmationSortie } from '@/composants/sortie'
 import { utiliserVerification } from '@/composants/verification'
 
@@ -136,6 +137,10 @@ const volume = computed(() =>
     ? formaterVolume({ longueur: longueur.value, largeur: largeur.value, hauteur: hauteur.value })
     : textes.referentiels.aucun,
 )
+
+/** Valeur d'une cote, pour le nom accessible du plan : « 7 200 mm », ou « — ». */
+const cote = (mm: number | null) =>
+  mm === null ? textes.referentiels.aucun : t.cote(formaterMillimetres(mm))
 
 const titre = computed(() => form.value.nom.trim() || origine.value?.nom || t.nouveau)
 const ariane = computed(() => [
@@ -292,9 +297,11 @@ async function reactiver() {
           <Bouton @click="demanderArchivage">{{ t.archiver }}</Bouton>
         </template>
       </template>
-      <Bouton variante="principal" taille="grande" type="submit" form="formulaire-camion">
-        {{ t.enregistrer }}
-      </Bouton>
+      <BoutonEnregistrer
+        :libelle="t.enregistrer"
+        :modifie="modifie"
+        formulaire="formulaire-camion"
+      />
     </template>
   </EntetePage>
 
@@ -352,8 +359,23 @@ async function reactiver() {
 
     <Carte :titre="t.plan">
       <div class="plans">
-        <PlanCaisse :titre="t.vueDessus" :longueur="longueur" :travers="largeur" />
-        <PlanCaisse :titre="t.vueCote" :longueur="longueur" :travers="hauteur" plancher />
+        <PlanCote
+          :titre="t.vueDessus"
+          :largeur="longueur"
+          :hauteur="largeur"
+          :description="t.descriptionPlan(t.vueDessus, cote(longueur), cote(largeur))"
+          :reperes="[t.fond, t.portes]"
+          quadrillage
+        />
+        <PlanCote
+          :titre="t.vueCote"
+          :largeur="longueur"
+          :hauteur="hauteur"
+          :description="t.descriptionPlan(t.vueCote, cote(longueur), cote(hauteur))"
+          :reperes="[t.fond, t.portes]"
+          quadrillage
+          plancher
+        />
       </div>
     </Carte>
   </div>

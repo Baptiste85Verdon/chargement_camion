@@ -130,6 +130,18 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 - Réactivation : bouton « Réactiver » dans la liste des éléments archivés, et méthode `reactiver` à ajouter aux dépôts. Un article ne peut pas être réactivé si un article actif a repris sa référence (l'index unique le refuse déjà) : le message le dit.
 - Dimensions : le catalogue et la fiche article affichent les dimensions à plat, avec la mention « à plat » visible (écart connu des captures 07 et 08).
 
+## Étape 8b · Finitions des référentiels
+
+- [x] Fait — branche `feat/p1-finitions-referentiels`
+- Cahier fonctionnel V5.9 : sections 4.6, 4.7 et 7, RG-21, RG-22. Cahier technique V3.9 : sections 5.13, 6.1 et 6.3. Écarts validés dans `docs/maquettes/README.md`.
+- Lignes de cote avec flèches aux extrémités (cahier technique 5.13), dans la fiche camion et la fiche article.
+- Champs de saisie numériques alignés à gauche ; les nombres restent alignés à droite dans les tableaux.
+- Indication « Modifications non enregistrées » près du bouton Enregistrer, mis en avant tant que c'est le cas, dans un composant réutilisé par tous les formulaires.
+- Composant de tableau triable réutilisable (clic sur l'en-tête, `aria-sort`, en-tête utilisable au clavier), appliqué au catalogue et aux modèles de camions ; camions triés par nom par défaut.
+- Aperçu de l'article dans la fiche : sélecteur Dessus / Face / Côté, avec les cotes, comme pour la fiche camion.
+- Tri : un troisième clic sur un en-tête rétablit le tri de départ.
+- Même comportement dans tous les tableaux : le nom de l'élément est un lien vers sa fiche (couleur `action`, souligné au survol et au focus), sans bouton « Ouvrir » séparé ; toute la ligne est cliquable avec un survol visible (lien étiré, un seul lien par ligne pour le clavier) ; chevron « › » décoratif en fin de ligne ; les autres boutons d'une ligne restent cliquables seuls. Bouton « Ouvrir la fiche » des modèles de camions supprimé.
+
 ## Étape 9 · Tournées, commandes et liste d'attente
 
 - [ ] Fait — branche `feat/p1-tournees-commandes`

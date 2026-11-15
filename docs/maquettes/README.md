@@ -63,3 +63,13 @@ Relevés en relisant les captures. On ne retouche pas la maquette : on corrige d
 - **Renvois de règles** : vérifier dans chaque message que le numéro de RG cité est le bon. L'appui relève de RG-04, et non de RG-08.
 - **08, fiche article** : pas de champ Poids nu (RG-05, poids maximal retenu).
 - **07 et 08, dimensions des fenêtres** : le catalogue affiche les fenêtres dans leur taille posée debout (1 500 × 180 × 1 350). Les dimensions enregistrées sont celles de la pose à plat (cahier technique, 4.7) : 1 500 × 1 350 × 180. Le catalogue et la fiche article affichent les dimensions à plat, avec la mention « à plat » visible.
+
+## Écarts validés avec la maquette
+
+Choix faits pendant le développement, validés par le porteur. Le code s'écarte ici volontairement des captures : ne pas « corriger » ces écarts pour revenir à la maquette.
+
+- **07 et 09, éléments archivés** (étape 8) : la maquette ne montre pas la liste des articles ou des modèles archivés. Elle est placée sous chaque tableau, derrière un bouton « Afficher les articles archivés (n) » ou « Afficher les modèles archivés (n) », avec un bouton « Réactiver » par ligne (RG-21).
+- **08, aperçu coté** (étapes 8 et 8b) : la capture montre une seule « vue de face ». L'aperçu montre l'article posé à plat sous trois faces au choix, Dessus, Face et Côté, avec ses cotes fléchées, comme le plan de la fiche camion.
+- **09, ordre des modèles** (étape 8) : la capture suit l'ordre de création. Les modèles sont triés par nom par défaut, et chaque tableau se trie par colonne (étape 8b).
+- **09, bouton « Ouvrir la fiche »** (étape 8b) : supprimé. Dans tous les tableaux, le nom de l'élément est un lien vers sa fiche et toute la ligne est cliquable, avec un chevron « › » en fin de ligne.
+- **08, 08e, 09b et 09e, champs numériques** (étape 8b) : les captures alignent les nombres à droite dans les champs. Ils sont alignés à gauche, comme tout texte saisi ; les nombres restent alignés à droite dans les tableaux.

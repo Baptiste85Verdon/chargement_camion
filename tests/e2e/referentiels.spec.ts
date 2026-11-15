@@ -123,9 +123,36 @@ test.describe('parcours des référentiels', () => {
     await expect(page.getByText('24 articles sur 24')).toBeVisible()
   })
 
+  test('un clic n’importe où sur la ligne ouvre la fiche ; « Réactiver » reste cliquable seul', async ({
+    page,
+  }) => {
+    await page.goto('/camions')
+    // Clic au milieu de la cellule des dimensions, pas sur le nom : le lien
+    // étiré recouvre la cellule (Playwright refuse d'ailleurs de cliquer la
+    // cellule elle-même, puisque c'est le lien qui reçoit le clic).
+    const cellule = page
+      .getByRole('row', { name: /Porteur 6,2 m/ })
+      .getByRole('cell')
+      .nth(1)
+    const boite = await cellule.boundingBox()
+    if (!boite) throw new Error('Cellule introuvable')
+    await page.mouse.click(boite.x + boite.width / 2, boite.y + boite.height / 2)
+    await expect(page.getByRole('heading', { level: 1, name: 'Porteur 6,2 m' })).toBeVisible()
+
+    await page.goto('/catalogue')
+    await page.getByRole('link', { name: 'Carton de quincaillerie' }).click()
+    await page.getByRole('button', { name: 'Archiver l’article' }).click()
+    await expect(page).toHaveURL(/\/catalogue$/)
+    await page.getByRole('button', { name: 'Afficher les articles archivés (1)' }).click()
+    await page.getByRole('button', { name: /Réactiver/ }).click()
+    // Le bouton a réactivé l'article sans ouvrir sa fiche.
+    await expect(page).toHaveURL(/\/catalogue$/)
+    await expect(page.getByText('24 articles sur 24')).toBeVisible()
+  })
+
   test('RG-21 : le camion d’une tournée en préparation ne se supprime pas', async ({ page }) => {
     await page.goto('/camions')
-    await page.getByRole('link', { name: 'Ouvrir la fiche Porteur 7,2 m' }).click()
+    await page.getByRole('link', { name: 'Porteur 7,2 m' }).click()
     await page.getByRole('button', { name: 'Supprimer le modèle' }).click()
     await expect(page.getByRole('dialog')).toBeHidden()
     await expect(page.getByRole('status').first()).toContainText('T-2026-118')
@@ -133,7 +160,7 @@ test.describe('parcours des référentiels', () => {
 
   test('RG-22 : quitter une fiche modifiée demande confirmation', async ({ page }) => {
     await page.goto('/camions')
-    await page.getByRole('link', { name: 'Ouvrir la fiche Fourgon 20 m³' }).click()
+    await page.getByRole('link', { name: 'Fourgon 20 m³' }).click()
     await page.getByLabel('Hauteur utile (obligatoire)').fill('2300')
     await page.getByRole('link', { name: 'Catalogue', exact: true }).first().click()
 

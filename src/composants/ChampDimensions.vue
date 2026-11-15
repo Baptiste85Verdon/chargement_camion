@@ -165,7 +165,6 @@ function surSortie(evenement: FocusEvent) {
   padding: 0 calc(var(--espace-7) + var(--espace-1)) 0 var(--espace-3);
   font: var(--typo-donnees);
   color: var(--encre);
-  text-align: right;
   background: var(--surface);
   border: 1px solid var(--bordure-forte);
   border-radius: var(--rayon-controle);

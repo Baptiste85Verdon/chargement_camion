@@ -17,6 +17,8 @@ import Bandeau from '@/composants/Bandeau.vue'
 import Bouton from '@/composants/Bouton.vue'
 import EntetePage from '@/composants/EntetePage.vue'
 import LienBouton from '@/composants/LienBouton.vue'
+import TableauTriable, { type ColonneTableau } from '@/composants/TableauTriable.vue'
+import type { EtatTri } from '@/composants/tri'
 import { formaterDate, formaterMillimetres, formaterVolume } from '@/composants/format'
 
 const t = textes.camions
@@ -67,6 +69,53 @@ const echelle = (camion: ModeleCamion) => `${(camion.longueur / plusLongue.value
 const dimensions = (c: ModeleCamion) =>
   [c.longueur, c.largeur, c.hauteur].map(formaterMillimetres).join(' × ')
 
+/** Modèles triés par nom par défaut ; un clic sur un en-tête change le tri. */
+const TRI_DEPART: EtatTri = { cle: 'nom', sens: 'croissant' }
+const tri = ref<EtatTri | null>(TRI_DEPART)
+
+const colonnes: ColonneTableau<ModeleCamion>[] = [
+  { cle: 'nom', libelle: t.colonnes.modele, valeur: (c) => c.nom, classe: 'camions__nom' },
+  {
+    cle: 'echelle',
+    libelle: t.colonnes.echelle,
+    valeur: (c) => c.longueur,
+    classe: 'camions__echelle',
+  },
+  {
+    cle: 'caisse',
+    libelle: t.colonnes.caisse,
+    valeur: (c) => [c.longueur, c.largeur, c.hauteur],
+    classe: 'donnees',
+  },
+  {
+    cle: 'volume',
+    libelle: t.colonnes.volume,
+    valeur: (c) => c.longueur * c.largeur * c.hauteur,
+    nombre: true,
+    classe: 'donnees',
+  },
+  { cle: 'tournees', libelle: t.colonnes.tournees, valeur: tourneesDe },
+]
+
+/** Modèles archivés : même tableau, avec « Réactiver » sur chaque ligne. */
+const triArchives = ref<EtatTri | null>(TRI_DEPART)
+const colonnesArchives: ColonneTableau<ModeleCamion>[] = [
+  { cle: 'nom', libelle: t.colonnes.modele, valeur: (c) => c.nom, classe: 'camions__nom' },
+  {
+    cle: 'caisse',
+    libelle: t.colonnes.caisse,
+    valeur: (c) => [c.longueur, c.largeur, c.hauteur],
+    classe: 'donnees',
+  },
+  {
+    cle: 'archiveLe',
+    libelle: t.colonnes.archiveLe,
+    valeur: (c) => c.archiveLe ?? '',
+    classe: 'donnees',
+  },
+  { cle: 'action', libelle: t.colonnes.action, libelleCache: true },
+]
+
 async function reactiver(camion: ModeleCamion) {
   try {
     await depots.camions.reactiver(camion.id)
@@ -96,49 +145,31 @@ async function reactiver(camion: ModeleCamion) {
 
   <template v-else>
     <div class="cadre">
-      <table class="tableau">
-        <caption class="visuellement-cache">
-          {{
-            t.legende
-          }}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">{{ t.colonnes.modele }}</th>
-            <th scope="col" class="camions__echelle">{{ t.colonnes.echelle }}</th>
-            <th scope="col">{{ t.colonnes.caisse }}</th>
-            <th scope="col" class="nombre">{{ t.colonnes.volume }}</th>
-            <th scope="col">{{ t.colonnes.tournees }}</th>
-            <th scope="col">
-              <span class="visuellement-cache">{{ t.colonnes.action }}</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="camion in actifs" :key="camion.id">
-            <th scope="row" class="camions__nom">{{ camion.nom }}</th>
-            <td class="camions__echelle">
-              <div
-                class="caisse"
-                :style="{ width: echelle(camion) }"
-                role="img"
-                :aria-label="t.echelle(formaterMillimetres(camion.longueur))"
-              >
-                <span aria-hidden="true">{{ t.fond }}</span>
-                <span aria-hidden="true">{{ t.portes }}</span>
-              </div>
-            </td>
-            <td class="donnees">{{ dimensions(camion) }}</td>
-            <td class="donnees nombre">{{ formaterVolume(camion) }}</td>
-            <td>{{ tourneesDe(camion) }}</td>
-            <td class="camions__action">
-              <LienBouton :vers="`/camions/${camion.id}`" :libelle="t.ouvrir(camion.nom)">
-                {{ textes.referentiels.ouvrirLaFiche }}
-              </LienBouton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <TableauTriable
+        v-model:tri="tri"
+        :tri-depart="TRI_DEPART"
+        :lien="(c) => `/camions/${c.id}`"
+        :colonnes="colonnes"
+        :lignes="actifs"
+        :cle-ligne="(c) => c.id"
+        :legende="t.legende"
+        entete-ligne="nom"
+      >
+        <template #echelle="{ ligne }">
+          <div
+            class="caisse"
+            :style="{ width: echelle(ligne) }"
+            role="img"
+            :aria-label="t.echelle(formaterMillimetres(ligne.longueur))"
+          >
+            <span aria-hidden="true">{{ t.fond }}</span>
+            <span aria-hidden="true">{{ t.portes }}</span>
+          </div>
+        </template>
+        <template #caisse="{ ligne }">{{ dimensions(ligne) }}</template>
+        <template #volume="{ ligne }">{{ formaterVolume(ligne) }}</template>
+        <template #tournees="{ ligne }">{{ tourneesDe(ligne) }}</template>
+      </TableauTriable>
     </div>
 
     <div class="archives">
@@ -159,31 +190,26 @@ async function reactiver(camion: ModeleCamion) {
         <h2 id="titre-camions-archives" class="archives__titre">{{ t.archives.titre }}</h2>
         <p class="archives__intro">{{ t.archives.intro }}</p>
         <p v-if="archives.length === 0" class="etat">{{ t.archives.aucun }}</p>
-        <table v-else class="tableau">
-          <thead>
-            <tr>
-              <th scope="col">{{ t.colonnes.modele }}</th>
-              <th scope="col">{{ t.colonnes.caisse }}</th>
-              <th scope="col">{{ t.colonnes.archiveLe }}</th>
-              <th scope="col">{{ t.colonnes.action }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="camion in archives" :key="camion.id">
-              <th scope="row" class="camions__nom">
-                <RouterLink :to="`/camions/${camion.id}`">{{ camion.nom }}</RouterLink>
-              </th>
-              <td class="donnees">{{ dimensions(camion) }}</td>
-              <td class="donnees">{{ formaterDate(camion.archiveLe ?? '') }}</td>
-              <td>
-                <Bouton taille="petite" @click="reactiver(camion)">
-                  {{ textes.referentiels.reactiver }}
-                  <span class="visuellement-cache">{{ camion.nom }}</span>
-                </Bouton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <TableauTriable
+          v-else
+          v-model:tri="triArchives"
+          :colonnes="colonnesArchives"
+          :tri-depart="TRI_DEPART"
+          :lignes="archives"
+          :cle-ligne="(c) => c.id"
+          :legende="t.archives.titre"
+          entete-ligne="nom"
+          :lien="(c) => `/camions/${c.id}`"
+        >
+          <template #caisse="{ ligne }">{{ dimensions(ligne) }}</template>
+          <template #archiveLe="{ ligne }">{{ formaterDate(ligne.archiveLe ?? '') }}</template>
+          <template #action="{ ligne }">
+            <Bouton taille="petite" @click="reactiver(ligne)">
+              {{ textes.referentiels.reactiver }}
+              <span class="visuellement-cache">{{ ligne.nom }}</span>
+            </Bouton>
+          </template>
+        </TableauTriable>
       </section>
     </div>
   </template>
@@ -202,21 +228,18 @@ async function reactiver(camion: ModeleCamion) {
   border-radius: var(--rayon-carte);
 }
 
-.camions__nom {
+/* Cellules dessinées par TableauTriable : `:deep` les atteint. */
+:deep(.camions__nom) {
   font: var(--typo-bouton);
   white-space: nowrap;
 }
 
-.camions__nom a {
-  color: var(--encre);
-}
-
-.camions__echelle {
+:deep(.camions__echelle) {
   width: 32%;
 }
 
 /* La caisse vue de dessus, à l'échelle : Fond à gauche, Portes à droite. */
-.caisse {
+:deep(.caisse) {
   display: flex;
   justify-content: space-between;
   min-width: max-content;
@@ -226,10 +249,6 @@ async function reactiver(camion: ModeleCamion) {
   background: var(--camion-fond);
   border: 2px solid var(--camion-contour);
   border-radius: var(--rayon-code);
-}
-
-.camions__action {
-  text-align: right;
 }
 
 .archives {

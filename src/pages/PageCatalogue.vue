@@ -18,6 +18,8 @@ import Annonce from '@/composants/Annonce.vue'
 import Bandeau from '@/composants/Bandeau.vue'
 import Bouton from '@/composants/Bouton.vue'
 import EntetePage from '@/composants/EntetePage.vue'
+import TableauTriable, { type ColonneTableau } from '@/composants/TableauTriable.vue'
+import type { EtatTri } from '@/composants/tri'
 import Icone from '@/composants/Icone.vue'
 import LienBouton from '@/composants/LienBouton.vue'
 import { formaterDate, formaterDimensions, formaterPoids } from '@/composants/format'
@@ -67,6 +69,61 @@ onMounted(async () => {
 
 const orientations = (a: FicheArticle) =>
   a.orientations.map((o) => textes.orientations[o]).join(', ')
+
+/** Tri choisi par un clic sur un en-tête ; sans tri, l'ordre par famille. */
+const tri = ref<EtatTri | null>(null)
+
+const dims = (d: FicheArticle['dimsEmballees'] | undefined) => (d ? [d.l, d.w, d.h] : [])
+
+/** Colonnes du catalogue : chacune dit comment trier (valeur) et s'aligne. */
+const colonnes: ColonneTableau<FicheArticle>[] = [
+  {
+    cle: 'reference',
+    libelle: t.colonnes.reference,
+    valeur: (a) => a.reference ?? '',
+    classe: 'donnees catalogue__doux',
+  },
+  { cle: 'nom', libelle: t.colonnes.article, valeur: (a) => a.nom },
+  { cle: 'famille', libelle: t.colonnes.famille, valeur: (a) => FAMILLES.indexOf(a.famille) },
+  // Dimensions : la longueur d'abord, puis la largeur, puis la hauteur.
+  {
+    cle: 'emballee',
+    libelle: t.colonnes.tailleEmballee,
+    valeur: (a) => dims(a.dimsEmballees),
+    classe: 'donnees',
+  },
+  { cle: 'nue', libelle: t.colonnes.tailleNue, valeur: (a) => dims(a.dimsNues), classe: 'donnees' },
+  {
+    cle: 'poids',
+    libelle: t.colonnes.poids,
+    valeur: (a) => a.poids,
+    nombre: true,
+    classe: 'donnees',
+  },
+  { cle: 'fragile', libelle: t.colonnes.fragile, valeur: (a) => a.fragile },
+  { cle: 'forme', libelle: t.colonnes.forme, valeur: (a) => textes.formes[a.forme] },
+  { cle: 'orientations', libelle: t.colonnes.orientations, valeur: orientations },
+]
+
+/** Articles archivés : même tableau, triables, avec « Réactiver » sur chaque ligne. */
+const triArchives = ref<EtatTri | null>(null)
+const colonnesArchives: ColonneTableau<FicheArticle>[] = [
+  {
+    cle: 'reference',
+    libelle: t.colonnes.reference,
+    valeur: (a) => a.reference ?? '',
+    classe: 'donnees catalogue__doux',
+  },
+  { cle: 'nom', libelle: t.colonnes.article, valeur: (a) => a.nom },
+  { cle: 'famille', libelle: t.colonnes.famille, valeur: (a) => a.famille },
+  {
+    cle: 'archiveLe',
+    libelle: t.colonnes.archiveLe,
+    valeur: (a) => a.archiveLe ?? '',
+    classe: 'donnees',
+  },
+  { cle: 'action', libelle: t.colonnes.action, libelleCache: true },
+]
 
 async function reactiver(article: FicheArticle) {
   try {
@@ -135,47 +192,27 @@ async function reactiver(article: FicheArticle) {
         </div>
       </div>
 
-      <table class="tableau">
-        <caption class="visuellement-cache">
-          {{
-            t.legende
-          }}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">{{ t.colonnes.reference }}</th>
-            <th scope="col">{{ t.colonnes.article }}</th>
-            <th scope="col">{{ t.colonnes.famille }}</th>
-            <th scope="col">{{ t.colonnes.tailleEmballee }}</th>
-            <th scope="col">{{ t.colonnes.tailleNue }}</th>
-            <th scope="col" class="nombre">{{ t.colonnes.poids }}</th>
-            <th scope="col">{{ t.colonnes.fragile }}</th>
-            <th scope="col">{{ t.colonnes.forme }}</th>
-            <th scope="col">{{ t.colonnes.orientations }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="article in affiches" :key="article.id">
-            <td class="donnees catalogue__doux">
-              {{ article.reference ?? textes.referentiels.aucun }}
-            </td>
-            <th scope="row" class="catalogue__nom">
-              <RouterLink :to="`/catalogue/${article.id}`">{{ article.nom }}</RouterLink>
-            </th>
-            <td>{{ article.famille }}</td>
-            <td class="donnees">{{ formaterDimensions(article.dimsEmballees) }}</td>
-            <td class="donnees">
-              {{
-                article.dimsNues ? formaterDimensions(article.dimsNues) : textes.referentiels.aucun
-              }}
-            </td>
-            <td class="donnees nombre">{{ formaterPoids(article.poids) }}</td>
-            <td>{{ article.fragile ? t.oui : t.non }}</td>
-            <td>{{ textes.formes[article.forme] }}</td>
-            <td>{{ orientations(article) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <TableauTriable
+        v-model:tri="tri"
+        :colonnes="colonnes"
+        :lignes="affiches"
+        :cle-ligne="(a) => a.id"
+        :legende="t.legende"
+        entete-ligne="nom"
+        :lien="(a) => `/catalogue/${a.id}`"
+      >
+        <template #reference="{ ligne }">{{
+          ligne.reference ?? textes.referentiels.aucun
+        }}</template>
+        <template #famille="{ ligne }">{{ ligne.famille }}</template>
+        <template #emballee="{ ligne }">{{ formaterDimensions(ligne.dimsEmballees) }}</template>
+        <template #nue="{ ligne }">
+          {{ ligne.dimsNues ? formaterDimensions(ligne.dimsNues) : textes.referentiels.aucun }}
+        </template>
+        <template #poids="{ ligne }">{{ formaterPoids(ligne.poids) }}</template>
+        <template #fragile="{ ligne }">{{ ligne.fragile ? t.oui : t.non }}</template>
+        <template #forme="{ ligne }">{{ textes.formes[ligne.forme] }}</template>
+      </TableauTriable>
       <p v-if="affiches.length === 0" class="etat catalogue__vide">{{ t.aucunResultat }}</p>
     </section>
 
@@ -197,35 +234,27 @@ async function reactiver(article: FicheArticle) {
         <h2 id="titre-archives" class="archives__titre">{{ t.archives.titre }}</h2>
         <p class="archives__intro">{{ t.archives.intro }}</p>
         <p v-if="archives.length === 0" class="etat">{{ t.archives.aucun }}</p>
-        <table v-else class="tableau">
-          <thead>
-            <tr>
-              <th scope="col">{{ t.colonnes.reference }}</th>
-              <th scope="col">{{ t.colonnes.article }}</th>
-              <th scope="col">{{ t.colonnes.famille }}</th>
-              <th scope="col">{{ t.colonnes.archiveLe }}</th>
-              <th scope="col">{{ t.colonnes.action }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="article in archives" :key="article.id">
-              <td class="donnees catalogue__doux">
-                {{ article.reference ?? textes.referentiels.aucun }}
-              </td>
-              <th scope="row" class="catalogue__nom">
-                <RouterLink :to="`/catalogue/${article.id}`">{{ article.nom }}</RouterLink>
-              </th>
-              <td>{{ article.famille }}</td>
-              <td class="donnees">{{ formaterDate(article.archiveLe ?? '') }}</td>
-              <td>
-                <Bouton taille="petite" @click="reactiver(article)">
-                  {{ textes.referentiels.reactiver }}
-                  <span class="visuellement-cache">{{ article.nom }}</span>
-                </Bouton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <TableauTriable
+          v-else
+          v-model:tri="triArchives"
+          :colonnes="colonnesArchives"
+          :lignes="archives"
+          :cle-ligne="(a) => a.id"
+          :legende="t.archives.titre"
+          entete-ligne="nom"
+          :lien="(a) => `/catalogue/${a.id}`"
+        >
+          <template #reference="{ ligne }">{{
+            ligne.reference ?? textes.referentiels.aucun
+          }}</template>
+          <template #archiveLe="{ ligne }">{{ formaterDate(ligne.archiveLe ?? '') }}</template>
+          <template #action="{ ligne }">
+            <Bouton taille="petite" @click="reactiver(ligne)">
+              {{ textes.referentiels.reactiver }}
+              <span class="visuellement-cache">{{ ligne.nom }}</span>
+            </Bouton>
+          </template>
+        </TableauTriable>
       </section>
     </div>
   </template>
@@ -295,22 +324,9 @@ async function reactiver(article: FicheArticle) {
   color: var(--texte-doux);
 }
 
-.catalogue__doux {
+/* Cellules dessinées par TableauTriable : `:deep` les atteint. */
+:deep(.catalogue__doux) {
   color: var(--texte-doux);
-}
-
-.catalogue__nom {
-  font: var(--typo-bouton);
-}
-
-.catalogue__nom a {
-  color: var(--encre);
-  text-decoration: none;
-}
-
-.catalogue__nom a:hover {
-  color: var(--action);
-  text-decoration: underline;
 }
 
 .catalogue__vide {
