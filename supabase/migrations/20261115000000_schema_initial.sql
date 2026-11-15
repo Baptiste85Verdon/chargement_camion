@@ -139,12 +139,16 @@ create table public.ligne_commande (
   poids_propre numeric(8, 1) check (poids_propre > 0),
   -- Poids proposé au prorata du volume (RG-03).
   poids_estime boolean not null default false,
+  -- Position de la ligne dans la commande (ligne 1, ligne 2…), pour garder
+  -- l'ordre de saisie : sans elle, la base ne garantit aucun ordre.
+  numero_ligne integer not null check (numero_ligne > 0),
 
   constraint ligne_taille_propre_complete check (
     (longueur_propre is null and largeur_propre is null and hauteur_propre is null)
     or (longueur_propre is not null and largeur_propre is not null and hauteur_propre is not null)
   ),
-  constraint ligne_poids_estime_a_un_poids check (not poids_estime or poids_propre is not null)
+  constraint ligne_poids_estime_a_un_poids check (not poids_estime or poids_propre is not null),
+  constraint ligne_numero_unique unique (commande_id, numero_ligne)
 );
 
 create index ligne_commande_commande_idx on public.ligne_commande (commande_id);

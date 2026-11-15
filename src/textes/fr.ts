@@ -87,6 +87,8 @@ export const textes = {
   donnees: {
     doublon: 'Cette valeur est déjà utilisée. Indiquez-en une autre.',
     contrainte: "Une valeur n'est pas acceptée. Vérifiez la saisie puis enregistrez à nouveau.",
+    utilise:
+      'Cet élément est encore utilisé ailleurs. Retirez-le de là où il sert, puis supprimez-le.',
     introuvable: "Cet élément n'existe plus. Revenez à la liste pour l'actualiser.",
     reseau: "Les données n'ont pas pu être enregistrées. Vérifiez la connexion puis réessayez.",
   },

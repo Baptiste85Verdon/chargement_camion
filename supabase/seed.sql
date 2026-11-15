@@ -112,25 +112,25 @@ on conflict (id) do nothing;
 
 insert into public.ligne_commande (
   id, commande_id, article_id, quantite, nu,
-  longueur_propre, largeur_propre, hauteur_propre, poids_propre, poids_estime
+  longueur_propre, largeur_propre, hauteur_propre, poids_propre, poids_estime, numero_ligne
 ) values
   -- C1 : deux poutres recoupées à 6 m pour cette commande (RG-03) ;
   -- poids proposé au prorata du volume, 293 × 6 000 / 8 000 ≈ 220 kg, estimé.
   ('e0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001',
-    'a0000000-0000-4000-8000-000000000014', 2, false, 6000, 200, 400, 220, true),
+    'a0000000-0000-4000-8000-000000000014', 2, false, 6000, 200, 400, 220, true, 1),
   -- C2 : deux fenêtres PVC 2 vantaux emballées (A10, A11), un carton de quincaillerie (A12).
   ('e0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000002',
-    'a0000000-0000-4000-8000-000000000001', 2, false, null, null, null, null, false),
+    'a0000000-0000-4000-8000-000000000001', 2, false, null, null, null, null, false, 1),
   ('e0000000-0000-4000-8000-000000000003', 'd0000000-0000-4000-8000-000000000002',
-    'a0000000-0000-4000-8000-000000000022', 1, false, null, null, null, null, false),
+    'a0000000-0000-4000-8000-000000000022', 1, false, null, null, null, null, false, 2),
   -- C3 : deux paquets de BA13 (A04, A05), deux bottes de planches de pin (A06, A07).
   ('e0000000-0000-4000-8000-000000000004', 'd0000000-0000-4000-8000-000000000003',
-    'a0000000-0000-4000-8000-000000000008', 2, false, null, null, null, null, false),
+    'a0000000-0000-4000-8000-000000000008', 2, false, null, null, null, null, false, 1),
   ('e0000000-0000-4000-8000-000000000005', 'd0000000-0000-4000-8000-000000000003',
-    'a0000000-0000-4000-8000-000000000011', 2, false, null, null, null, null, false),
+    'a0000000-0000-4000-8000-000000000011', 2, false, null, null, null, null, false, 2),
   -- C4 : deux palettes de parpaings (A01, A03), une palette de ciment (A02).
   ('e0000000-0000-4000-8000-000000000006', 'd0000000-0000-4000-8000-000000000004',
-    'a0000000-0000-4000-8000-000000000017', 2, false, null, null, null, null, false),
+    'a0000000-0000-4000-8000-000000000017', 2, false, null, null, null, null, false, 1),
   ('e0000000-0000-4000-8000-000000000007', 'd0000000-0000-4000-8000-000000000004',
-    'a0000000-0000-4000-8000-000000000018', 1, false, null, null, null, null, false)
+    'a0000000-0000-4000-8000-000000000018', 1, false, null, null, null, null, false, 2)
 on conflict (id) do nothing;

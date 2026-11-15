@@ -78,7 +78,7 @@ function lireCommandes(): CommandeAPlacer[] {
   }))
 
   const lignes =
-    /\('(e0[0-9a-f-]+)', '(d0[0-9a-f-]+)',\s*'(a0[0-9a-f-]+)', (\d+), (true|false), (\w+), (\w+), (\w+), (\w+), (true|false)\)/g
+    /\('(e0[0-9a-f-]+)', '(d0[0-9a-f-]+)',\s*'(a0[0-9a-f-]+)', (\d+), (true|false), (\w+), (\w+), (\w+), (\w+), (true|false), (\d+)\)/g
   for (const m of sql.matchAll(lignes)) {
     const [id = '', commandeId, articleId = '', quantite, nu, l = '', w, h, poids = ''] = groupes(m)
     const longueur = nombreOuRien(l)
