@@ -17,6 +17,8 @@ export interface OptionSelecteur {
   valeur: string
   libelle: string
   desactive?: boolean
+  /** Précision lue seulement (« déjà affichée dans l'autre cadre »). */
+  description?: string
 }
 
 const props = withDefaults(
@@ -58,6 +60,9 @@ const nom = useId()
           :disabled="option.desactive"
         />
         {{ option.libelle }}
+        <span v-if="option.description" class="visuellement-cache">
+          , {{ option.description }}</span
+        >
       </label>
     </div>
   </fieldset>

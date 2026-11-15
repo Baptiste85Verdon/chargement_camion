@@ -12,8 +12,8 @@
  *    flèches sont l'alternative au glisser-déposer, pour le clavier. Le
  *    numéro de la commande est le lien vers sa saisie express.
  * 3. Calcul du plan : le résumé de la charge, puis « Lancer le calcul ».
- *    Le plan calculé est enregistré comme nouvelle version ; sa page arrive
- *    à l'étape 10.
+ *    Le plan calculé est enregistré comme nouvelle version, puis sa page
+ *    s'ouvre ; « Voir le plan » y ramène sans recalculer.
  */
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
@@ -372,7 +372,7 @@ async function lancer() {
     dernierPlan.value = plan
     const rangs = new Map(commandes.value.map((x) => [x.commande.id, x.commande.rangLivraison]))
     const codes = [...new Set(enTrop.map((u) => `C${rangs.get(u.commandeId) ?? 0}`))].join(', ')
-    informer(
+    annonces.deposer(
       [
         t.planCalcule(plan.version, placements.length),
         enTrop.length > 0 ? t.planEnTrop(enTrop.length, codes) : '',
@@ -380,6 +380,7 @@ async function lancer() {
         .filter(Boolean)
         .join(' '),
     )
+    await routeur.push(`/tournees/${props.id}/plan`)
   } catch (e) {
     alerter(e)
   } finally {
@@ -641,6 +642,9 @@ async function lancer() {
       <p v-if="dernierPlan" class="note">
         {{ t.dernierPlan(dernierPlan.version, formaterDate(dernierPlan.calculeLe)) }}
       </p>
+      <LienBouton v-if="dernierPlan" :vers="`/tournees/${props.id}/plan`" class="calcul__bouton">
+        {{ t.voirPlan }}
+      </LienBouton>
       <p v-if="dernierPlan?.aRecalculer" class="a-recalculer">
         <Icone nom="alerte" :taille="16" />
         <span>

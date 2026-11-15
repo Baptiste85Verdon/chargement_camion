@@ -1,7 +1,7 @@
 // Préparation d'une tournée (captures 01, 02 ; CF 4.1, 4.2, RG-07, RG-10).
 import { describe, expect, it } from 'vitest'
 import type { Commande, FicheArticle, LigneDeCommande, ModeleCamion } from './modele'
-import { calculerPlan, deplacer, referenceSuivante } from './tournee'
+import { calculerPlan, deplacer, lirePlan, referenceSuivante } from './tournee'
 import { validerPlan } from './validateur'
 import { preparerUnites } from './unites'
 
@@ -119,5 +119,56 @@ describe('calculerPlan', () => {
     expect(placements.length + enTrop.length).toBe(20)
     expect(enTrop.length).toBeGreaterThan(0)
     expect(enTrop[0]).toMatchObject({ ligneCommandeId: 'l1', commandeId: 'c1' })
+  })
+})
+
+// --- Relecture du plan enregistré -------------------------------------------------
+
+describe('lirePlan', () => {
+  const commandes = [
+    { commande: commande('c1', 1), lignes: [ligne('l1', 'c1', 1)] },
+    { commande: commande('c2', 2), lignes: [ligne('l2', 'c2', 2)] },
+  ]
+  const enregistre = (ligneCommandeId: string, numeroUnite: number, rang: number) => ({
+    id: `p-${ligneCommandeId}-${numeroUnite}`,
+    planId: 'plan',
+    ligneCommandeId,
+    numeroUnite,
+    x: (rang - 1) * 1200,
+    y: 0,
+    z: 0,
+    orientation: 'aPlat' as const,
+    rang,
+    statut: 'aFaire' as const,
+  })
+
+  it('retrouve l’unité de chaque placement enregistré, par sa ligne et son numéro', () => {
+    const { placements, unites } = lirePlan(
+      commandes,
+      [palette],
+      [enregistre('l2', 2, 1), enregistre('l1', 1, 2), enregistre('l2', 1, 3)],
+    )
+    expect(unites.map((u) => u.id)).toEqual(['l1-1', 'l2-1', 'l2-2'])
+    expect(placements).toEqual([
+      { uniteId: 'l2-2', x: 0, y: 0, z: 0, orientation: 'aPlat', rang: 1 },
+      { uniteId: 'l1-1', x: 1200, y: 0, z: 0, orientation: 'aPlat', rang: 2 },
+      { uniteId: 'l2-1', x: 2400, y: 0, z: 0, orientation: 'aPlat', rang: 3 },
+    ])
+  })
+
+  it('RG-10 : une unité sans placement est à placer', () => {
+    const { placements, aPlacer } = lirePlan(commandes, [palette], [enregistre('l1', 1, 1)])
+    expect(placements.map((p) => p.uniteId)).toEqual(['l1-1'])
+    expect(aPlacer.map((u) => u.id)).toEqual(['l2-1', 'l2-2'])
+  })
+
+  it('ignore un placement dont la ligne ou l’unité n’existe plus', () => {
+    const { placements, aPlacer } = lirePlan(
+      commandes,
+      [palette],
+      [enregistre('l1', 1, 1), enregistre('l1', 2, 2), enregistre('disparue', 1, 3)],
+    )
+    expect(placements.map((p) => p.uniteId)).toEqual(['l1-1'])
+    expect(aPlacer).toHaveLength(2)
   })
 })

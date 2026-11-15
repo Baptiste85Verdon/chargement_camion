@@ -145,15 +145,27 @@ describe('Préparation d’une tournée (capture 02)', () => {
     expect(await depots.plans.obtenirDernier(vide.id)).toBeNull()
   })
 
-  it('RG-10 : « Lancer le calcul » enregistre une version du plan avec toutes les unités', async () => {
-    const { page, depots } = await monterPage(`/tournees/${T118}`)
+  it('RG-10 : « Lancer le calcul » enregistre une version du plan, puis ouvre sa page', async () => {
+    const { page, depots, routeur } = await monterPage(`/tournees/${T118}`)
     await bouton(page, p.lancer).trigger('click')
-    await flushPromises()
+    await vi.waitFor(() => expect(routeur.currentRoute.value.name).toBe('plan'))
     const plan = await depots.plans.obtenirDernier(T118)
     expect(plan?.plan.version).toBe(1)
     // Jeu « couloirs » : 12 articles, tous placés.
     expect(plan?.placements).toHaveLength(12)
-    expect(page.text()).toContain(p.planCalcule(1, 12))
+    // La page du plan reprend le message déposé par la préparation.
+    await vi.waitFor(() => expect(page.text()).toContain(p.planCalcule(1, 12)))
+  })
+
+  it('« Voir le plan » mène au dernier plan calculé', async () => {
+    const depots = depotsDemarrage()
+    const { page } = await monterPage(`/tournees/${T118}`, depots)
+    expect(page.findAll('a').some((a) => a.text() === p.voirPlan)).toBe(false)
+    await bouton(page, p.lancer).trigger('click')
+    await flushPromises()
+    const { page: retour } = await monterPage(`/tournees/${T118}`, depots)
+    const lien = retour.findAll('a').find((a) => a.text() === p.voirPlan)
+    expect(lien?.attributes('href')).toBe(`/tournees/${T118}/plan`)
   })
 
   it('RG-22 : supprimer une commande demande confirmation, puis garde des rangs continus', async () => {
