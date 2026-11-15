@@ -1,7 +1,14 @@
 // Préparation d'une tournée (captures 01, 02 ; CF 4.1, 4.2, RG-07, RG-10).
 import { describe, expect, it } from 'vitest'
 import type { Commande, FicheArticle, LigneDeCommande, ModeleCamion } from './modele'
-import { calculerPlan, deplacer, lirePlan, referenceSuivante } from './tournee'
+import {
+  calculerPlan,
+  deplacer,
+  lignesReportees,
+  lirePlan,
+  regrouperParLigne,
+  referenceSuivante,
+} from './tournee'
 import { validerPlan } from './validateur'
 import { preparerUnites } from './unites'
 
@@ -120,6 +127,15 @@ describe('calculerPlan', () => {
     expect(enTrop.length).toBeGreaterThan(0)
     expect(enTrop[0]).toMatchObject({ ligneCommandeId: 'l1', commandeId: 'c1' })
   })
+
+  it('RG-11 : ignore une ligne reportée en liste d’attente, restée dans sa commande', () => {
+    const commandes = [
+      { commande: commande('c1', 1), lignes: [ligne('l1', 'c1', 1), ligne('l2', 'c1', 2)] },
+    ]
+    const { placements, enTrop } = calculerPlan(commandes, [palette], camion, new Set(['l2']))
+    expect(enTrop).toEqual([])
+    expect(placements.map((p) => p.ligneCommandeId)).toEqual(['l1'])
+  })
 })
 
 // --- Relecture du plan enregistré -------------------------------------------------
@@ -170,5 +186,52 @@ describe('lirePlan', () => {
     )
     expect(placements.map((p) => p.uniteId)).toEqual(['l1-1'])
     expect(aPlacer).toHaveLength(2)
+  })
+
+  it('RG-11 : une ligne reportée n’est ni dans le plan ni à placer', () => {
+    const { unites, placements, aPlacer } = lirePlan(
+      commandes,
+      [palette],
+      [enregistre('l1', 1, 1), enregistre('l2', 1, 2)],
+      new Set(['l2']),
+    )
+    expect(unites.map((u) => u.id)).toEqual(['l1-1'])
+    expect(placements.map((p) => p.uniteId)).toEqual(['l1-1'])
+    expect(aPlacer).toEqual([])
+  })
+})
+
+// --- Report en liste d'attente -------------------------------------------------------
+
+describe('lignesReportees', () => {
+  it('RG-11 : retient les lignes citées par un élément en attente, pas les commandes entières', () => {
+    const element = (id: string, ligneCommandeId: string | null) => ({
+      id,
+      commandeId: 'c1',
+      ligneCommandeId,
+      tourneeOrigineId: 't',
+      rangOrigine: 1,
+      motif: 'depassement' as const,
+      reporteLe: '2026-11-16T08:00:00Z',
+    })
+    expect(lignesReportees([element('e1', 'l2'), element('e2', null)])).toEqual(new Set(['l2']))
+  })
+})
+
+describe('regrouperParLigne', () => {
+  it('RG-11 : compte les unités à reporter de chaque ligne, dans l’ordre des unités', () => {
+    const unites = preparerUnites(
+      [
+        { id: 'c1', rangLivraison: 1, lignes: [ligne('l1', 'c1', 3)] },
+        { id: 'c2', rangLivraison: 2, lignes: [ligne('l2', 'c2', 1)] },
+      ],
+      [palette],
+    )
+    // Dans le désordre : l1-3, l2-1, l1-1.
+    const choisies = ['l1-3', 'l2-1', 'l1-1'].flatMap((id) => unites.filter((u) => u.id === id))
+    expect(regrouperParLigne(choisies)).toEqual([
+      { ligneCommandeId: 'l1', commandeId: 'c1', quantite: 2 },
+      { ligneCommandeId: 'l2', commandeId: 'c2', quantite: 1 },
+    ])
   })
 })
