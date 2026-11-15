@@ -2,7 +2,7 @@
 
 Nov 1, 2026 · @Baptiste Verdon
 
-**Version V5.9, 15 novembre 2026 : tableaux triables par colonne, indication des modifications non enregistrées (RG-21, RG-22), aperçu de l'article sous trois faces. Version V5.8, 4 novembre 2026 : fiche article (case « Peut être livré nu », taille nue, orientations par défaut), camion utilisé non supprimable, rouge étendu aux pertes de données. Version V5.7, 4 novembre 2026 : vérification des saisies (RG-21) et fenêtres de confirmation (RG-22). Version V5.6, 4 novembre 2026 : équilibre de la charge (RG-20), zone « Articles à placer » près des vues. Version V5.5, 4 novembre 2026 : calage des articles (RG-19). Version V5.4, 4 novembre 2026 : formes non rectangulaires (boîte englobante, dessus porteur, RG-18), poids propre à une commande, dimensions mesurées au signalement. Version V5.3, 3 novembre 2026 : charte graphique et principes d'interface (section 7), accessibilité complétée, lignes de cote. Version V5.2, validée le 2 novembre 2026 (RG-07 fondée sur l'accès ; précisions sur les silhouettes et le filtre de profondeur) : vues multiples, vue par étape, zoom, articles cachés et mise en évidence d'une commande ajoutés après la première maquette ; versions précédentes : rotation : rotation, aimantation désactivable, raccourcis personnalisables et zone « Articles à placer » ajoutés.** Ce document s'appuie sur le brief V4 et sur la note de cadrage V5.3, et sur la charte graphique V2.4. Il décrit ce que fait l'application, page par page et règle par règle. Le *comment*, c'est-à-dire les choix techniques, relève du cahier des charges technique.
+**Version V5.10, 16 novembre 2026 : date et camion d'une tournée enregistrés à chaque changement, changement de camion avec un plan déjà calculé (RG-22). Version V5.9, 15 novembre 2026 : tableaux triables par colonne, indication des modifications non enregistrées (RG-21, RG-22), aperçu de l'article sous trois faces. Version V5.8, 4 novembre 2026 : fiche article (case « Peut être livré nu », taille nue, orientations par défaut), camion utilisé non supprimable, rouge étendu aux pertes de données. Version V5.7, 4 novembre 2026 : vérification des saisies (RG-21) et fenêtres de confirmation (RG-22). Version V5.6, 4 novembre 2026 : équilibre de la charge (RG-20), zone « Articles à placer » près des vues. Version V5.5, 4 novembre 2026 : calage des articles (RG-19). Version V5.4, 4 novembre 2026 : formes non rectangulaires (boîte englobante, dessus porteur, RG-18), poids propre à une commande, dimensions mesurées au signalement. Version V5.3, 3 novembre 2026 : charte graphique et principes d'interface (section 7), accessibilité complétée, lignes de cote. Version V5.2, validée le 2 novembre 2026 (RG-07 fondée sur l'accès ; précisions sur les silhouettes et le filtre de profondeur) : vues multiples, vue par étape, zoom, articles cachés et mise en évidence d'une commande ajoutés après la première maquette ; versions précédentes : rotation : rotation, aimantation désactivable, raccourcis personnalisables et zone « Articles à placer » ajoutés.** Ce document s'appuie sur le brief V4 et sur la note de cadrage V5.3, et sur la charte graphique V2.4. Il décrit ce que fait l'application, page par page et règle par règle. Le *comment*, c'est-à-dire les choix techniques, relève du cahier des charges technique.
 
 ## 1. Objet et périmètre
 
@@ -80,7 +80,8 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
 
 ### 4.2 Préparation d'une tournée
 
-- Choix du modèle de camion.
+- Choix de la date de livraison et du modèle de camion. Ils s'enregistrent dès qu'ils changent, sans bouton d'enregistrement : un retour « Enregistré », avec une icône, le confirme et il est annoncé aux lecteurs d'écran. Une tournée en préparation peut attendre sa date et son camion ; ils deviennent obligatoires au lancement du calcul (RG-21).
+- Changer le camion d'une tournée dont le plan est déjà calculé demande confirmation (RG-22) : le plan avait été calculé pour une autre caisse. Après confirmation, le plan est marqué « à recalculer » ; il reste consultable, et le prochain calcul crée une nouvelle version.
 - Ajout de commandes :
   - par la saisie express ;
   - depuis la liste d'attente.
@@ -221,6 +222,7 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
     - annuler tout le chargement (RG-13) ;
     - retirer une commande entière (RG-13) ;
     - enregistrer un modèle de camion utilisé par une tournée en cours ;
+    - changer le camion d'une tournée dont le plan est déjà calculé : le plan est marqué « à recalculer » (bouton de ton neutre) ;
     - quitter un formulaire qui contient des modifications non enregistrées, signalées par la mention « Modifications non enregistrées » (RG-21).
   - Forme :
     - un titre en question (« Supprimer « Poutre lamellé-collé » ? ») ;
@@ -336,7 +338,7 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
 ## 10. État du projet
 
 - **Étape atteinte** : Cahier des charges fonctionnel V5.9 du 15 novembre 2026 : tableaux triables, indication des modifications non enregistrées, aperçu de l'article sous trois faces, ajoutés pendant le développement du prototype 1 (étape 8b). V5.8 du 4 novembre 2026 : formes non rectangulaires, poids par commande, dimensions mesurées, calage, équilibre, zone « Articles à placer », vérification des saisies et confirmations validés. La V5.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3 et le cahier des charges technique V3.9 sont rédigés.
-- **Prochaine étape** : suite du développement du prototype 1 avec Claude Code (étape 9, tournées et commandes), d'après les maquettes validées le 4 novembre 2026.
+- **Prochaine étape** : suite du développement du prototype 1 avec Claude Code (étape 10, plan de chargement), d'après les maquettes validées le 4 novembre 2026. La V5.10 du 16 novembre 2026 précise la préparation d'une tournée (étape 9).
 - **Profil du client** : technique (développeur), sans connaissance du métier.
 - **Direction artistique** : piste retenue (charte graphique V2) ; ligne directrice pour le maquettiste.
 - **Décisions prises** :
