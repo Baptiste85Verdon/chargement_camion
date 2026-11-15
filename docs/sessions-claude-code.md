@@ -150,21 +150,28 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 - Enregistrement d'une commande en une seule opération « tout ou rien » (fonction SQL appelée par le dépôt), au lieu des trois requêtes de l'étape 6.
 - Modifier une commande ne vide pas tout son placement : changer le numéro, le client ou la ville ne touche pas au plan ; seules les lignes vraiment changées (article, quantité, dimensions, poids) perdent leur placement et passent dans la zone « Articles à placer », avec un message. Le dépôt de l'étape 6 remplace encore toutes les lignes : son test de contrat « remplace toutes les lignes » est à revoir.
 
-## Étape 10 · Plan de chargement
+## Étape 10a · Plan de chargement : les vues
 
-- [ ] Fait — branche `feat/p1-plan-chargement`
-- Captures 04, 04a à 04e. Cahier technique : sections 5.1, 5.8 à 5.12, 5.14, 5.16 et 5.17.
+- [ ] Fait — branche `feat/p1-plan-vues`
+- Captures 04, 04c, 04d, 04e. Cahier technique : sections 5.1, 5.8 à 5.12 et 5.14.
+- Utilisable seule une fois fusionnée : la page du plan affiche le dernier plan calculé d'une tournée, sans les fonctions de l'étape 10b.
 - Ce qui est à construire :
+  - la page du plan, ouverte depuis la préparation de la tournée ;
   - deux cadres de vue avec leurs sélecteurs ;
   - repères Fond / Portes, cotes, zoom, articles cachés et filtre de profondeur ;
   - mise en évidence d'une commande, vue par étape avec silhouettes ;
-  - tableau des placements, ordre de chargement ;
+  - tableau des placements, ordre de chargement, sélection d'un article.
+
+## Étape 10b · Plan de chargement : équilibre, calage et dépassement
+
+- [ ] Fait — branche `feat/p1-plan-chargement`
+- Captures 04, 04a, 04b. Cahier technique : sections 5.7, 5.16 et 5.17. RG-10, RG-11, RG-19, RG-20.
+- Ce qui est à construire :
   - carte d'équilibre avec le centre de gravité, bandeau de calage ;
   - dépassement et report dans la zone « Articles à placer » ;
   - report d'une partie seulement d'une ligne (1 unité sur 2, par exemple) : la ligne est scindée en deux, la partie reportée devient une ligne à part, citée par l'élément en attente ;
   - recalcul de la tournée d'origine : une ligne reportée, qui reste dans sa commande d'origine, est ignorée par le calcul.
 - Le plan peut être marqué « à recalculer » (camion changé, étape 9) : la page le dit et propose de relancer le calcul.
-- Peut être découpée en deux sessions si elle est trop longue : d'abord les vues, puis le reste.
 
 ## Étape 11 · Recette du prototype 1
 
