@@ -259,7 +259,7 @@ Le parcours de préparation, de l'accueil jusqu'au mode quai, suit simplement l'
 - **Rapidité de saisie** : la saisie express permet de créer une commande et ses articles en quelques actions.
 - **Messages** : chaque blocage ou alerte explique la règle en cause en langage courant (RG-08, RG-09, RG-10, RG-19).
 - **Formulaires** : les erreurs de saisie s'affichent sous les champs, jamais dans une fenêtre surgissante (RG-21). Les modifications non enregistrées sont signalées près du bouton d'enregistrement (RG-21). Les fenêtres de confirmation sont réservées aux actions destructrices ou irréversibles (RG-22).
-- **Tableaux** : les listes en tableau (catalogue, modèles de camions) se trient par colonne, d'un clic ou au clavier sur l'en-tête : ordre croissant, puis décroissant, puis retour à l'ordre de départ. Le sens du tri est indiqué par une flèche et annoncé aux lecteurs d'écran. Un bouton « Rétablir l'ordre de départ » permet aussi d'y revenir à tout moment.
+- **Tableaux** : les listes en tableau (catalogue, modèles de camions) se trient par colonne, d'un clic ou au clavier sur l'en-tête : ordre croissant, puis décroissant, puis retour à l'ordre de départ. Le sens du tri est indiqué par une flèche et annoncé aux lecteurs d'écran. Dans tous les tableaux, le nom d'un élément est un lien vers sa fiche, et toute la ligne est cliquable, avec un survol visible et un chevron « › » en fin de ligne ; il n'y a pas de bouton « Ouvrir » séparé. Les autres boutons d'une ligne (« Réactiver ») restent cliquables seuls.
 - **Données d'exemple** : l'application est utilisable dès le premier lancement grâce à la base générée (RG-01).
 
 ### Charte graphique et principes d'interface
@@ -365,6 +365,7 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
   - fiche article : case « Peut être livré nu », taille nue jamais plus grande qu'emballée, orientations par défaut selon la famille ;
   - camion utilisé par une tournée en cours non supprimable ;
   - tableaux triables par colonne, modèles de camions triés par nom par défaut ;
+  - dans tous les tableaux, ligne cliquable vers la fiche de l'élément, sans bouton « Ouvrir » ;
   - modifications non enregistrées signalées près du bouton d'enregistrement ;
   - aperçu de l'article sous trois faces (dessus, face, côté).
 - **Priorités** : définitives, voir la section 2.

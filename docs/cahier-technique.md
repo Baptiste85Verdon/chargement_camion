@@ -377,7 +377,7 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
 
 - **Un seul composant** `TableauTriable`, générique : il reçoit les colonnes (libellé, valeur de tri facultative, alignement) et les lignes ; chaque cellule est remplie par un emplacement nommé.
 - **En-tête** : une colonne triable contient un vrai `<button>`, qui se déclenche à la souris, à Entrée et à Espace. Clics successifs sur un même en-tête : ordre croissant, ordre décroissant, puis retour au tri de départ. Une flèche montre le sens (jamais la couleur seule).
-- **Retour au tri de départ** : dès que le tri s'écarte de celui de départ, un bouton « Rétablir l'ordre de départ » apparaît au-dessus du tableau ; il disparaît une fois l'ordre rétabli.
+- **Lignes qui ouvrent une fiche** : même comportement dans tous les tableaux. Le nom de l'élément (en-tête de ligne, `<th scope="row">`) est un lien vers sa fiche, en `action`, souligné au survol et au focus. Ce lien est « étiré » sur la ligne : un pseudo-élément en position absolue la couvre, la ligne servant de repère (`position: relative`). Toute la ligne est donc cliquable, avec un survol `surface-survol`, mais il n'y a qu'un lien par ligne pour le clavier et les lecteurs d'écran. Un chevron « › » termine la ligne ; son icône est décorative (`aria-hidden`), et l'en-tête de sa colonne n'est lu que par les lecteurs d'écran. Les autres boutons et liens de la ligne passent au-dessus du lien étiré (`z-index`) et restent cliquables seuls. Pas de bouton « Ouvrir » séparé.
 - **Accessibilité** : la colonne triée porte `aria-sort` (`ascending` ou `descending`), les autres n'en portent pas ; la légende du tableau, lue par les lecteurs d'écran, rappelle le tri en cours.
 - **Comparaison** : fonctions pures (`composants/tri.ts`), testées sans interface. Textes comparés à la française, sans tenir compte de la casse ni des accents, nombres contenus comparés comme des nombres (« Porteur 8,5 m » avant « Porteur 12 m ») ; dimensions comparées longueur, puis largeur, puis hauteur. Le tri est stable : sans tri choisi ou entre deux lignes égales, l'ordre reçu est gardé.
 - **Tri par défaut** : choisi par la page. Le catalogue garde l'ordre des familles ; les modèles de camions sont triés par nom.
@@ -586,7 +586,7 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
   - zone « Articles à placer » à côté des vues, glisser-déposer comme moyen principal ;
   - validation des saisies en fonctions pures dans `domaine/`, contraintes SQL en seconde barrière ;
   - fenêtres de confirmation en `<dialog>` natif, un seul composant ;
-  - tableaux triables par un seul composant (`TableauTriable`), avec `aria-sort` ;
+  - tableaux triables par un seul composant (`TableauTriable`), avec `aria-sort`, retour au tri de départ au troisième clic, et lignes cliquables vers la fiche par un lien étiré ;
   - indication des modifications non enregistrées par un seul composant (`BoutonEnregistrer`) ;
   - nombres alignés à gauche dans les champs, à droite dans les tableaux.
 - **Points à arbitrer** : aucun.
