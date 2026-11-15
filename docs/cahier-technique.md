@@ -2,7 +2,7 @@
 
 Nov 2, 2026 · @Baptiste Verdon
 
-**Version V3.8, 4 novembre 2026 : formulaires (RG-21) et fenêtres de confirmation (RG-22). Version V3.7, 4 novembre 2026 : seuil d'appui provisoire fixé à 60 %, statut d'équilibre jugé sur les pourcentages affichés. Version V3.6, 4 novembre 2026 : choix du meilleur plan (variantes et échanges), mesure de l'équilibre (RG-20) et son indicateur, zone « Articles à placer » près des vues. Version V3.5, 4 novembre 2026 : calage des articles (RG-19) dans le validateur et le placeur, jeu d'essai « couloirs » chiffré. Version V3.4, 4 novembre 2026 : boîte englobante et dessus porteur (RG-18), poids effectif d'une ligne de commande, dimensions mesurées au signalement. Version V3.3, 3 novembre 2026 : charte graphique dans le code (polices, icônes, jetons), rendu des blocs, lignes de cote, atténuation sans opacité. Version V3.2, validée le 2 novembre 2026 (accès au déchargement en 3D, critère de compacité, jeu d'essai « couloirs » ; précisions sur les silhouettes et le filtre de profondeur).** Ce document traduit en choix techniques le cahier des charges fonctionnel V5.8, la note de cadrage V5.3, le brief V4 et la charte graphique V2.4. Les références RG renvoient aux règles de gestion du cahier fonctionnel. Il sert de spécification de départ pour le développement avec Claude Code.
+**Version V3.9, 15 novembre 2026 : composant de tableau triable, indication des modifications non enregistrées (6.1), alignement des nombres, lignes de cote en composant, unité d'affichage en point ouvert. Version V3.8, 4 novembre 2026 : formulaires (RG-21) et fenêtres de confirmation (RG-22). Version V3.7, 4 novembre 2026 : seuil d'appui provisoire fixé à 60 %, statut d'équilibre jugé sur les pourcentages affichés. Version V3.6, 4 novembre 2026 : choix du meilleur plan (variantes et échanges), mesure de l'équilibre (RG-20) et son indicateur, zone « Articles à placer » près des vues. Version V3.5, 4 novembre 2026 : calage des articles (RG-19) dans le validateur et le placeur, jeu d'essai « couloirs » chiffré. Version V3.4, 4 novembre 2026 : boîte englobante et dessus porteur (RG-18), poids effectif d'une ligne de commande, dimensions mesurées au signalement. Version V3.3, 3 novembre 2026 : charte graphique dans le code (polices, icônes, jetons), rendu des blocs, lignes de cote, atténuation sans opacité. Version V3.2, validée le 2 novembre 2026 (accès au déchargement en 3D, critère de compacité, jeu d'essai « couloirs » ; précisions sur les silhouettes et le filtre de profondeur).** Ce document traduit en choix techniques le cahier des charges fonctionnel V5.9, la note de cadrage V5.3, le brief V4 et la charte graphique V2.4. Les références RG renvoient aux règles de gestion du cahier fonctionnel. Il sert de spécification de départ pour le développement avec Claude Code.
 
 ## 1. Architecture générale
 
@@ -278,6 +278,7 @@ Dans une vue, un article peut être entièrement masqué par ceux de devant : su
 - La caisse est cotée dans chaque vue : la longueur sous la vue, la largeur ou la hauteur sur le côté. Trait de 1 px `cote`, flèches aux extrémités, valeur en millimètres en IBM Plex Mono (« 7 200 mm »).
 - L'article sélectionné affiche ses propres cotes, en `action` : ses dimensions et sa distance au fond.
 - Les cotes appartiennent au calque de libellés : elles suivent le zoom en position, mais gardent une taille lisible.
+- Dans les fiches, un composant `LigneCote` dessine une cote en HTML (trait, flèche pleine à chaque extrémité, valeur au milieu) et `PlanCote` l'emploie autour d'un dessin SVG en millimètres : vues de la caisse dans la fiche camion, faces de l'article (dessus, face, côté) dans la fiche article. Une cote plus courte que sa valeur garde la hauteur du dessin ; la valeur dépasse, centrée, sur fond `surface`.
 - Deux fonctions pures, développées en TDD comme `projeter` :
   - `coterCaisse(camion, vue)` renvoie les cotes de la caisse ;
   - `coter(placement, unite, camion, vue)` renvoie celles de l'article : ses dimensions telles qu'il est posé, puis sa distance au fond.
@@ -361,7 +362,8 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
   - à l'enregistrement, un résumé `role="alert"` reçoit le focus, avec un lien vers chaque champ en erreur ;
   - les champs obligatoires portent `aria-required="true"` et la mention « (obligatoire) » dans leur libellé.
 - **Seconde barrière dans la base** : contraintes SQL dans les migrations Supabase (`NOT NULL`, `CHECK` des valeurs supérieures à 0, `CHECK` taille nue complète ou vide, `UNIQUE (tournee_id, numero)` pour les commandes). Une erreur renvoyée par la base est traduite en message de champ, jamais affichée brute.
-- **Modifications non enregistrées** : chaque formulaire suit un état « modifié ». Quitter la page, par la navigation (`onBeforeRouteLeave` de Vue Router) ou en fermant l'onglet (`beforeunload`), déclenche la confirmation de RG-22.
+- **Modifications non enregistrées** : chaque formulaire suit un état « modifié », vrai tant que la saisie diffère de ce qui est enregistré. Un seul composant, `BoutonEnregistrer`, l'affiche dans tous les formulaires : la mention « Modifications non enregistrées », avec une icône, dans une zone `role="status"` présente dès l'affichage, et le bouton d'enregistrement en style principal tant que l'état est vrai, secondaire sinon, toujours actif. Quitter la page, par la navigation (`onBeforeRouteLeave` de Vue Router) ou en fermant l'onglet (`beforeunload`), déclenche la confirmation de RG-22.
+- **Alignement des nombres** : dans un champ de saisie, les nombres sont alignés à gauche, comme tout texte saisi, en IBM Plex Mono. Dans un tableau, ils sont alignés à droite, pour se comparer d'une ligne à l'autre.
 
 ### 6.2 Fenêtres de confirmation (RG-22)
 
@@ -370,6 +372,14 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
 - **Accessibilité** : le titre est relié par `aria-labelledby` et la conséquence par `aria-describedby`.
 - **Rendu** : voile `voile` derrière la fenêtre, carte `surface` aux coins `rayon-carte` avec `ombre-flottant`, bouton de suppression sur fond `erreur`.
 - **Un seul composant** `ConfirmationDialog`, avec un titre, un texte de conséquence, le libellé de l'action et un ton (`danger` ou `neutre`). Il est utilisé par tous les cas listés en RG-22.
+
+### 6.3 Tableaux triables
+
+- **Un seul composant** `TableauTriable`, générique : il reçoit les colonnes (libellé, valeur de tri facultative, alignement) et les lignes ; chaque cellule est remplie par un emplacement nommé.
+- **En-tête** : une colonne triable contient un vrai `<button>`, qui se déclenche à la souris, à Entrée et à Espace. Le premier clic trie en ordre croissant, le suivant inverse le sens. Une flèche montre le sens (jamais la couleur seule).
+- **Accessibilité** : la colonne triée porte `aria-sort` (`ascending` ou `descending`), les autres n'en portent pas ; la légende du tableau, lue par les lecteurs d'écran, rappelle le tri en cours.
+- **Comparaison** : fonctions pures (`composants/tri.ts`), testées sans interface. Textes comparés à la française, sans tenir compte de la casse ni des accents, nombres contenus comparés comme des nombres (« Porteur 8,5 m » avant « Porteur 12 m ») ; dimensions comparées longueur, puis largeur, puis hauteur. Le tri est stable : sans tri choisi ou entre deux lignes égales, l'ordre reçu est gardé.
+- **Tri par défaut** : choisi par la page. Le catalogue garde l'ordre des familles ; les modèles de camions sont triés par nom.
 
 ## 7. Données, hébergement et hors connexion
 
@@ -536,13 +546,14 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
 - [ ] **Seuils de calage** : `SEUIL_CALAGE` (0,5), `TOLERANCE_CONTACT` (20 mm) et l'écart de compacité du placeur (100 mm), provisoires, à confirmer avec un professionnel.
 - [ ] **Seuils d'équilibre et variantes** : `SEUILS_EQUILIBRE` (55 % et 60 %), nombre de variantes du placeur (16), poids proches (`ECART_POIDS_PROCHE` : la plus légère pèse au moins 90 % de la plus lourde) et nombre maximal d'essais d'échange (`MAX_ESSAIS_ECHANGES`, 500), provisoires.
 - [ ] **Lourds en hauteur** : `POIDS_LOURD` (500 kg) et `HAUTEUR_MAX_LOURD` (1 000 mm), provisoires, à confirmer avec un professionnel.
+- [ ] **Unité d'affichage et de saisie (V2)** : la V1 affiche et saisit toutes les dimensions en millimètres. Faut-il permettre de choisir l'unité (mm, cm ou m), pour l'affichage et pour la saisie ? Les données restent en millimètres entiers ; seule la conversion à l'écran changerait. À décider pour la V2.
 - [ ] **Passage pour un article long** : quelle est la largeur minimale d'un passage pour glisser un article long au plancher ? À valider avec un professionnel. Sur « couloirs », `optimiser` glisse les poutres de C1 (6 m) dans un passage de 400 mm entre deux palettes ; aucune règle ne l'interdit aujourd'hui.
 
 ## 11. État du projet
 
-- **Étape atteinte** : Cahier des charges technique V3.8 du 4 novembre 2026 (formulaires et confirmations, seuil d'appui provisoire, arrondi du statut d'équilibre, boîte englobante, poids par commande, dimensions mesurées, calage, équilibre, jeu d'essai « couloirs » chiffré). La V3.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3, le cahier fonctionnel V5.8 et la charte graphique V2.4 sont rédigés.
+- **Étape atteinte** : Cahier des charges technique V3.9 du 15 novembre 2026 (tableau triable, indication des modifications non enregistrées, alignement des nombres, lignes de cote en composant), ajoutée pendant le développement du prototype 1 (étape 8b). V3.8 du 4 novembre 2026 (formulaires et confirmations, seuil d'appui provisoire, arrondi du statut d'équilibre, boîte englobante, poids par commande, dimensions mesurées, calage, équilibre, jeu d'essai « couloirs » chiffré). La V3.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3, le cahier fonctionnel V5.9 et la charte graphique V2.4 sont rédigés.
 - **Direction artistique** : piste retenue (charte graphique V2 et fichier de jetons) ; ligne directrice pour le maquettiste.
-- **Prochaine étape** : vérification des maquettes du prototype 1 (Claude Design) par le porteur et le maquettiste, puis développement du prototype 1 avec Claude Code.
+- **Prochaine étape** : suite du développement du prototype 1 avec Claude Code (étape 9, tournées et commandes).
 - **Profil du client** : technique (développeur), sans connaissance du métier.
 - **Décisions prises** :
   - Vue 3 + TypeScript + Vite, choix pressenti ;
@@ -573,12 +584,16 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
   - choix du meilleur plan par variantes et échanges (`optimiser`), équilibre mesuré au pire moment de la tournée (`mesurerEquilibre`) et son indicateur ;
   - zone « Articles à placer » à côté des vues, glisser-déposer comme moyen principal ;
   - validation des saisies en fonctions pures dans `domaine/`, contraintes SQL en seconde barrière ;
-  - fenêtres de confirmation en `<dialog>` natif, un seul composant.
+  - fenêtres de confirmation en `<dialog>` natif, un seul composant ;
+  - tableaux triables par un seul composant (`TableauTriable`), avec `aria-sort` ;
+  - indication des modifications non enregistrées par un seul composant (`BoutonEnregistrer`) ;
+  - nombres alignés à gauche dans les champs, à droite dans les tableaux.
 - **Points à arbitrer** : aucun.
 - **Informations à définir** :
   - seuil d'appui ;
   - pas de déplacement au clavier ;
   - hébergeur statique ;
+  - unité d'affichage et de saisie des dimensions (V2) ;
   - nom et logo de l'application ;
   - seuils de calage ;
   - seuils d'équilibre et nombre de variantes ;

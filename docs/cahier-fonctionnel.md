@@ -2,7 +2,7 @@
 
 Nov 1, 2026 · @Baptiste Verdon
 
-**Version V5.8, 4 novembre 2026 : fiche article (case « Peut être livré nu », taille nue, orientations par défaut), camion utilisé non supprimable, rouge étendu aux pertes de données. Version V5.7, 4 novembre 2026 : vérification des saisies (RG-21) et fenêtres de confirmation (RG-22). Version V5.6, 4 novembre 2026 : équilibre de la charge (RG-20), zone « Articles à placer » près des vues. Version V5.5, 4 novembre 2026 : calage des articles (RG-19). Version V5.4, 4 novembre 2026 : formes non rectangulaires (boîte englobante, dessus porteur, RG-18), poids propre à une commande, dimensions mesurées au signalement. Version V5.3, 3 novembre 2026 : charte graphique et principes d'interface (section 7), accessibilité complétée, lignes de cote. Version V5.2, validée le 2 novembre 2026 (RG-07 fondée sur l'accès ; précisions sur les silhouettes et le filtre de profondeur) : vues multiples, vue par étape, zoom, articles cachés et mise en évidence d'une commande ajoutés après la première maquette ; versions précédentes : rotation : rotation, aimantation désactivable, raccourcis personnalisables et zone « Articles à placer » ajoutés.** Ce document s'appuie sur le brief V4 et sur la note de cadrage V5.3, et sur la charte graphique V2.4. Il décrit ce que fait l'application, page par page et règle par règle. Le *comment*, c'est-à-dire les choix techniques, relève du cahier des charges technique.
+**Version V5.9, 15 novembre 2026 : tableaux triables par colonne, indication des modifications non enregistrées (RG-21, RG-22), aperçu de l'article sous trois faces. Version V5.8, 4 novembre 2026 : fiche article (case « Peut être livré nu », taille nue, orientations par défaut), camion utilisé non supprimable, rouge étendu aux pertes de données. Version V5.7, 4 novembre 2026 : vérification des saisies (RG-21) et fenêtres de confirmation (RG-22). Version V5.6, 4 novembre 2026 : équilibre de la charge (RG-20), zone « Articles à placer » près des vues. Version V5.5, 4 novembre 2026 : calage des articles (RG-19). Version V5.4, 4 novembre 2026 : formes non rectangulaires (boîte englobante, dessus porteur, RG-18), poids propre à une commande, dimensions mesurées au signalement. Version V5.3, 3 novembre 2026 : charte graphique et principes d'interface (section 7), accessibilité complétée, lignes de cote. Version V5.2, validée le 2 novembre 2026 (RG-07 fondée sur l'accès ; précisions sur les silhouettes et le filtre de profondeur) : vues multiples, vue par étape, zoom, articles cachés et mise en évidence d'une commande ajoutés après la première maquette ; versions précédentes : rotation : rotation, aimantation désactivable, raccourcis personnalisables et zone « Articles à placer » ajoutés.** Ce document s'appuie sur le brief V4 et sur la note de cadrage V5.3, et sur la charte graphique V2.4. Il décrit ce que fait l'application, page par page et règle par règle. Le *comment*, c'est-à-dire les choix techniques, relève du cahier des charges technique.
 
 ## 1. Objet et périmètre
 
@@ -118,13 +118,14 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
 
 ### 4.6 Catalogue des articles et fiche article
 
-- Liste des articles, avec recherche et filtre par famille.
+- Liste des articles, avec recherche et filtre par famille. Le tableau se trie par colonne d'un clic sur son en-tête ; sans tri choisi, les articles sont rangés par famille.
 - Création, modification et suppression d'articles (RG-02), avec leur forme et leur dessus porteur (RG-18). Les orientations sont proposées par défaut selon la famille, d'après RG-04 : une fenêtre « debout », une plaque « à plat » et « contre une paroi ». L'utilisateur reste libre de les changer.
+- La fiche montre un aperçu coté de l'article posé à plat, sous trois faces au choix : dessus (longueur × largeur), face (longueur × hauteur) et côté (largeur × hauteur). La taille nue, quand il y en a une, y figure en pointillés.
 - Base d'exemple générée au premier lancement (RG-01).
 
 ### 4.7 Modèles de camions et fiche camion
 
-- Liste des modèles, avec création, modification et suppression. Un modèle utilisé par une tournée en préparation, prête ou en chargement ne peut pas être supprimé (RG-21).
+- Liste des modèles, triée par nom par défaut et triable par colonne, avec création, modification et suppression. Un modèle utilisé par une tournée en préparation, prête ou en chargement ne peut pas être supprimé (RG-21).
 - Modèles d'exemple générés au premier lancement.
 
 ### 4.8 Liste d'attente
@@ -196,6 +197,7 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
 - **RG-21** *(numérotée à la suite)* : vérification des saisies.
   - Chaque champ obligatoire porte la mention « (obligatoire) » en texte.
   - Les champs sont vérifiés quand on les quitte, puis à l'enregistrement. Une erreur disparaît dès que la valeur est corrigée. Le bouton d'enregistrement reste toujours actif.
+  - Tant qu'un formulaire contient des modifications non enregistrées, la mention « Modifications non enregistrées » s'affiche près du bouton d'enregistrement, avec une icône, et ce bouton est mis en avant. Elle disparaît à l'enregistrement. Quitter le formulaire dans cet état demande confirmation (RG-22).
   - Une **erreur** bloque l'enregistrement : champ obligatoire vide, valeur invalide, doublon interdit. Elle s'affiche sous le champ, en rouge, avec une icône et un message qui dit comment corriger : « Indiquez un nombre entier de millimètres, par exemple 1 250. » À l'enregistrement, un résumé en haut du formulaire compte les champs à corriger (« 2 champs à corriger »), avec un lien vers chacun.
   - Un **avertissement** ne bloque pas : il s'affiche en ambre sous le champ, et l'utilisateur peut enregistrer.
   - Il n'y a pas de bornes de plausibilité : une valeur valide mais inhabituelle n'est pas signalée, l'utilisateur en juge lui-même.
@@ -219,7 +221,7 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
     - annuler tout le chargement (RG-13) ;
     - retirer une commande entière (RG-13) ;
     - enregistrer un modèle de camion utilisé par une tournée en cours ;
-    - quitter un formulaire qui contient des modifications non enregistrées.
+    - quitter un formulaire qui contient des modifications non enregistrées, signalées par la mention « Modifications non enregistrées » (RG-21).
   - Forme :
     - un titre en question (« Supprimer « Poutre lamellé-collé » ? ») ;
     - la conséquence concrète (« Cet article n'est utilisé dans aucune commande. Il sera définitivement supprimé. ») ;
@@ -256,7 +258,8 @@ Le parcours de préparation, de l'accueil jusqu'au mode quai, suit simplement l'
   - le mode quai doit être confortable sur tablette, avec de grandes zones tactiles et un contenu limité à l'étape en cours.
 - **Rapidité de saisie** : la saisie express permet de créer une commande et ses articles en quelques actions.
 - **Messages** : chaque blocage ou alerte explique la règle en cause en langage courant (RG-08, RG-09, RG-10, RG-19).
-- **Formulaires** : les erreurs de saisie s'affichent sous les champs, jamais dans une fenêtre surgissante (RG-21). Les fenêtres de confirmation sont réservées aux actions destructrices ou irréversibles (RG-22).
+- **Formulaires** : les erreurs de saisie s'affichent sous les champs, jamais dans une fenêtre surgissante (RG-21). Les modifications non enregistrées sont signalées près du bouton d'enregistrement (RG-21). Les fenêtres de confirmation sont réservées aux actions destructrices ou irréversibles (RG-22).
+- **Tableaux** : les listes en tableau (catalogue, modèles de camions) se trient par colonne, d'un clic ou au clavier sur l'en-tête ; le sens du tri est indiqué par une flèche et annoncé aux lecteurs d'écran.
 - **Données d'exemple** : l'application est utilisable dès le premier lancement grâce à la base générée (RG-01).
 
 ### Charte graphique et principes d'interface
@@ -332,8 +335,8 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
 
 ## 10. État du projet
 
-- **Étape atteinte** : Cahier des charges fonctionnel V5.8 du 4 novembre 2026 : formes non rectangulaires, poids par commande, dimensions mesurées, calage, équilibre, zone « Articles à placer », vérification des saisies et confirmations validés. La V5.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3 et le cahier des charges technique V3.8 sont rédigés.
-- **Prochaine étape** : vérification des maquettes du prototype 1 (Claude Design) par le porteur et le maquettiste, puis développement du prototype 1 avec Claude Code.
+- **Étape atteinte** : Cahier des charges fonctionnel V5.9 du 15 novembre 2026 : tableaux triables, indication des modifications non enregistrées, aperçu de l'article sous trois faces, ajoutés pendant le développement du prototype 1 (étape 8b). V5.8 du 4 novembre 2026 : formes non rectangulaires, poids par commande, dimensions mesurées, calage, équilibre, zone « Articles à placer », vérification des saisies et confirmations validés. La V5.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3 et le cahier des charges technique V3.9 sont rédigés.
+- **Prochaine étape** : suite du développement du prototype 1 avec Claude Code (étape 9, tournées et commandes), d'après les maquettes validées le 4 novembre 2026.
 - **Profil du client** : technique (développeur), sans connaissance du métier.
 - **Direction artistique** : piste retenue (charte graphique V2) ; ligne directrice pour le maquettiste.
 - **Décisions prises** :
@@ -360,7 +363,10 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
   - vérification des saisies (RG-21) : erreurs en rouge sous les champs et résumé, avertissements en ambre, pas de bornes de plausibilité, numéro de commande unique, nom d'article en double seulement signalé ;
   - confirmations (RG-22) avant chaque action destructrice ou irréversible, bouton rouge pour toute perte de données ;
   - fiche article : case « Peut être livré nu », taille nue jamais plus grande qu'emballée, orientations par défaut selon la famille ;
-  - camion utilisé par une tournée en cours non supprimable.
+  - camion utilisé par une tournée en cours non supprimable ;
+  - tableaux triables par colonne, modèles de camions triés par nom par défaut ;
+  - modifications non enregistrées signalées près du bouton d'enregistrement ;
+  - aperçu de l'article sous trois faces (dessus, face, côté).
 - **Priorités** : définitives, voir la section 2.
 - **Points à arbitrer** : aucun.
 - **Informations à définir** :
