@@ -165,7 +165,7 @@ const descriptions = computed(() => {
 
 /* Laisse la place de l'unité, posée à droite dans le champ. */
 .champ__saisie--unite {
-  padding-right: var(--espace-7);
+  padding-right: calc(var(--espace-7) + var(--espace-2));
 }
 
 .champ__unite {
@@ -176,10 +176,18 @@ const descriptions = computed(() => {
   pointer-events: none;
 }
 
-/* Erreur : contour de 2 px ; on retire 1 px de marge pour que le texte ne bouge pas. */
+/*
+ * Erreur : contour de 2 px au lieu de 1. On retire 1 px de marge intérieure
+ * de chaque côté pour que le texte saisi ne bouge pas quand l'erreur apparaît.
+ */
 .champ--erreur .champ__saisie {
+  padding-right: calc(var(--espace-3) - 1px);
   padding-left: calc(var(--espace-3) - 1px);
   border: 2px solid var(--erreur);
+}
+
+.champ--erreur .champ__saisie--unite {
+  padding-right: calc(var(--espace-7) + var(--espace-2) - 1px);
 }
 
 .champ--desactive .champ__saisie {
