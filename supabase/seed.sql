@@ -134,3 +134,36 @@ insert into public.ligne_commande (
   ('e0000000-0000-4000-8000-000000000007', 'd0000000-0000-4000-8000-000000000004',
     'a0000000-0000-4000-8000-000000000018', 1, false, null, null, null, null, false, 2)
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Liste d'attente (capture 10, RG-11) : une commande entière reportée de la
+-- tournée T-2026-117, déjà chargée, faute de place.
+-- ---------------------------------------------------------------------------
+insert into public.tournee (id, reference, date_livraison, modele_camion_id, statut) values
+  ('b0000000-0000-4000-8000-000000000117', 'T-2026-117', '2026-11-04',
+    'c0000000-0000-4000-8000-000000000003', 'chargee')
+on conflict (id) do nothing;
+
+-- En attente, la commande n'a plus de tournée ni de rang.
+insert into public.commande (id, tournee_id, numero, destination, ville, rang_livraison) values
+  ('d0000000-0000-4000-8000-000000000412', null,
+    'CMD-2026-0412', 'Couverture Bernard', 'Orvault', null)
+on conflict (id) do nothing;
+
+insert into public.ligne_commande (
+  id, commande_id, article_id, quantite, nu,
+  longueur_propre, largeur_propre, hauteur_propre, poids_propre, poids_estime, numero_ligne
+) values
+  ('e0000000-0000-4000-8000-000000000412', 'd0000000-0000-4000-8000-000000000412',
+    'a0000000-0000-4000-8000-000000000019', 2, false, null, null, null, null, false, 1),
+  ('e0000000-0000-4000-8000-000000000413', 'd0000000-0000-4000-8000-000000000412',
+    'a0000000-0000-4000-8000-000000000021', 1, false, null, null, null, null, false, 2)
+on conflict (id) do nothing;
+
+-- C5 dans la tournée d'origine : rang_origine garde ce code.
+insert into public.element_attente (
+  id, commande_id, ligne_commande_id, tournee_origine_id, rang_origine, motif, cree_le
+) values
+  ('f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000412', null,
+    'b0000000-0000-4000-8000-000000000117', 5, 'depassement', '2026-11-02T08:00:00+00:00')
+on conflict (id) do nothing;

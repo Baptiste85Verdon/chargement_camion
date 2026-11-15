@@ -67,6 +67,18 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
       ...modif,
     })
 
+    /** Un placement minimal de l'unité 1 d'une ligne, au rang donné. */
+    const poser = (ligneCommandeId: string, rang: number) => ({
+      ligneCommandeId,
+      numeroUnite: 1,
+      x: 0,
+      y: 0,
+      z: 0,
+      orientation: 'aPlat' as const,
+      rang,
+      statut: 'aFaire' as const,
+    })
+
     describe('articles', () => {
       it('crée un article, lui donne un identifiant et le relit à l’identique', async () => {
         const cree = await depots.articles.enregistrer(fenetre)
@@ -239,7 +251,12 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
             poidsEstime: true,
           },
         ])
-        expect(await depots.commandes.obtenir(resultat.commande.id)).toEqual(resultat)
+        // Une nouvelle commande : toutes ses lignes sont à placer.
+        expect(resultat.lignesChangees).toEqual([resultat.lignes[0]?.id])
+        expect(await depots.commandes.obtenir(resultat.commande.id)).toEqual({
+          commande: resultat.commande,
+          lignes: resultat.lignes,
+        })
       })
 
       it('liste les commandes d’une tournée par rang de livraison', async () => {
@@ -280,21 +297,143 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
         ).rejects.toMatchObject({ code: 'doublon', champ: 'numero' })
       })
 
-      it('remplace toutes les lignes à chaque enregistrement', async () => {
+      it('modifie les lignes en place : une ligne retirée disparaît, les autres gardent leur identifiant', async () => {
         const plaque = await depots.articles.enregistrer(ba13)
         const fen = await depots.articles.enregistrer(fenetre)
         const t = await tournee()
-        const { commande } = await depots.commandes.enregistrer(
+        const { commande, lignes } = await depots.commandes.enregistrer(
           { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
           [ligne(plaque.id), ligne(fen.id)],
         )
+        const [, deuxieme] = lignes
         const modifiee = await depots.commandes.enregistrer(commande, [
-          ligne(fen.id, { quantite: 5, nu: true }),
+          { ...ligne(fen.id, { quantite: 5, nu: true }), id: deuxieme?.id },
         ])
-        expect(modifiee.lignes.map((l) => [l.articleId, l.quantite, l.nu])).toEqual([
-          [fen.id, 5, true],
+        expect(modifiee.lignes.map((l) => [l.id, l.articleId, l.quantite, l.nu])).toEqual([
+          [deuxieme?.id, fen.id, 5, true],
         ])
         expect((await depots.commandes.obtenir(commande.id))?.lignes).toHaveLength(1)
+      })
+
+      it('garde l’ordre de saisie des lignes, même réordonnées', async () => {
+        const plaque = await depots.articles.enregistrer(ba13)
+        const fen = await depots.articles.enregistrer(fenetre)
+        const t = await tournee()
+        const { commande, lignes } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+          [ligne(plaque.id), ligne(fen.id)],
+        )
+        const [a, b] = lignes
+        const inversee = await depots.commandes.enregistrer(commande, [
+          { ...ligne(fen.id), id: b?.id },
+          { ...ligne(plaque.id), id: a?.id },
+        ])
+        expect(inversee.lignes.map((l) => l.id)).toEqual([b?.id, a?.id])
+      })
+
+      it('seules les lignes vraiment changées perdent leur placement', async () => {
+        const plaque = await depots.articles.enregistrer(ba13)
+        const fen = await depots.articles.enregistrer(fenetre)
+        const t = await tournee()
+        const { commande, lignes } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+          [ligne(plaque.id, { quantite: 1 }), ligne(fen.id, { quantite: 1 })],
+        )
+        const [garde, changee] = lignes
+        await depots.plans.enregistrerVersion(t.id, [
+          poser(garde?.id ?? '', 1),
+          poser(changee?.id ?? '', 2),
+        ])
+
+        const resultat = await depots.commandes.enregistrer(
+          { ...commande, destination: 'Client renommé' },
+          [
+            { ...ligne(plaque.id, { quantite: 1 }), id: garde?.id },
+            { ...ligne(fen.id, { quantite: 2 }), id: changee?.id },
+            ligne(plaque.id, { quantite: 1 }),
+          ],
+        )
+        const ajoutee = resultat.lignes[2]?.id
+        expect(resultat.lignesChangees).toEqual([changee?.id, ajoutee])
+        const plan = await depots.plans.obtenirDernier(t.id)
+        expect(plan?.placements.map((p) => p.ligneCommandeId)).toEqual([garde?.id])
+      })
+
+      it('changer le numéro, le client ou la ville ne touche pas au plan', async () => {
+        const plaque = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { commande, lignes } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+          [ligne(plaque.id, { quantite: 1, poidsPropre: 480, poidsEstime: true })],
+        )
+        await depots.plans.enregistrerVersion(t.id, [poser(lignes[0]?.id ?? '', 1)])
+        const resultat = await depots.commandes.enregistrer(
+          { ...commande, numero: 'CMD-2', destination: 'Autre', ville: 'Vertou' },
+          // Le seul marquage « estimé » retiré ne change ni la taille ni le poids.
+          [{ ...ligne(plaque.id, { quantite: 1, poidsPropre: 480 }), id: lignes[0]?.id }],
+        )
+        expect(resultat.lignesChangees).toEqual([])
+        expect((await depots.plans.obtenirDernier(t.id))?.placements).toHaveLength(1)
+      })
+
+      it('refuse une ligne qui appartient à une autre commande, sans rien enregistrer', async () => {
+        const plaque = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { commande } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+          [ligne(plaque.id)],
+        )
+        const autre = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-2', destination: 'Autre', rangLivraison: 2 },
+          [ligne(plaque.id)],
+        )
+        await expect(
+          depots.commandes.enregistrer({ ...commande, destination: 'Changée' }, [
+            { ...ligne(plaque.id), id: autre.lignes[0]?.id },
+          ]),
+        ).rejects.toMatchObject({ code: 'introuvable' })
+        // Tout ou rien : la commande n'a pas changé.
+        expect((await depots.commandes.obtenir(commande.id))?.commande.destination).toBe('Client')
+      })
+
+      it('RG-07 : réordonne les commandes d’une tournée', async () => {
+        const plaque = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const ids: string[] = []
+        for (const rang of [1, 2, 3]) {
+          const { commande } = await depots.commandes.enregistrer(
+            { tourneeId: t.id, numero: `CMD-${rang}`, destination: 'Client', rangLivraison: rang },
+            [ligne(plaque.id)],
+          )
+          ids.push(commande.id)
+        }
+        const [a = '', b = '', c = ''] = ids
+        await depots.commandes.reordonner(t.id, [c, a, b])
+        const ordre = (await depots.commandes.listerParTournee(t.id)).map((x) => [
+          x.commande.numero,
+          x.commande.rangLivraison,
+        ])
+        expect(ordre).toEqual([
+          ['CMD-3', 1],
+          ['CMD-1', 2],
+          ['CMD-2', 3],
+        ])
+      })
+
+      it('RG-07 : refuse un ordre qui oublie une commande de la tournée', async () => {
+        const plaque = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const ids: string[] = []
+        for (const rang of [1, 2]) {
+          const { commande } = await depots.commandes.enregistrer(
+            { tourneeId: t.id, numero: `CMD-${rang}`, destination: 'Client', rangLivraison: rang },
+            [ligne(plaque.id)],
+          )
+          ids.push(commande.id)
+        }
+        await expect(depots.commandes.reordonner(t.id, [ids[1] ?? ''])).rejects.toMatchObject({
+          code: 'contrainte',
+        })
       })
 
       it('liste les commandes qui utilisent un article, avec toutes leurs lignes', async () => {
@@ -536,24 +675,159 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
         const article = await depots.articles.enregistrer(ba13)
         const t = await tournee()
         const { commande, lignes } = await depots.commandes.enregistrer(
-          { tourneeId: null, numero: 'CMD-7', destination: 'SCI Martin', rangLivraison: null },
-          [ligne(article.id)],
+          { tourneeId: t.id, numero: 'CMD-7', destination: 'SCI Martin', rangLivraison: 1 },
+          [ligne(article.id), ligne(article.id)],
         )
-        const entier = await depots.attente.ajouter({
-          commandeId: commande.id,
-          ligneCommandeId: null,
-          tourneeOrigineId: t.id,
-          motif: 'depassement',
-        })
-        const partiel = await depots.attente.ajouter({
+        const premier = await depots.attente.ajouter({
           commandeId: commande.id,
           ligneCommandeId: lignes[0]?.id ?? null,
           tourneeOrigineId: t.id,
+          rangOrigine: 1,
+          motif: 'depassement',
+        })
+        const second = await depots.attente.ajouter({
+          commandeId: commande.id,
+          ligneCommandeId: lignes[1]?.id ?? null,
+          tourneeOrigineId: t.id,
+          rangOrigine: 1,
           motif: 'signalement',
         })
-        expect(await depots.attente.lister()).toEqual([entier, partiel])
-        await depots.attente.supprimer(entier.id)
-        expect(await depots.attente.lister()).toEqual([partiel])
+        expect(premier.reporteLe).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+        expect(premier).toMatchObject({ rangOrigine: 1, motif: 'depassement' })
+        expect(await depots.attente.lister()).toEqual([premier, second])
+        // Des articles reportés : seul l'élément disparaît, la commande d'origine reste.
+        await depots.attente.supprimer(premier.id)
+        expect(await depots.attente.lister()).toEqual([second])
+        expect((await depots.commandes.obtenir(commande.id))?.lignes).toHaveLength(2)
+      })
+
+      it('RG-22 : supprimer une commande entière en attente supprime la commande', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { commande } = await depots.commandes.enregistrer(
+          { tourneeId: null, numero: 'CMD-7', destination: 'SCI Martin', rangLivraison: null },
+          [ligne(article.id)],
+        )
+        const element = await depots.attente.ajouter({
+          commandeId: commande.id,
+          ligneCommandeId: null,
+          tourneeOrigineId: t.id,
+          rangOrigine: 3,
+          motif: 'depassement',
+        })
+        await depots.attente.supprimer(element.id)
+        expect(await depots.attente.lister()).toEqual([])
+        expect(await depots.commandes.obtenir(commande.id)).toBeNull()
+      })
+
+      it('RG-11 : affecte une commande entière à une tournée, livrée en dernier', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const origine = await tournee('T-2026-117')
+        const cible = await tournee('T-2026-118')
+        await depots.commandes.enregistrer(
+          { tourneeId: cible.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+          [ligne(article.id)],
+        )
+        const { commande } = await depots.commandes.enregistrer(
+          { tourneeId: null, numero: 'CMD-7', destination: 'SCI Martin', rangLivraison: null },
+          [ligne(article.id)],
+        )
+        const element = await depots.attente.ajouter({
+          commandeId: commande.id,
+          ligneCommandeId: null,
+          tourneeOrigineId: origine.id,
+          rangOrigine: 4,
+          motif: 'depassement',
+        })
+
+        const affectee = await depots.attente.affecter(element.id, cible.id)
+
+        expect(affectee).toBe(commande.id)
+        expect(await depots.attente.lister()).toEqual([])
+        const commandes = await depots.commandes.listerParTournee(cible.id)
+        expect(commandes.map((c) => [c.commande.numero, c.commande.rangLivraison])).toEqual([
+          ['CMD-1', 1],
+          ['CMD-7', 2],
+        ])
+      })
+
+      it('RG-11 : affecte des articles reportés dans une commande de la tournée choisie', async () => {
+        const plaque = await depots.articles.enregistrer(ba13)
+        const fen = await depots.articles.enregistrer(fenetre)
+        const origine = await tournee('T-2026-116')
+        const cible = await tournee('T-2026-118')
+        const { commande, lignes } = await depots.commandes.enregistrer(
+          {
+            tourneeId: origine.id,
+            numero: 'CMD-5',
+            destination: 'Ets Garnier',
+            ville: 'Carquefou',
+            rangLivraison: 2,
+          },
+          [ligne(plaque.id), ligne(fen.id), ligne(plaque.id, { quantite: 1 })],
+        )
+        const [, l2, l3] = lignes
+        await depots.plans.enregistrerVersion(origine.id, [poser(l2?.id ?? '', 1)])
+        const elements = []
+        for (const l of [l2, l3]) {
+          elements.push(
+            await depots.attente.ajouter({
+              commandeId: commande.id,
+              ligneCommandeId: l?.id ?? null,
+              tourneeOrigineId: origine.id,
+              rangOrigine: 2,
+              motif: 'signalement',
+            }),
+          )
+        }
+
+        const premiere = await depots.attente.affecter(elements[0]?.id ?? '', cible.id)
+        // Une seconde ligne de la même commande rejoint la même commande.
+        const seconde = await depots.attente.affecter(elements[1]?.id ?? '', cible.id)
+
+        expect(seconde).toBe(premiere)
+        const nouvelle = await depots.commandes.obtenir(premiere)
+        expect(nouvelle?.commande).toMatchObject({
+          tourneeId: cible.id,
+          numero: 'CMD-5',
+          destination: 'Ets Garnier',
+          ville: 'Carquefou',
+          rangLivraison: 1,
+        })
+        expect(nouvelle?.lignes.map((l) => l.id)).toEqual([l2?.id, l3?.id])
+        // La commande d'origine garde ce qui a été livré.
+        expect((await depots.commandes.obtenir(commande.id))?.lignes.map((l) => l.id)).toEqual([
+          lignes[0]?.id,
+        ])
+        // La ligne quitte le plan de sa tournée d'origine.
+        expect((await depots.plans.obtenirDernier(origine.id))?.placements).toEqual([])
+        expect(await depots.attente.lister()).toEqual([])
+      })
+
+      it('refuse d’affecter à une tournée qui n’est plus en préparation', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const chargee = await depots.tournees.enregistrer({
+          reference: 'T-2026-001',
+          date: '2026-11-02',
+          modeleCamionId: t.modeleCamionId,
+          statut: 'chargee',
+        })
+        const { commande } = await depots.commandes.enregistrer(
+          { tourneeId: null, numero: 'CMD-7', destination: 'SCI Martin', rangLivraison: null },
+          [ligne(article.id)],
+        )
+        const element = await depots.attente.ajouter({
+          commandeId: commande.id,
+          ligneCommandeId: null,
+          tourneeOrigineId: t.id,
+          rangOrigine: 1,
+          motif: 'depassement',
+        })
+        await expect(depots.attente.affecter(element.id, chargee.id)).rejects.toMatchObject({
+          code: 'contrainte',
+        })
+        expect(await depots.attente.lister()).toHaveLength(1)
       })
     })
   })

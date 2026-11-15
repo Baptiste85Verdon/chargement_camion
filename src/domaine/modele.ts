@@ -149,5 +149,13 @@ export interface ElementAttente {
   ligneCommandeId: string | null
   /** Tournée d'où vient l'élément. */
   tourneeOrigineId: string | null
+  /**
+   * Rang de livraison de la commande dans sa tournée d'origine : il donne le
+   * code affiché dans la liste d'attente (capture 10). Une commande entière
+   * en attente n'a plus de rang à elle, d'où cette copie.
+   */
+  rangOrigine: number | null
   motif: MotifAttente
+  /** Date et heure du report, au format ISO, fixées à l'ajout. */
+  reporteLe: string
 }

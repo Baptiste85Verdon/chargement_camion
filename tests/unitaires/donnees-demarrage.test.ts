@@ -15,11 +15,14 @@ const demarrage = lireDonneesDemarrage(sql)
 
 /** Les commandes de la tournée T-2026-118 et leurs lignes, prêtes à placer. */
 function commandesAPlacer(): CommandeAPlacer[] {
-  return demarrage.commandes.map((commande) => ({
-    id: commande.id,
-    rangLivraison: commande.rangLivraison ?? 0,
-    lignes: demarrage.lignes.filter((l) => l.commandeId === commande.id),
-  }))
+  const t118 = demarrage.tournees.find((t) => t.reference === 'T-2026-118')
+  return demarrage.commandes
+    .filter((commande) => commande.tourneeId === t118?.id)
+    .map((commande) => ({
+      id: commande.id,
+      rangLivraison: commande.rangLivraison ?? 0,
+      lignes: demarrage.lignes.filter((l) => l.commandeId === commande.id),
+    }))
 }
 
 /** Signature d'une unité, pour comparer sans tenir compte des identifiants. */
@@ -96,9 +99,13 @@ describe('lecture de seed.sql pour les dépôts en mémoire', () => {
         date: '2026-11-05',
         statut: 'enPreparation',
       }),
+      expect.objectContaining({ reference: 'T-2026-117', statut: 'chargee' }),
     ])
-    expect(demarrage.commandes.map((c) => c.rangLivraison)).toEqual([1, 2, 3, 4])
-    expect(demarrage.lignes).toHaveLength(7)
+    const t118 = demarrage.tournees[0]?.id
+    const siennes = demarrage.commandes.filter((c) => c.tourneeId === t118)
+    expect(siennes.map((c) => c.rangLivraison)).toEqual([1, 2, 3, 4])
+    const ids = new Set(siennes.map((c) => c.id))
+    expect(demarrage.lignes.filter((l) => ids.has(l.commandeId))).toHaveLength(7)
   })
 
   it('garde virgules et apostrophes dans les textes', () => {
@@ -124,5 +131,17 @@ describe('lecture de seed.sql pour les dépôts en mémoire', () => {
     expect(() =>
       lireInsertions(`insert into public.t (a, b) values ('x') on conflict do nothing;`),
     ).toThrow(/1 valeurs pour 2 colonnes/)
+  })
+})
+
+describe('données de démarrage : liste d’attente (RG-11)', () => {
+  it('RG-11 : une commande entière de T-2026-117 attend, reportée pour dépassement', () => {
+    const [element] = demarrage.attente
+    expect(demarrage.attente).toHaveLength(1)
+    const commande = demarrage.commandes.find((c) => c.id === element?.commandeId)
+    const origine = demarrage.tournees.find((t) => t.id === element?.tourneeOrigineId)
+    expect(commande).toMatchObject({ destination: 'Couverture Bernard', tourneeId: null })
+    expect(origine?.reference).toBe('T-2026-117')
+    expect(element).toMatchObject({ ligneCommandeId: null, rangOrigine: 5, motif: 'depassement' })
   })
 })

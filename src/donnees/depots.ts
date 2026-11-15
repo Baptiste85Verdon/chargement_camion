@@ -81,8 +81,21 @@ export interface CommandeAvecLignes {
   lignes: LigneDeCommande[]
 }
 
-/** Lignes à enregistrer avec leur commande : la commande leur donne son `id`. */
+/**
+ * Lignes à enregistrer avec leur commande : la commande leur donne son `id`.
+ * Une ligne déjà enregistrée garde son `id` ; une ligne ajoutée n'en a pas.
+ */
 export type LigneAEnregistrer = Omit<AEnregistrer<LigneDeCommande>, 'commandeId'>
+
+/** Une commande enregistrée, et les lignes qui ont perdu leur place dans le plan. */
+export interface CommandeEnregistree extends CommandeAvecLignes {
+  /**
+   * Lignes ajoutées ou vraiment changées (article, quantité, livraison nue,
+   * dimensions, poids : voir `ligneModifiee`), dans l'ordre de la commande.
+   * Elles n'ont plus de placement : elles sont à replacer.
+   */
+  lignesChangees: string[]
+}
 
 export interface CommandeRepository {
   /** Commandes d'une tournée, par rang de livraison. */
@@ -97,14 +110,26 @@ export interface CommandeRepository {
   listerParArticle(articleId: string): Promise<CommandeAvecLignes[]>
   obtenir(id: string): Promise<CommandeAvecLignes | null>
   /**
-   * Crée ou modifie la commande, puis remplace toutes ses lignes par celles
-   * données. Rejette `doublon` (champ `numero`) si le numéro existe déjà
-   * dans la tournée.
+   * Crée ou modifie la commande et ses lignes, en une seule opération « tout
+   * ou rien » (fonction SQL `enregistrer_commande`) :
+   * - une ligne avec `id` est modifiée en place ; si elle a vraiment changé,
+   *   ses placements sont supprimés ; sinon, elle garde sa place dans le plan ;
+   * - une ligne sans `id` est ajoutée ; une ligne enregistrée absente de la
+   *   liste est supprimée ;
+   * - l'ordre de la liste devient l'ordre des lignes.
+   * Rejette `doublon` (champ `numero`) si le numéro existe déjà dans la
+   * tournée, `introuvable` si une ligne citée n'appartient pas à la commande.
    */
   enregistrer(
     commande: AEnregistrer<Commande>,
     lignes: LigneAEnregistrer[],
-  ): Promise<CommandeAvecLignes>
+  ): Promise<CommandeEnregistree>
+  /**
+   * Nouvel ordre de livraison (RG-07) : la première commande de la liste
+   * reçoit le rang 1. La liste doit contenir toutes les commandes de la
+   * tournée, et elles seules ; sinon, rejette `contrainte` sans rien changer.
+   */
+  reordonner(tourneeId: string, commandeIds: string[]): Promise<void>
   /** Supprime la commande et ses lignes. */
   supprimer(id: string): Promise<void>
 }
@@ -136,7 +161,25 @@ export interface PlanRepository {
 export interface ElementAttenteRepository {
   /** Éléments en attente, les plus anciens d'abord. */
   lister(): Promise<ElementAttente[]>
-  ajouter(element: AEnregistrer<ElementAttente>): Promise<ElementAttente>
+  /** Ajoute un élément ; la date du report est celle de l'ajout. */
+  ajouter(element: Omit<ElementAttente, 'id' | 'reporteLe'>): Promise<ElementAttente>
+  /**
+   * Affecte l'élément à une tournée en préparation (RG-11), en une seule
+   * opération (fonction SQL `affecter_element_attente`), et rend l'`id` de la
+   * commande qui le reçoit, livrée en dernier :
+   * - une commande entière entre dans la tournée ;
+   * - des articles reportés rejoignent la commande de même numéro dans la
+   *   tournée, créée au besoin avec le client et la ville d'origine ; ils
+   *   quittent le plan de leur tournée d'origine.
+   * L'élément quitte la liste. Rejette `contrainte` si la tournée n'est plus
+   * en préparation, `introuvable` si l'élément ou la tournée n'existe plus.
+   */
+  affecter(elementId: string, tourneeId: string): Promise<string>
+  /**
+   * Retire l'élément de la liste (RG-22, après confirmation). Une commande
+   * entière en attente est supprimée avec lui ; des articles reportés
+   * restent dans leur commande d'origine.
+   */
   supprimer(id: string): Promise<void>
 }
 
