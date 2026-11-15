@@ -427,7 +427,7 @@ async function reactiver() {
 }
 
 .champs__mm {
-  max-width: calc(var(--espace-7) * 5);
+  max-width: calc(var(--espace-7) * 7);
 }
 
 .resume-caisse {

@@ -673,7 +673,7 @@ async function reactiver() {
 }
 
 .groupe__poids {
-  max-width: calc(var(--espace-7) * 4);
+  max-width: calc(var(--espace-7) * 6);
 }
 
 .fiche__ordre {

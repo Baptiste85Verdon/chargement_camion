@@ -37,7 +37,11 @@ const recherche = ref('')
 const famille = ref<Famille | null>(null)
 const archivesVisibles = ref(false)
 
-const actifs = computed(() => tous.value.filter(estActif))
+/** Rangés par famille, dans l'ordre des familles, puis par nom (capture 07). */
+const parFamille = (a: FicheArticle, b: FicheArticle) =>
+  FAMILLES.indexOf(a.famille) - FAMILLES.indexOf(b.famille) || a.nom.localeCompare(b.nom, 'fr')
+
+const actifs = computed(() => tous.value.filter(estActif).sort(parFamille))
 const archives = computed(() => tous.value.filter((a) => !estActif(a)))
 const affiches = computed(() =>
   filtrerCatalogue(actifs.value, { recherche: recherche.value, famille: famille.value }),
