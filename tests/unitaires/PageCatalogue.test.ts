@@ -27,6 +27,13 @@ describe('Catalogue des articles (capture 07)', () => {
     expect(ligne?.text()).toContain('1 500 × 1 350 × 180')
   })
 
+  it('affiche le nom de la famille, et non sa valeur de tri', async () => {
+    const { page } = await monterPage('/catalogue')
+    const ligne = page.findAll('.catalogue tbody tr').find((tr) => tr.text().includes('PLQ-BA13'))
+    const cellules = ligne?.findAll('td').map((td) => td.text())
+    expect(cellules).toContain('Plaques de plâtre')
+  })
+
   it('cherche par nom ou par référence', async () => {
     const { page } = await monterPage('/catalogue')
     await page.get('#recherche-catalogue').setValue('velux')

@@ -186,6 +186,7 @@ async function reactiver(article: FicheArticle) {
         <template #nom="{ ligne }">
           <RouterLink :to="`/catalogue/${ligne.id}`">{{ ligne.nom }}</RouterLink>
         </template>
+        <template #famille="{ ligne }">{{ ligne.famille }}</template>
         <template #emballee="{ ligne }">{{ formaterDimensions(ligne.dimsEmballees) }}</template>
         <template #nue="{ ligne }">
           {{ ligne.dimsNues ? formaterDimensions(ligne.dimsNues) : textes.referentiels.aucun }}
