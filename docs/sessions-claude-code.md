@@ -103,7 +103,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 6 · Données et validations de saisie
 
-- [ ] Fait — branche `feat/p1-donnees`
+- [x] Fait — branche `feat/p1-donnees`
 - Cahier technique : sections 3, 6.1, 7.1, 7.2.
 - Vérifier que `.env.local` existe avec l'URL et la clé publique. Le porteur relie la CLI Supabase au projet lui-même si un mot de passe est demandé.
 - Migrations SQL (tables, contraintes `NOT NULL`, `CHECK`, `UNIQUE`, `GRANT` au rôle `anon` et politiques RLS : voir la section Supabase de `CLAUDE.md`), données de démarrage (RG-01, avec la tournée T-2026-118 du jeu « couloirs »).
