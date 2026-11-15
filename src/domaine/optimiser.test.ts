@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
-import { diagnostiquerCalage } from './calage'
+import { diagnostiquerCalage, estDebout, occupationDe } from './calage'
+import { HAUTEUR_MAX_LOURD, POIDS_LOURD } from './constantes'
 import {
   ameliorerParEchanges,
   estMeilleur,
@@ -185,6 +186,19 @@ describe('optimiser : jeu d’essai « couloirs »', () => {
   it('RG-20 : obtient 58 / 42 au pire moment, contre 59 / 41 pour la référence', () => {
     expect(Math.round((0.5 + obtenu.pireEcart) * 100)).toBe(58)
     expect(Math.round((0.5 + reference.pireEcart) * 100)).toBe(59)
+  })
+
+  // Étape 4c : sans les règles 9 et 10 ni la règle 7 élargie, ce plan
+  // empilait deux BA13 contre une paroi, posait une palette de 1 225 kg sur
+  // une autre et mettait les fenêtres de C2 en hauteur, derrière C3.
+  it('RG-04 : met au plancher les articles debout et les articles lourds', () => {
+    const occupations = resultat.placements.map((p) => occupationDe(p, jeu.unites))
+    const debout = occupations.filter(estDebout)
+    expect(debout.map((o) => o.unite.id).sort()).toEqual(['A10', 'A11'])
+    expect(debout.every((o) => o.boite.z0 === 0)).toBe(true)
+    const lourds = occupations.filter((o) => o.unite.poids > POIDS_LOURD)
+    expect(lourds.every((o) => o.boite.z0 <= HAUTEUR_MAX_LOURD)).toBe(true)
+    expect(lourds.find((o) => o.unite.id === 'A03')?.boite.z0).toBe(0)
   })
 
   it('garde les placements fixes', () => {
