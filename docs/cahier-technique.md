@@ -562,6 +562,8 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
 - [ ] **Lourds en hauteur** : `POIDS_LOURD` (500 kg) et `HAUTEUR_MAX_LOURD` (1 000 mm), provisoires, à confirmer avec un professionnel.
 - [ ] **Unité d'affichage et de saisie (V2)** : la V1 affiche et saisit toutes les dimensions en millimètres. Faut-il permettre de choisir l'unité (mm, cm ou m), pour l'affichage et pour la saisie ? Les données restent en millimètres entiers ; seule la conversion à l'écran changerait. À décider pour la V2.
 - [ ] **Passage pour un article long** : quelle est la largeur minimale d'un passage pour glisser un article long au plancher ? À valider avec un professionnel. Sur « couloirs », `optimiser` glisse les poutres de C1 (6 m) dans un passage de 400 mm entre deux palettes ; aucune règle ne l'interdit aujourd'hui.
+- [ ] **Report d'une commande entière et recalcul** (étape 10b, RG-11) : en V1, « Reporter toute la commande » relance le calcul complet du plan, après confirmation. Au prototype 2, la confirmation devra prévenir que les ajustements manuels seront perdus. Au prototype 3, si des articles sont déjà chargés, le recalcul les garde fixes, comme la nouvelle simulation (RG-15).
+- [ ] **Codes des commandes figés au chargement** (étape 10b) : quand une commande entière quitte la tournée, les rangs des suivantes se resserrent (C1, C3, C4 deviennent C1, C2, C3). À partir du statut « en chargement » (prototype 3), les codes sont figés et ne sont plus resserrés.
 
 ## 11. État du projet
 

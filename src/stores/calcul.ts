@@ -33,7 +33,10 @@ export async function calculerEtEnregistrer(
   const { plan } = await depots.plans.enregistrerVersion(tourneeId, placements)
 
   const rangs = new Map(commandes.map((c) => [c.commande.id, c.commande.rangLivraison]))
-  const codes = [...new Set(enTrop.map((u) => `C${rangs.get(u.commandeId) ?? 0}`))].join(', ')
+  const codes = [...new Set(enTrop.map((u) => rangs.get(u.commandeId) ?? 0))]
+    .sort((a, b) => a - b)
+    .map((rang) => `C${rang}`)
+    .join(', ')
   const t = textes.preparation
   const annonce = [
     t.planCalcule(plan.version, placements.length),

@@ -304,11 +304,30 @@ async function voirMalCales() {
   element?.focus()
 }
 
+/** Échap quitte la sélection multiple. */
 function echap(evenement: KeyboardEvent) {
   if (evenement.key === 'Escape' && selection.value.length > 1) selection.value = []
 }
-onMounted(() => document.addEventListener('keydown', echap))
-onBeforeUnmount(() => document.removeEventListener('keydown', echap))
+
+/**
+ * Un clic ailleurs que dans la carte qui les liste (ou le bandeau qui les a
+ * sélectionnés) quitte aussi la sélection multiple. Un clic sur un article le
+ * sélectionne ensuite seul, par son propre bouton.
+ */
+function clicAilleurs(evenement: PointerEvent) {
+  const cible = evenement.target
+  if (selection.value.length < 2 || !(cible instanceof Element)) return
+  if (!cible.closest('.selection, .bandeau-calage')) selection.value = []
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', echap)
+  document.addEventListener('pointerdown', clicAilleurs)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', echap)
+  document.removeEventListener('pointerdown', clicAilleurs)
+})
 
 const enEvidence = ref<number | null>(null)
 
@@ -419,7 +438,7 @@ const explicationCalage = computed(() => {
   const autres = malCales.value.filter((id) => !estDebout(id)).map(repere)
   return [
     debout.length ? t.calage.debout(enumerer(debout), debout.length) : '',
-    autres.length ? t.calage.autres(enumerer(autres)) : '',
+    autres.length ? t.calage.autres(enumerer(autres), autres.length) : '',
     t.calage.conseil,
   ]
     .filter(Boolean)
@@ -484,6 +503,8 @@ async function agir(action: () => Promise<string>) {
   if (occupe.value) return
   occupe.value = true
   erreurAction.value = ''
+  // L'annonce reçue en arrivant sur la page ne vaut plus pour le nouveau plan.
+  annonce.value = ''
   const statutAvant = mesure.value.etapes.length ? mesure.value.statut : null
   try {
     const texte = await action()
@@ -1022,6 +1043,16 @@ async function reporterCommande() {
   display: flex;
   flex-wrap: wrap;
   gap: var(--espace-2);
+}
+
+/* Dépassement : les boutons passent sous le message (capture 04b). */
+.bandeau-depassement {
+  flex-wrap: wrap;
+}
+
+.bandeau-depassement :deep(.bandeau__actions) {
+  flex-basis: 100%;
+  padding-left: calc(var(--espace-5) + var(--espace-3));
 }
 
 /* --- Grille : vues et tableau à gauche, panneau à droite --- */

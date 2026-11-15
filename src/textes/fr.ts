@@ -304,12 +304,13 @@ export const textes = {
         `${n} ${n > 1 ? 'articles mal calés' : 'article mal calé'} : ${liste}`,
       debout: (reperes: string, n: number) =>
         `${reperes} : ${n > 1 ? 'articles debout' : 'article debout'} sans appui contre une paroi, ni contre des articles couvrant la moitié d'une grande face.`,
-      autres: (reperes: string) => `${reperes} : ne touche rien côté fond ou en largeur.`,
+      autres: (reperes: string, n: number) =>
+        `${reperes} : ${n > 1 ? 'ne touchent' : 'ne touche'} rien côté fond ou en largeur.`,
       conseil: 'Calez-les avant le départ.',
       voir: 'Voir',
       mention: 'mal calé',
       selectionnes: (n: number) =>
-        `${n} ${n > 1 ? 'articles mal calés sélectionnés' : 'article mal calé sélectionné'}. Échap pour revenir à un seul article.`,
+        `${n} ${n > 1 ? 'articles mal calés sélectionnés' : 'article mal calé sélectionné'}. Échap pour quitter la sélection multiple.`,
     },
     // Dépassement et report (RG-10, RG-11, 5.7)
     depassement: {
@@ -345,7 +346,7 @@ export const textes = {
     selection: 'Article sélectionné',
     selectionMultiple: (n: number) => `${n} articles sélectionnés`,
     selectionMultipleAide:
-      'Choisissez un article pour afficher son détail et ses cotes. Échap revient à la sélection vide.',
+      'Choisissez un article pour afficher son détail et ses cotes. Échap, ou un clic ailleurs, quitte la sélection multiple.',
     selectionVide:
       "Sélectionnez un article dans une vue, dans le tableau ou dans l'ordre de chargement pour afficher son détail.",
     deselectionner: 'Désélectionner',

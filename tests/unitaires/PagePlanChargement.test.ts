@@ -222,6 +222,15 @@ describe('Plan de chargement : articles mal calés (RG-19)', () => {
     expect(texte(carte(page, t.selection))).toContain(t.selectionVide)
   })
 
+  it('RG-19 : un clic ailleurs sort de la sélection multiple', async () => {
+    const { page } = await ouvrirJeu('fenetres-isolees')
+    await bouton(page.get('.bandeau-calage'), t.calage.voir).trigger('click')
+    await flushPromises()
+    page.get('.barre').element.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    await flushPromises()
+    expect(texte(carte(page, t.selection))).toContain(t.selectionVide)
+  })
+
   it('RG-19 : un clic sur un article de la liste revient à la sélection de cet article', async () => {
     const { page } = await ouvrirJeu('fenetres-isolees')
     await bouton(page.get('.bandeau-calage'), t.calage.voir).trigger('click')
