@@ -84,6 +84,25 @@ function pointsAutourDe(b: Boite, sens: Sens): PointCandidat[] {
   ]
 }
 
+/**
+ * Le quatrième point, en option (4.3, étape 5) : le point « à côté », poussé
+ * jusqu'à la paroi d'en face. Il garde le x et le z de l'unité posée, mais
+ * se place contre la paroi opposée au sens de parcours, ancré de ce côté-là.
+ * Sans lui, le placeur ne crée de points qu'au bord des unités posées et
+ * n'atteint jamais la paroi d'en face : la charge penche d'un côté.
+ */
+function pointParoiOpposee(b: Boite, sens: Sens, camion: Camion): PointCandidat {
+  return sens === 'gaucheDroite'
+    ? { x: b.x0, y: camion.largeur, z: b.z0, ancrage: 'droite' }
+    : { x: b.x0, y: 0, z: b.z0, ancrage: 'gauche' }
+}
+
+/** Les options d'une variante du placeur qui ne dépendent pas du rang. */
+export interface OptionsPlaceur {
+  /** Ajouter, après chaque unité, le point contre la paroi opposée. */
+  pointParoiOpposee?: boolean
+}
+
 const cleDe = (p: PointCandidat) => `${p.x};${p.y};${p.z};${p.ancrage}`
 
 /**
@@ -136,7 +155,8 @@ function meilleurEssai(essais: Essai[]): Essai {
 /**
  * Le placeur, pour une variante donnée (4.4) : les unités sont placées dans
  * l'ordre reçu, sans nouveau tri, et `sensDe` donne le sens de parcours en
- * largeur pour chaque rang de livraison.
+ * largeur pour chaque rang de livraison. `options` active le point contre la
+ * paroi opposée.
  *
  * `unites` contient toutes les unités, y compris celles des placements
  * `fixes` : celles-ci gardent leur place et servent d'obstacles.
@@ -146,6 +166,7 @@ export function placerVariante<U extends Unite>(
   camion: Camion,
   fixes: Placement[],
   sensDe: (rang: number) => Sens,
+  options: OptionsPlaceur = {},
 ): ResultatPlaceur<U> {
   const plan: Placement[] = [...fixes]
   const boites: Boite[] = fixes.map((p) => boiteDe(p, trouverUnite(p.uniteId, unites)))
@@ -153,9 +174,14 @@ export function placerVariante<U extends Unite>(
   const ajouterPoints = (nouveaux: PointCandidat[]) => {
     for (const p of nouveaux) points.set(cleDe(p), p)
   }
+  /** Les points autour d'une unité posée : trois, plus le quatrième en option. */
+  const pointsApres = (b: Boite, sens: Sens): PointCandidat[] =>
+    options.pointParoiOpposee
+      ? [...pointsAutourDe(b, sens), pointParoiOpposee(b, sens, camion)]
+      : pointsAutourDe(b, sens)
   // Les placements fixes ont pu être trouvés dans un sens ou dans l'autre.
   for (const b of boites)
-    ajouterPoints([...pointsAutourDe(b, 'gaucheDroite'), ...pointsAutourDe(b, 'droiteGauche')])
+    ajouterPoints([...pointsApres(b, 'gaucheDroite'), ...pointsApres(b, 'droiteGauche')])
 
   let front = Math.max(0, ...boites.map((b) => b.x1))
   let sommePoids = 0
@@ -216,7 +242,7 @@ export function placerVariante<U extends Unite>(
     const retenu = meilleurEssai(essais)
     plan.push(retenu.placement)
     boites.push(retenu.boite)
-    ajouterPoints(pointsAutourDe(retenu.boite, sens))
+    ajouterPoints(pointsApres(retenu.boite, sens))
     front = retenu.front
     sommePoids += unite.poids
     sommePoidsY += unite.poids * ((retenu.boite.y0 + retenu.boite.y1) / 2)
@@ -228,7 +254,9 @@ export function placerVariante<U extends Unite>(
 
 /**
  * Calcule un plan de chargement (cahier technique, 4.3 et 4.7) : tri des
- * unités, puis placement glouton en partant de la paroi gauche.
+ * unités, puis placement glouton en partant de la paroi gauche, avec les
+ * trois points de base. Le point contre la paroi opposée n'est essayé que
+ * par les variantes d'`optimiser`.
  */
 export function placer<U extends Unite>(
   unites: U[],
