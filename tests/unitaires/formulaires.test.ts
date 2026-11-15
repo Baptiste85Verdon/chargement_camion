@@ -24,6 +24,23 @@ describe('Champ (RG-21)', () => {
     expect(champ.get('input').attributes('aria-required')).toBe('true')
   })
 
+  it('RG-21 : le texte d’aide est sous le champ, avant l’erreur, et lui est relié', () => {
+    const champ = mount(Champ, {
+      props: { libelle: 'Client', modelValue: '', aide: 'Nom du client', erreur: 'Indiquez-le.' },
+    })
+    const enfants = [...champ.element.children].map((e) => e.className)
+    // Libellé, cadre du champ, aide, puis message d'erreur : les champs d'une
+    // même rangée restent alignés, avec ou sans aide.
+    expect(enfants).toEqual([
+      'champ__libelle',
+      'champ__cadre',
+      'champ__aide',
+      'champ__message champ__message--erreur',
+    ])
+    const aide = champ.get('.champ__aide')
+    expect(champ.get('input').attributes('aria-describedby')).toContain(aide.attributes('id'))
+  })
+
   it('RG-21 : une erreur s’affiche sous le champ, avec icône, et lui est reliée', () => {
     const message = textes.validation.nombre.entierPositif
     const champ = mount(Champ, {

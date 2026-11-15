@@ -1,17 +1,26 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { useAttente } from '@/stores/attente'
+import { utiliserDepots } from '@/stores/depots'
 import { textes } from '@/textes/fr'
+import Badge from '@/composants/Badge.vue'
 
 /**
  * Entrées de la navigation principale (captures 01, 07, 09). La liste
- * d'attente arrivera avec sa page (étape 9).
+ * d'attente porte le nombre de ses éléments (badge).
  * `exact` : « Tournées » n'est active que sur l'accueil, pas sur toutes les pages.
  */
 const entrees = [
   { libelle: textes.navigation.tournees, vers: '/', exact: true },
   { libelle: textes.navigation.catalogue, vers: '/catalogue', exact: false },
   { libelle: textes.navigation.camions, vers: '/camions', exact: false },
+  { libelle: textes.navigation.attente, vers: '/attente', exact: false, badge: true },
 ]
+
+const depots = utiliserDepots()
+const attente = useAttente()
+onMounted(() => attente.actualiser(depots))
 </script>
 
 <template>
@@ -27,6 +36,12 @@ const entrees = [
             :exact-active-class="'navigation__lien--active'"
           >
             {{ entree.libelle }}
+            <Badge v-if="entree.badge && attente.nombre">
+              <span aria-hidden="true">{{ attente.nombre }}</span>
+              <span class="visuellement-cache">{{
+                textes.navigation.attenteNombre(attente.nombre)
+              }}</span>
+            </Badge>
           </RouterLink>
         </li>
       </ul>
@@ -80,6 +95,7 @@ const entrees = [
 /* Lien actif : texte appuyé et trait `encre` en bas, pas seulement une couleur. */
 .navigation__lien {
   display: flex;
+  gap: var(--espace-2);
   align-items: center;
   padding: var(--espace-3) var(--espace-3);
   font: var(--typo-bouton);

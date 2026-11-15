@@ -83,6 +83,8 @@ export function traduireErreur(erreur: ErreurPostgrest): ErreurDonnees {
     case '23514':
     case '23502':
       return new ErreurDonnees('contrainte', champ, erreur)
+    // P0002 : levée par les fonctions SQL (commande, ligne ou élément introuvable).
+    case 'P0002':
     case 'PGRST116':
       return new ErreurDonnees('introuvable', undefined, erreur)
     default:

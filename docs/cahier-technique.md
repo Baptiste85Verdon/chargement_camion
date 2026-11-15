@@ -2,7 +2,7 @@
 
 Nov 2, 2026 · @Baptiste Verdon
 
-**Version V3.9, 15 novembre 2026 : composant de tableau triable, indication des modifications non enregistrées (6.1), alignement des nombres, lignes de cote en composant, unité d'affichage en point ouvert. Version V3.8, 4 novembre 2026 : formulaires (RG-21) et fenêtres de confirmation (RG-22). Version V3.7, 4 novembre 2026 : seuil d'appui provisoire fixé à 60 %, statut d'équilibre jugé sur les pourcentages affichés. Version V3.6, 4 novembre 2026 : choix du meilleur plan (variantes et échanges), mesure de l'équilibre (RG-20) et son indicateur, zone « Articles à placer » près des vues. Version V3.5, 4 novembre 2026 : calage des articles (RG-19) dans le validateur et le placeur, jeu d'essai « couloirs » chiffré. Version V3.4, 4 novembre 2026 : boîte englobante et dessus porteur (RG-18), poids effectif d'une ligne de commande, dimensions mesurées au signalement. Version V3.3, 3 novembre 2026 : charte graphique dans le code (polices, icônes, jetons), rendu des blocs, lignes de cote, atténuation sans opacité. Version V3.2, validée le 2 novembre 2026 (accès au déchargement en 3D, critère de compacité, jeu d'essai « couloirs » ; précisions sur les silhouettes et le filtre de profondeur).** Ce document traduit en choix techniques le cahier des charges fonctionnel V5.9, la note de cadrage V5.3, le brief V4 et la charte graphique V2.4. Les références RG renvoient aux règles de gestion du cahier fonctionnel. Il sert de spécification de départ pour le développement avec Claude Code.
+**Version V3.10, 16 novembre 2026 : commandes enregistrées en une seule opération (fonctions SQL), lignes modifiées en place, plan « à recalculer », rang d'origine dans la liste d'attente, texte d'aide sous le champ. Version V3.9, 15 novembre 2026 : composant de tableau triable, indication des modifications non enregistrées (6.1), alignement des nombres, lignes de cote en composant, unité d'affichage en point ouvert. Version V3.8, 4 novembre 2026 : formulaires (RG-21) et fenêtres de confirmation (RG-22). Version V3.7, 4 novembre 2026 : seuil d'appui provisoire fixé à 60 %, statut d'équilibre jugé sur les pourcentages affichés. Version V3.6, 4 novembre 2026 : choix du meilleur plan (variantes et échanges), mesure de l'équilibre (RG-20) et son indicateur, zone « Articles à placer » près des vues. Version V3.5, 4 novembre 2026 : calage des articles (RG-19) dans le validateur et le placeur, jeu d'essai « couloirs » chiffré. Version V3.4, 4 novembre 2026 : boîte englobante et dessus porteur (RG-18), poids effectif d'une ligne de commande, dimensions mesurées au signalement. Version V3.3, 3 novembre 2026 : charte graphique dans le code (polices, icônes, jetons), rendu des blocs, lignes de cote, atténuation sans opacité. Version V3.2, validée le 2 novembre 2026 (accès au déchargement en 3D, critère de compacité, jeu d'essai « couloirs » ; précisions sur les silhouettes et le filtre de profondeur).** Ce document traduit en choix techniques le cahier des charges fonctionnel V5.9, la note de cadrage V5.3, le brief V4 et la charte graphique V2.4. Les références RG renvoient aux règles de gestion du cahier fonctionnel. Il sert de spécification de départ pour le développement avec Claude Code.
 
 ## 1. Architecture générale
 
@@ -54,11 +54,11 @@ L'origine est le coin du fond, côté gauche, au plancher.
 | `modele_camion` | id, nom, longueur, largeur et hauteur utiles, date d'archivage (facultative) | Données d'exemple au premier lancement (RG-01). Un camion utilisé ne se supprime pas, il s'archive ; pas d'archivage pendant une tournée en préparation, prête ou en chargement (RG-21) |
 | `tournee` | id, référence (unique, T-2026-118), date, modele\_camion\_id, statut | Statuts : en préparation, prête, en chargement, chargée. Date et camion vides tant qu'ils sont à fixer ; obligatoires dès que la tournée quitte l'état « en préparation » |
 | `commande` | id, tournee\_id (vide si en attente), numéro, destination, ville (facultative), rang de livraison | Le rang fixe l'ordre de chargement (RG-07) |
-| `ligne_commande` | id, commande\_id, numéro de ligne, article\_id, quantité, emballé ou nu, dimensions propres à la commande (facultatives), poids propre à la commande (facultatif), poids estimé (oui ou non) | Ces valeurs ne modifient jamais le catalogue. Le poids proposé au prorata du volume est marqué estimé (RG-03). Le numéro de ligne garde l'ordre de saisie |
-| `plan_chargement` | id, tournee\_id, numéro de version, date de calcul | Une nouvelle version à chaque simulation, pour garder l'historique |
+| `ligne_commande` | id, commande\_id, numéro de ligne, article\_id, quantité, emballé ou nu, dimensions propres à la commande (facultatives), poids propre à la commande (facultatif), poids estimé (oui ou non) | Ces valeurs ne modifient jamais le catalogue. Le poids proposé au prorata du volume est marqué estimé (RG-03), arrondi au dixième de kilogramme. Le numéro de ligne garde l'ordre de saisie ; il est unique dans la commande, vérifié en fin de transaction (contrainte différable), pour qu'un réordonnancement puisse échanger deux numéros. Une ligne modifiée garde son identifiant |
+| `plan_chargement` | id, tournee\_id, numéro de version, date de calcul, à recalculer (oui ou non) | Une nouvelle version à chaque simulation, pour garder l'historique. Une version ne se modifie pas, sauf sa marque « à recalculer », posée quand le camion de la tournée change (RG-22) |
 | `placement` | id, plan\_id, ligne\_commande\_id, numéro d'unité, x, y, z, orientation, rang de chargement, statut | Un placement par unité physique ; il sert aussi d'étape de chargement, avec les statuts à faire, chargé et en problème |
 | `signalement` | id, placement\_id, type, commentaire, longueur, largeur et hauteur mesurées (facultatives), action, résultat de la revérification, date | RG-12 à RG-16 |
-| `element_attente` | id, commande\_id, ligne\_commande\_id (vide si toute la commande), tournée d'origine, motif | Motifs : dépassement ou signalement (RG-11, RG-13) |
+| `element_attente` | id, commande\_id, ligne\_commande\_id (vide si toute la commande), tournée d'origine, rang d'origine, motif, date du report | Motifs : dépassement ou signalement (RG-11, RG-13). Le rang d'origine donne le code affiché (C5) : une commande entière en attente n'a plus de rang à elle |
 
 En V1, sans compte, les règles de sécurité de Supabase (sécurité au niveau des lignes) restent ouvertes. Elles seront fermées et liées aux utilisateurs quand les comptes arriveront (RG-17).
 
@@ -360,7 +360,8 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
 - **Affichage** :
   - le champ en erreur reçoit `aria-invalid="true"` et `aria-describedby` vers son message ;
   - à l'enregistrement, un résumé `role="alert"` reçoit le focus, avec un lien vers chaque champ en erreur ;
-  - les champs obligatoires portent `aria-required="true"` et la mention « (obligatoire) » dans leur libellé.
+  - les champs obligatoires portent `aria-required="true"` et la mention « (obligatoire) » dans leur libellé ; la mention garde la hauteur de ligne du libellé ;
+  - le texte d'aide d'un champ est placé sous le champ, avant les messages d'erreur et d'avertissement, et relié par `aria-describedby`. Le libellé tient ainsi sur une ligne, et les champs d'une même rangée restent alignés, qu'ils aient une aide ou non.
 - **Seconde barrière dans la base** : contraintes SQL dans les migrations Supabase (`NOT NULL`, `CHECK` des valeurs supérieures à 0, `CHECK` taille nue complète ou vide, `UNIQUE (tournee_id, numero)` pour les commandes). Une erreur renvoyée par la base est traduite en message de champ, jamais affichée brute.
 - **Modifications non enregistrées** : chaque formulaire suit un état « modifié », vrai tant que la saisie diffère de ce qui est enregistré. Un seul composant, `BoutonEnregistrer`, l'affiche dans tous les formulaires : la mention « Modifications non enregistrées », avec une icône, dans une zone `role="status"` présente dès l'affichage, et le bouton d'enregistrement en style principal tant que l'état est vrai, secondaire sinon, toujours actif. Quitter la page, par la navigation (`onBeforeRouteLeave` de Vue Router) ou en fermant l'onglet (`beforeunload`), déclenche la confirmation de RG-22.
 - **Alignement des nombres** : dans un champ de saisie, les nombres sont alignés à gauche, comme tout texte saisi, en IBM Plex Mono. Dans un tableau, ils sont alignés à droite, pour se comparer d'une ligne à l'autre.
@@ -387,6 +388,15 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
 ### 7.1 Couche d'accès aux données
 
 L'application ne parle jamais directement à Supabase : elle passe par des **dépôts**, un par objet métier. Par exemple `ArticleRepository` ou `TourneeRepository`, avec des méthodes comme `lister`, `obtenir`, `enregistrer` et `supprimer`. Les dépôts des articles et des modèles de camions ajoutent `archiver`. Leur `lister` ne rend que les éléments actifs, sauf avec l'option `{ avecArchives: true }`, et `obtenir` rend aussi un élément archivé, pour les commandes et les plans qui le citent. `supprimer` rejette un élément déjà utilisé (`utilise`) : l'interface propose alors l'archivage.
+
+Les commandes, les plans et la liste d'attente ont leurs propres opérations :
+
+- **`CommandeRepository.enregistrer(commande, lignes)`** enregistre la commande et ses lignes en une seule opération « tout ou rien » : la fonction SQL `enregistrer_commande`, appelée par `client.rpc`, s'exécute dans une transaction. Une ligne qui porte son identifiant est modifiée en place ; une ligne sans identifiant est ajoutée ; une ligne absente de la liste est supprimée ; l'ordre de la liste devient l'ordre des lignes. Seule une ligne vraiment changée (article, quantité, livraison nue, dimensions ou poids, règle `ligneModifiee` du domaine) perd ses placements ; changer le numéro, le client ou la ville ne touche pas au plan. Le résultat donne les lignes ajoutées ou changées (`lignesChangees`), à replacer.
+- **`CommandeRepository.reordonner(tournee, ids)`** fixe le nouvel ordre de livraison (RG-07), fonction SQL `reordonner_commandes` ; la liste doit contenir toutes les commandes de la tournée, et elles seules.
+- **`PlanRepository.marquerARecalculer(plan)`** pose la marque « à recalculer » sur une version (RG-22).
+- **`ElementAttenteRepository.affecter(element, tournee)`** fait rejoindre une tournée en préparation à un élément en attente, livré en dernier (RG-11), fonction SQL `affecter_element_attente`. Une commande entière entre dans la tournée ; des articles reportés rejoignent la commande de même numéro dans la tournée, créée au besoin, et quittent le plan de leur tournée d'origine. **`supprimer`** retire l'élément ; pour une commande entière, la commande est supprimée avec lui.
+
+Les fonctions SQL s'exécutent avec les droits de l'appelant (`SECURITY INVOKER`) : les politiques de sécurité au niveau des lignes s'appliquent comme pour une requête ordinaire, et chaque fonction n'utilise que les droits déjà accordés au rôle `anon`.
 
 En V1, une implémentation Supabase de ces dépôts est fournie. Plus tard, une implémentation qui appelle votre API la remplacera sans que les pages ni l'algorithme changent. Pour les tests, une implémentation en mémoire évite de dépendre du réseau.
 
@@ -449,8 +459,8 @@ Le développement suit une démarche **TDD** : écrire un test qui échoue, écr
 | A05 | Paquet de plaques BA13 | C3 | 2 500 × 1 200 × 250 | 500 kg | à plat | 1 200 | 1 000 | 250 | 5 |
 | A06 | Botte de planches de pin | C3 | 4 000 × 1 000 × 400 | 800 kg | à plat | 2 400 | 0 | 0 | 6 |
 | A07 | Botte de planches de pin | C3 | 4 000 × 1 000 × 400 | 800 kg | à plat | 2 400 | 0 | 400 | 7 |
-| A08 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 220 kg | à plat | 1 200 | 2 200 | 0 | 8 |
-| A09 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 220 kg | à plat | 1 200 | 2 200 | 400 | 9 |
+| A08 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 219,8 kg | à plat | 1 200 | 2 200 | 0 | 8 |
+| A09 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 219,8 kg | à plat | 1 200 | 2 200 | 400 | 9 |
 | A10 | Fenêtre PVC 2 vantaux, emballée, fragile | C2 | 1 500 × 180 × 1 350 | 45 kg | debout | 3 700 | 2 020 | 0 | 10 |
 | A11 | Fenêtre PVC 2 vantaux, emballée, fragile | C2 | 1 500 × 180 × 1 350 | 45 kg | debout | 3 700 | 1 840 | 0 | 11 |
 | A12 | Carton de quincaillerie | C2 | 600 × 600 × 600 | 30 kg | à plat | 3 700 | 1 240 | 0 | 12 |
@@ -459,7 +469,7 @@ Le développement suit une démarche **TDD** : écrire un test qui échoue, écr
 
 - **Le couloir (RG-07)** : les poutres de C1, livrées en premier, partent à 1,2 m du fond le long de la paroi droite et sortent sans rien déplacer.
 - **Le calage (RG-19)** : la fenêtre A10 s'appuie contre les deux poutres de C1, qui couvrent 59 % de sa face (800 mm sur 1 350 mm de haut). A11 s'appuie contre A10. Le carton A12 touche A05 côté fond et A11 en largeur.
-- **L'équilibre (RG-20)** : le centre de gravité est à 2,23 m du fond et à 12 cm à gauche de l'axe, soit 55 / 45 au départ. La charge passe à 59 / 41 après la livraison de C1 et de C2, puis à 58 / 42 après C3 : statut « À surveiller ».
+- **L'équilibre (RG-20)** : le centre de gravité est à environ 2,22 m du fond et à 12 cm à gauche de l'axe, soit 55 / 45 au départ. La charge passe à 59 / 41 après la livraison de C1 et de C2, puis à 58 / 42 après C3 : statut « À surveiller ».
 
 **Variante « fenêtres isolées »** : c'est la disposition d'origine de la maquette. Seules trois unités changent : A10 en (4 000 ; 1 860 ; 0), A11 en (4 000 ; 1 610 ; 0) et A12 en (6 600 ; 0 ; 0).
 
@@ -554,7 +564,7 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
 
 - **Étape atteinte** : Cahier des charges technique V3.9 du 15 novembre 2026 (tableau triable, indication des modifications non enregistrées, alignement des nombres, lignes de cote en composant), ajoutée pendant le développement du prototype 1 (étape 8b). V3.8 du 4 novembre 2026 (formulaires et confirmations, seuil d'appui provisoire, arrondi du statut d'équilibre, boîte englobante, poids par commande, dimensions mesurées, calage, équilibre, jeu d'essai « couloirs » chiffré). La V3.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3, le cahier fonctionnel V5.9 et la charte graphique V2.4 sont rédigés.
 - **Direction artistique** : piste retenue (charte graphique V2 et fichier de jetons) ; ligne directrice pour le maquettiste.
-- **Prochaine étape** : suite du développement du prototype 1 avec Claude Code (étape 9, tournées et commandes).
+- **Prochaine étape** : suite du développement du prototype 1 avec Claude Code (étape 10, plan de chargement). La V3.10 du 16 novembre 2026 ajoute les fonctions SQL des commandes et de la liste d'attente, le plan « à recalculer » et la place du texte d'aide (étape 9).
 - **Profil du client** : technique (développeur), sans connaissance du métier.
 - **Décisions prises** :
   - Vue 3 + TypeScript + Vite, choix pressenti ;

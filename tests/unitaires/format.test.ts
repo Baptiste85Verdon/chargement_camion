@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   formaterDimensions,
+  formaterJour,
+  formaterMetresCubes,
   formaterMillimetres,
   formaterPoids,
+  formaterPourcentage,
   formaterVolume,
 } from '@/composants/format'
 
@@ -27,5 +30,14 @@ describe('mise en forme des nombres', () => {
   it('écrit le volume utile en mètres cubes, à une décimale', () => {
     expect(formaterVolume({ longueur: 7200, largeur: 2400, hauteur: 2500 })).toBe('43,2 m³')
     expect(formaterVolume({ longueur: 6200, largeur: 2450, hauteur: 2400 })).toBe('36,5 m³')
+  })
+
+  it('écrit une date de livraison en toutes lettres, avec une majuscule', () => {
+    expect(formaterJour('2026-11-05')).toBe('Jeudi 5 novembre 2026')
+  })
+
+  it('écrit un volume chargé et une part', () => {
+    expect(formaterMetresCubes(10.42)).toBe('10,4 m³')
+    expect(formaterPourcentage(0.24)).toMatch(/^24\s%$/)
   })
 })

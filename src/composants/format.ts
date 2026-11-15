@@ -29,3 +29,31 @@ export const formaterDate = (iso: string) => jour.format(new Date(iso))
 /** Volume utile d'une caisse : « 43,2 m³ ». 1 m³ = 10⁹ mm³. */
 export const formaterVolume = (c: Camion) =>
   `${uneDecimale.format((c.longueur * c.largeur * c.hauteur) / 1e9)} m³`
+
+const jourLong = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  // Une date AAAA-MM-JJ est lue à minuit UTC : on l'affiche en UTC, sinon
+  // un fuseau à l'ouest de Greenwich afficherait la veille.
+  timeZone: 'UTC',
+})
+
+/** « Jeudi 5 novembre 2026 », depuis une date AAAA-MM-JJ (date de livraison). */
+export function formaterJour(date: string) {
+  const texte = jourLong.format(new Date(`${date}T00:00:00Z`))
+  return texte.charAt(0).toLocaleUpperCase('fr') + texte.slice(1)
+}
+
+/** Un volume en mètres cubes : « 10,4 m³ ». */
+export const formaterMetresCubes = (m3: number) => `${uneDecimale.format(m3)} m³`
+
+const pourcentage = new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: 0 })
+
+/** Une part : « 24 % », depuis 0,24. */
+export const formaterPourcentage = (part: number) => pourcentage.format(part)
+
+/** « En préparation », depuis « en préparation » : un libellé en début de case. */
+export const premiereMajuscule = (texte: string) =>
+  texte.charAt(0).toLocaleUpperCase('fr') + texte.slice(1)

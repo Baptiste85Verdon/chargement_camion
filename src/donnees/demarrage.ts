@@ -16,11 +16,13 @@ import {
   articleDepuisLigne,
   camionDepuisLigne,
   commandeDepuisLigne,
+  elementAttenteDepuisLigne,
   ligneCommandeDepuisLigne,
   tourneeDepuisLigne,
   type LigneArticle,
   type LigneCamion,
   type LigneCommandeBase,
+  type LigneElementAttente,
   type LigneLigneCommande,
   type LigneTournee,
 } from './supabase-lignes'
@@ -139,5 +141,6 @@ export function lireDonneesDemarrage(sql: string): Required<ContenuInitial> {
     tournees: lignes<LigneTournee>('tournee').map(tourneeDepuisLigne),
     commandes: lignes<LigneCommandeBase>('commande').map(commandeDepuisLigne),
     lignes: lignes<LigneLigneCommande>('ligne_commande').map(ligneCommandeDepuisLigne),
+    attente: lignes<LigneElementAttente>('element_attente').map(elementAttenteDepuisLigne),
   }
 }

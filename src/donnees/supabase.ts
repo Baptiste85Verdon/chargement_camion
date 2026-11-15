@@ -26,7 +26,7 @@ import {
   elementAttenteDepuisLigne,
   elementAttenteVersLigne,
   ligneCommandeDepuisLigne,
-  ligneCommandeVersLigne,
+  ligneCommandePourEnregistrement,
   placementDepuisLigne,
   placementVersLigne,
   planDepuisLigne,
@@ -227,37 +227,32 @@ function depotCommandes(client: SupabaseClient): CommandeRepository {
     },
 
     /**
-     * Trois requêtes : la commande, la suppression de ses anciennes lignes,
-     * l'insertion des nouvelles. Elles ne forment pas une transaction : si la
-     * dernière échoue, la commande reste sans lignes et l'erreur est remontée.
-     * Remplacer les lignes supprime aussi les placements qui les citaient :
-     * une commande modifiée demande un nouveau calcul du plan.
+     * Une seule requête : la fonction SQL `enregistrer_commande` (migration
+     * …_commandes_tout_ou_rien.sql) fait tout dans une transaction. Si une
+     * étape échoue, rien n'est enregistré.
      */
     async enregistrer(commande, lignes) {
-      const ligneCommande: Record<string, unknown> = commandeVersLigne(commande)
-      const requete =
-        commande.id === undefined
-          ? client.from('commande').insert(ligneCommande)
-          : client.from('commande').update(ligneCommande).eq('id', commande.id)
-      const enregistree = commandeDepuisLigne(
-        resultat<LigneCommandeBase>(await requete.select().single()),
-      )
-
-      verifier(await client.from('ligne_commande').delete().eq('commande_id', enregistree.id))
-      if (lignes.length === 0) return { commande: enregistree, lignes: [] }
-
-      const inserees = resultat<LigneLigneCommande[]>(
-        await client
-          .from('ligne_commande')
-          .insert(lignes.map((l, i) => ligneCommandeVersLigne(l, enregistree.id, i + 1)))
-          .select(),
+      const reponse = resultat<{
+        commande: LigneCommandeBase
+        lignes: LigneLigneCommande[]
+        lignes_changees: string[]
+      }>(
+        await client.rpc('enregistrer_commande', {
+          p_commande: commandeVersLigne(commande),
+          p_lignes: lignes.map(ligneCommandePourEnregistrement),
+        }),
       )
       return {
-        commande: enregistree,
-        lignes: inserees
-          .sort((a, b) => a.numero_ligne - b.numero_ligne)
-          .map(ligneCommandeDepuisLigne),
+        commande: commandeDepuisLigne(reponse.commande),
+        lignes: reponse.lignes.map(ligneCommandeDepuisLigne),
+        lignesChangees: reponse.lignes_changees,
       }
+    },
+
+    async reordonner(tourneeId, commandeIds) {
+      verifier(
+        await client.rpc('reordonner_commandes', { p_tournee_id: tourneeId, p_ids: commandeIds }),
+      )
     },
 
     async supprimer(id) {
@@ -327,6 +322,17 @@ function depotPlans(client: SupabaseClient): PlanRepository {
       }
     },
 
+    async marquerARecalculer(planId) {
+      resultat(
+        await client
+          .from('plan_chargement')
+          .update({ a_recalculer: true })
+          .eq('id', planId)
+          .select('id')
+          .single(),
+      )
+    },
+
     async changerStatutPlacement(placementId, statut) {
       resultat(
         await client
@@ -365,8 +371,34 @@ function depotAttente(client: SupabaseClient): ElementAttenteRepository {
         ),
       )
     },
+    async affecter(elementId, tourneeId) {
+      return resultat<string>(
+        await client.rpc('affecter_element_attente', {
+          p_element_id: elementId,
+          p_tournee_id: tourneeId,
+        }),
+      )
+    },
+    /**
+     * Une commande entière en attente est supprimée, et l'élément avec elle
+     * (ON DELETE CASCADE) ; pour des articles reportés, seul l'élément l'est.
+     */
     async supprimer(id) {
-      verifier(await client.from('element_attente').delete().eq('id', id))
+      const reponse = await client
+        .from('element_attente')
+        .select('commande_id, ligne_commande_id')
+        .eq('id', id)
+        .maybeSingle()
+      if (reponse.error) throw traduireErreur(reponse.error)
+      const element = reponse.data as {
+        commande_id: string
+        ligne_commande_id: string | null
+      } | null
+      if (element && element.ligne_commande_id === null) {
+        verifier(await client.from('commande').delete().eq('id', element.commande_id))
+      } else {
+        verifier(await client.from('element_attente').delete().eq('id', id))
+      }
     },
   }
 }

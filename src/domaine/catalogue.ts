@@ -43,3 +43,16 @@ export function compterParFamille(articles: FicheArticle[]): Map<Famille, number
   for (const a of articles) comptes.set(a.famille, (comptes.get(a.famille) ?? 0) + 1)
   return comptes
 }
+
+/**
+ * Recherche de la saisie express (capture 03) : le texte est cherché dans le
+ * nom, la référence et la famille, sans tenir compte des accents ni de la
+ * casse. Un texte vide rend tout le catalogue.
+ */
+export function chercherArticles(articles: FicheArticle[], texte: string): FicheArticle[] {
+  const cherche = simplifier(texte)
+  if (cherche === '') return articles
+  return articles.filter((a) =>
+    [a.nom, a.reference ?? '', a.famille].some((champ) => simplifier(champ).includes(cherche)),
+  )
+}

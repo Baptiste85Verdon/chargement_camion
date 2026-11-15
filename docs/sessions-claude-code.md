@@ -144,7 +144,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 9 · Tournées, commandes et liste d'attente
 
-- [ ] Fait — branche `feat/p1-tournees-commandes`
+- [x] Fait — branche `feat/p1-tournees-commandes`
 - Captures 01, 02, 02e, 03, 03b, 03e, 10. Cahier fonctionnel : sections 4.1 à 4.3 et 4.8, RG-03, RG-11.
 - Accueil, préparation d'une tournée (ordre de livraison), saisie express (poids estimé), liste d'attente, lancement du calcul.
 - Enregistrement d'une commande en une seule opération « tout ou rien » (fonction SQL appelée par le dépôt), au lieu des trois requêtes de l'étape 6.
@@ -160,7 +160,10 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
   - mise en évidence d'une commande, vue par étape avec silhouettes ;
   - tableau des placements, ordre de chargement ;
   - carte d'équilibre avec le centre de gravité, bandeau de calage ;
-  - dépassement et report dans la zone « Articles à placer ».
+  - dépassement et report dans la zone « Articles à placer » ;
+  - report d'une partie seulement d'une ligne (1 unité sur 2, par exemple) : la ligne est scindée en deux, la partie reportée devient une ligne à part, citée par l'élément en attente ;
+  - recalcul de la tournée d'origine : une ligne reportée, qui reste dans sa commande d'origine, est ignorée par le calcul.
+- Le plan peut être marqué « à recalculer » (camion changé, étape 9) : la page le dit et propose de relancer le calcul.
 - Peut être découpée en deux sessions si elle est trop longue : d'abord les vues, puis le reste.
 
 ## Étape 11 · Recette du prototype 1

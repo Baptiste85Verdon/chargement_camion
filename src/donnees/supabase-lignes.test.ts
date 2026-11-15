@@ -6,6 +6,9 @@ import {
   articleVersLigne,
   commandeDepuisLigne,
   commandeVersLigne,
+  elementAttenteDepuisLigne,
+  elementAttenteVersLigne,
+  ligneCommandePourEnregistrement,
   ligneCommandeDepuisLigne,
   ligneCommandeVersLigne,
   orientation,
@@ -173,5 +176,48 @@ describe('conversions Supabase', () => {
 
   it('refuse une valeur inconnue venant de la base, plutôt que de la laisser passer', () => {
     expect(() => orientation.versDomaine('couche')).toThrow('Valeur inconnue')
+  })
+
+  it('prépare une ligne pour la fonction enregistrer_commande, avec son id s’il existe', () => {
+    const ligne = {
+      articleId: 'a1',
+      quantite: 2,
+      nu: true,
+      dimsPropres: { l: 6000, w: 200, h: 400 },
+      poidsPropre: 219.8,
+      poidsEstime: true,
+    }
+    expect(ligneCommandePourEnregistrement(ligne)).toEqual({
+      article_id: 'a1',
+      quantite: 2,
+      nu: true,
+      longueur_propre: 6000,
+      largeur_propre: 200,
+      hauteur_propre: 400,
+      poids_propre: 219.8,
+      poids_estime: true,
+    })
+    expect(ligneCommandePourEnregistrement({ ...ligne, id: 'l1' })).toMatchObject({ id: 'l1' })
+  })
+
+  it('convertit un élément en attente, avec son rang d’origine et sa date de report', () => {
+    const element = {
+      commandeId: 'c1',
+      ligneCommandeId: null,
+      tourneeOrigineId: 't1',
+      rangOrigine: 5,
+      motif: 'depassement' as const,
+    }
+    const ligne = elementAttenteVersLigne(element)
+    expect(ligne).toEqual({
+      commande_id: 'c1',
+      ligne_commande_id: null,
+      tournee_origine_id: 't1',
+      rang_origine: 5,
+      motif: 'depassement',
+    })
+    expect(
+      elementAttenteDepuisLigne({ ...ligne, id: 'e1', cree_le: '2026-11-02T08:00:00+00:00' }),
+    ).toEqual({ ...element, id: 'e1', reporteLe: '2026-11-02T08:00:00+00:00' })
   })
 })

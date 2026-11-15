@@ -18,6 +18,7 @@ import type {
   Tournee,
 } from '@/domaine/modele'
 import { estActif } from '@/domaine/modele'
+import { ligneModifiee } from '@/domaine/saisie-commande'
 import type {
   AEnregistrer,
   CommandeAvecLignes,
@@ -35,6 +36,7 @@ export interface ContenuInitial {
   tournees?: Tournee[]
   commandes?: Commande[]
   lignes?: LigneDeCommande[]
+  attente?: ElementAttente[]
 }
 
 const copie = <T>(objet: T): T => structuredClone(objet)
@@ -52,7 +54,7 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
   const lignes = indexer(initial.lignes)
   const plans = new Map<string, PlanChargement>()
   const placements = new Map<string, PlacementEnregistre>()
-  const attente = new Map<string, ElementAttente>()
+  const attente = indexer(initial.attente)
 
   /** Crée ou remplace une ligne de table ; une modification d'un id inconnu est refusée. */
   function ecrire<T extends { id: string }>(table: Map<string, T>, objet: AEnregistrer<T>): T {
@@ -247,6 +249,8 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
         const commande = commandes.get(id)
         return commande ? avecLignes(commande) : null
       },
+      // Même règle que la fonction SQL enregistrer_commande : tout est
+      // vérifié avant la première écriture, pour rester « tout ou rien ».
       async enregistrer(commande, nouvellesLignes) {
         // UNIQUE (tournee_id, numero) : seulement dans une même tournée.
         const doublon = [...commandes.values()].some(
@@ -260,13 +264,49 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
         if (nouvellesLignes.some((l) => !articles.has(l.articleId))) {
           throw new ErreurDonnees('introuvable', 'articleId')
         }
+        if (commande.id !== undefined && !commandes.has(commande.id)) {
+          throw new ErreurDonnees('introuvable')
+        }
+        const siennes = new Map(
+          commande.id === undefined ? [] : lignesDe(commande.id).map((l) => [l.id, l]),
+        )
+        if (nouvellesLignes.some((l) => l.id !== undefined && !siennes.has(l.id))) {
+          throw new ErreurDonnees('introuvable')
+        }
 
         const enregistree = ecrire(commandes, commande)
-        for (const l of lignesDe(enregistree.id)) supprimerLigne(l.id)
+        const gardees = new Set(nouvellesLignes.map((l) => l.id))
+        for (const id of siennes.keys()) if (!gardees.has(id)) supprimerLigne(id)
+
+        const lignesChangees: string[] = []
         for (const l of nouvellesLignes) {
-          ecrire(lignes, { ...l, id: undefined, commandeId: enregistree.id })
+          const avant = l.id === undefined ? undefined : siennes.get(l.id)
+          const ecrite = ecrire(lignes, { ...l, commandeId: enregistree.id })
+          if (!avant) {
+            lignesChangees.push(ecrite.id)
+          } else if (ligneModifiee(avant, l)) {
+            for (const p of placements.values()) {
+              if (p.ligneCommandeId === ecrite.id) placements.delete(p.id)
+            }
+            lignesChangees.push(ecrite.id)
+          }
+          // L'ordre de la liste devient l'ordre des lignes : on réinsère.
+          lignes.delete(ecrite.id)
+          lignes.set(ecrite.id, ecrite)
         }
-        return avecLignes(enregistree)
+        return { ...avecLignes(enregistree), lignesChangees }
+      },
+      async reordonner(tourneeId, commandeIds) {
+        const siennes = [...commandes.values()].filter((c) => c.tourneeId === tourneeId)
+        const complete =
+          commandeIds.length === siennes.length &&
+          new Set(commandeIds).size === commandeIds.length &&
+          siennes.every((c) => commandeIds.includes(c.id))
+        if (!complete) throw new ErreurDonnees('contrainte')
+        commandeIds.forEach((id, i) => {
+          const c = commandes.get(id)
+          if (c) commandes.set(id, { ...c, rangLivraison: i + 1 })
+        })
       },
       async supprimer(id) {
         supprimerCommande(id)
@@ -299,11 +339,17 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
           tourneeId,
           version: Math.max(0, ...versions.map((p) => p.version)) + 1,
           calculeLe: new Date().toISOString(),
+          aRecalculer: false,
         })
         const enregistres = nouveaux
           .map((p) => ecrire(placements, { ...p, planId: plan.id }))
           .sort((a, b) => a.rang - b.rang)
         return { plan, placements: enregistres }
+      },
+      async marquerARecalculer(planId) {
+        const plan = plans.get(planId)
+        if (!plan) throw new ErreurDonnees('introuvable')
+        plans.set(planId, { ...plan, aRecalculer: true })
       },
       async changerStatutPlacement(placementId, statut) {
         const placement = placements.get(placementId)
@@ -321,9 +367,46 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
       },
       async ajouter(element) {
         if (!commandes.has(element.commandeId)) throw new ErreurDonnees('introuvable')
-        return ecrire(attente, { ...element, id: undefined })
+        return ecrire(attente, { ...element, reporteLe: new Date().toISOString() })
+      },
+      // Même règle que la fonction SQL affecter_element_attente.
+      async affecter(elementId, tourneeId) {
+        const element = attente.get(elementId)
+        const tournee = tournees.get(tourneeId)
+        const origine = element && commandes.get(element.commandeId)
+        if (!element || !tournee || !origine) throw new ErreurDonnees('introuvable')
+        if (tournee.statut !== 'enPreparation') throw new ErreurDonnees('contrainte')
+
+        const dansLaTournee = [...commandes.values()].filter((c) => c.tourneeId === tourneeId)
+        const rang = Math.max(0, ...dansLaTournee.map((c) => c.rangLivraison ?? 0)) + 1
+        let cible: Commande
+        if (element.ligneCommandeId === null) {
+          cible = { ...origine, tourneeId, rangLivraison: rang }
+          commandes.set(cible.id, cible)
+        } else {
+          cible =
+            dansLaTournee.find((c) => c.numero === origine.numero) ??
+            ecrire(commandes, {
+              tourneeId,
+              numero: origine.numero,
+              destination: origine.destination,
+              ...(origine.ville ? { ville: origine.ville } : {}),
+              rangLivraison: rang,
+            })
+          const ligne = lignes.get(element.ligneCommandeId)
+          if (ligne) {
+            lignes.set(ligne.id, { ...ligne, commandeId: cible.id })
+            for (const p of placements.values()) {
+              if (p.ligneCommandeId === ligne.id) placements.delete(p.id)
+            }
+          }
+        }
+        attente.delete(elementId)
+        return cible.id
       },
       async supprimer(id) {
+        const element = attente.get(id)
+        if (element?.ligneCommandeId === null) supprimerCommande(element.commandeId)
         attente.delete(id)
       },
     },

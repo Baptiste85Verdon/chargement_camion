@@ -297,6 +297,25 @@ export function ligneCommandeVersLigne(
   }
 }
 
+/**
+ * Une ligne telle que l'attend la fonction SQL `enregistrer_commande` : avec
+ * son `id` si elle est déjà enregistrée ; la fonction lui donne sa commande
+ * et son numéro de ligne.
+ */
+export function ligneCommandePourEnregistrement(ligne: LigneAEnregistrer) {
+  return {
+    ...avecId(ligne.id),
+    article_id: ligne.articleId,
+    quantite: ligne.quantite,
+    nu: ligne.nu,
+    longueur_propre: ligne.dimsPropres?.l ?? null,
+    largeur_propre: ligne.dimsPropres?.w ?? null,
+    hauteur_propre: ligne.dimsPropres?.h ?? null,
+    poids_propre: ligne.poidsPropre ?? null,
+    poids_estime: ligne.poidsEstime,
+  }
+}
+
 // --- plan_chargement et placement ---------------------------------------------------------
 
 export interface LignePlan {
@@ -304,6 +323,7 @@ export interface LignePlan {
   tournee_id: string
   version: number
   calcule_le: string
+  a_recalculer: boolean
 }
 
 export function planDepuisLigne(ligne: LignePlan): PlanChargement {
@@ -312,6 +332,7 @@ export function planDepuisLigne(ligne: LignePlan): PlanChargement {
     tourneeId: ligne.tournee_id,
     version: ligne.version,
     calculeLe: ligne.calcule_le,
+    aRecalculer: ligne.a_recalculer,
   }
 }
 
@@ -364,7 +385,9 @@ export interface LigneElementAttente {
   commande_id: string
   ligne_commande_id: string | null
   tournee_origine_id: string | null
+  rang_origine: number | null
   motif: string
+  cree_le: string
 }
 
 export function elementAttenteDepuisLigne(ligne: LigneElementAttente): ElementAttente {
@@ -373,15 +396,19 @@ export function elementAttenteDepuisLigne(ligne: LigneElementAttente): ElementAt
     commandeId: ligne.commande_id,
     ligneCommandeId: ligne.ligne_commande_id,
     tourneeOrigineId: ligne.tournee_origine_id,
+    rangOrigine: ligne.rang_origine,
     motif: motifAttente.versDomaine(ligne.motif),
+    reporteLe: ligne.cree_le,
   }
 }
 
-export function elementAttenteVersLigne(element: AEnregistrer<ElementAttente>) {
+/** Un élément à ajouter : la base fixe son `id` et sa date (`cree_le`). */
+export function elementAttenteVersLigne(element: Omit<ElementAttente, 'id' | 'reporteLe'>) {
   return {
     commande_id: element.commandeId,
     ligne_commande_id: element.ligneCommandeId,
     tournee_origine_id: element.tourneeOrigineId,
+    rang_origine: element.rangOrigine,
     motif: motifAttente.versBase(element.motif),
   }
 }
