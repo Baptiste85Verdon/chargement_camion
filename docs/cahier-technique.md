@@ -459,8 +459,8 @@ Le développement suit une démarche **TDD** : écrire un test qui échoue, écr
 | A05 | Paquet de plaques BA13 | C3 | 2 500 × 1 200 × 250 | 500 kg | à plat | 1 200 | 1 000 | 250 | 5 |
 | A06 | Botte de planches de pin | C3 | 4 000 × 1 000 × 400 | 800 kg | à plat | 2 400 | 0 | 0 | 6 |
 | A07 | Botte de planches de pin | C3 | 4 000 × 1 000 × 400 | 800 kg | à plat | 2 400 | 0 | 400 | 7 |
-| A08 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 220 kg | à plat | 1 200 | 2 200 | 0 | 8 |
-| A09 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 220 kg | à plat | 1 200 | 2 200 | 400 | 9 |
+| A08 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 219,8 kg | à plat | 1 200 | 2 200 | 0 | 8 |
+| A09 | Poutre lamellé-collé | C1 | 6 000 × 200 × 400 | 219,8 kg | à plat | 1 200 | 2 200 | 400 | 9 |
 | A10 | Fenêtre PVC 2 vantaux, emballée, fragile | C2 | 1 500 × 180 × 1 350 | 45 kg | debout | 3 700 | 2 020 | 0 | 10 |
 | A11 | Fenêtre PVC 2 vantaux, emballée, fragile | C2 | 1 500 × 180 × 1 350 | 45 kg | debout | 3 700 | 1 840 | 0 | 11 |
 | A12 | Carton de quincaillerie | C2 | 600 × 600 × 600 | 30 kg | à plat | 3 700 | 1 240 | 0 | 12 |
@@ -469,7 +469,7 @@ Le développement suit une démarche **TDD** : écrire un test qui échoue, écr
 
 - **Le couloir (RG-07)** : les poutres de C1, livrées en premier, partent à 1,2 m du fond le long de la paroi droite et sortent sans rien déplacer.
 - **Le calage (RG-19)** : la fenêtre A10 s'appuie contre les deux poutres de C1, qui couvrent 59 % de sa face (800 mm sur 1 350 mm de haut). A11 s'appuie contre A10. Le carton A12 touche A05 côté fond et A11 en largeur.
-- **L'équilibre (RG-20)** : le centre de gravité est à 2,23 m du fond et à 12 cm à gauche de l'axe, soit 55 / 45 au départ. La charge passe à 59 / 41 après la livraison de C1 et de C2, puis à 58 / 42 après C3 : statut « À surveiller ».
+- **L'équilibre (RG-20)** : le centre de gravité est à environ 2,22 m du fond et à 12 cm à gauche de l'axe, soit 55 / 45 au départ. La charge passe à 59 / 41 après la livraison de C1 et de C2, puis à 58 / 42 après C3 : statut « À surveiller ».
 
 **Variante « fenêtres isolées »** : c'est la disposition d'origine de la maquette. Seules trois unités changent : A10 en (4 000 ; 1 860 ; 0), A11 en (4 000 ; 1 610 ; 0) et A12 en (6 600 ; 0 ; 0).
 

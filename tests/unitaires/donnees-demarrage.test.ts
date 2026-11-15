@@ -25,12 +25,7 @@ function commandesAPlacer(): CommandeAPlacer[] {
     }))
 }
 
-/**
- * Signature d'une unité, pour comparer sans tenir compte des identifiants.
- * Le poids est arrondi au kilogramme : la base d'exemple garde le poids
- * estimé au dixième (219,8 kg pour les poutres de C1, RG-03), le jeu
- * d'essai « couloirs » du cahier technique (section 8) l'arrondit à 220 kg.
- */
+/** Signature d'une unité, pour comparer sans tenir compte des identifiants. */
 const signature = (u: {
   commandeRang: number
   dims: Dimensions
@@ -38,7 +33,7 @@ const signature = (u: {
   fragile: boolean
   orientations: Orientation[]
 }) =>
-  `C${u.commandeRang} ${u.dims.l}×${u.dims.w}×${u.dims.h} ${Math.round(u.poids)} kg ${u.fragile ? 'fragile' : ''} ${[...u.orientations].sort().join('/')}`
+  `C${u.commandeRang} ${u.dims.l}×${u.dims.w}×${u.dims.h} ${u.poids} kg ${u.fragile ? 'fragile' : ''} ${[...u.orientations].sort().join('/')}`
 
 describe('données de démarrage (RG-01)', () => {
   const articles = demarrage.articles

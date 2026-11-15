@@ -46,9 +46,11 @@ describe('mesurerEquilibre : jeu d’essai « couloirs » (RG-20)', () => {
     ])
   })
 
-  it('RG-20 : place le centre de gravité à 2,23 m du fond et 12 cm à gauche de l’axe', () => {
+  it('RG-20 : place le centre de gravité à environ 2,22 m du fond et 12 cm à gauche de l’axe', () => {
     const depart = mesure.etapes[0]
-    expect(Math.round((depart?.cgX ?? 0) / 10) * 10).toBe(2230)
+    // Valeur exacte à 1 mm près : 2 225 mm tombe pile sur une limite
+    // d'arrondi à 10 mm (2 224,98 mm avec les poutres de 219,8 kg).
+    expect(Math.abs((depart?.cgX ?? 0) - 2225)).toBeLessThanOrEqual(1)
     expect(Math.round((depart?.cgY ?? 0) - jeu.camion.largeur / 2)).toBe(-124)
   })
 
