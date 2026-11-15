@@ -153,6 +153,11 @@ function placer(unites: Unite[], camion: Camion, fixes?: Placement[]): { placeme
 function diagnostiquerCalage(plan: Placement[], unites: Unite[], camion: Camion): string[] // unités mal calées : avertissement, pas un refus ; unites comme pour valider
 function mesurerEquilibre(plan: Placement[], unites: Unite[], camion: Camion): { etapes: { apres: number | null; partGauche: number; cgX: number; cgY: number }[]; statut: 'equilibre' | 'aSurveiller' | 'desequilibre' } // apres : rang de la dernière commande livrée (null au départ)
 function optimiser(unites: Unite[], camion: Camion, fixes?: Placement[]): { placements: Placement[]; enTrop: Unite[] } // variantes, comparaison, échanges (4.4)
+function projeter(p: Placement, unite: Unite, camion: Camion, vue: Vue): { uniteId: string; rect: Rectangle; profondeur: { proche: number; loin: number } } // 5.8
+function projeterPlan(plan: Placement[], unites: Unite[], camion: Camion, vue: Vue): (Projection & { cache: boolean })[] // ordre de dessin, articles cachés (5.10)
+function vuesOuVisible(uniteId: string, plan: Placement[], unites: Unite[], camion: Camion): Vue[] // vues où l'article se voit (5.10)
+function coterCaisse(camion: Camion, vue: Vue): Cote[] // cotes de la caisse (5.13)
+function coter(p: Placement, unite: Unite, camion: Camion, vue: Vue): Cote[] // cotes de l'article sélectionné (5.13)
 ```
 
 **Orientation et encombrement** : `Unite.dims` décrit la boîte englobante de l'article posé à plat, longueur selon x, largeur selon y, hauteur selon z. Mettre une unité debout revient à la faire pivoter d'un quart de tour autour de sa longueur. La longueur reste selon x, la largeur et la hauteur s'échangent. « Contre une paroi » est la même pose que « debout », avec en plus un contact obligatoire avec la paroi gauche ou la paroi droite, à `TOLERANCE_CONTACT` près. Par exemple, une fenêtre de 1 500 × 1 350 × 180 mm à plat occupe 1 500 × 180 × 1 350 mm debout.
@@ -230,7 +235,7 @@ Côté données, un article à placer est une unité de la tournée qui n'a pas 
 - un mini-pictogramme du camion vu de dessus, qui montre d'où l'on regarde ;
 - le plancher, marqué par un trait plus épais.
 
-**Calcul** : une fonction pure `projeter(placement, vue)` renvoie le rectangle à dessiner et sa profondeur. Les articles sont dessinés du plus éloigné au plus proche, si bien que ceux de devant recouvrent ceux de derrière. Cette fonction est développée en TDD, comme le validateur.
+**Calcul** : une fonction pure `projeter(placement, unite, camion, vue)` renvoie le rectangle à dessiner, en millimètres dans le repère de la vue, et sa profondeur : distance de l'observateur à la face la plus proche et à la face la plus éloignée. L'unité donne les dimensions ; le camion sert aux vues prises depuis la paroi droite, le fond ou les portes, et à inverser la hauteur, car le plancher est en bas. `projeterPlan(plan, unites, camion, vue)` renvoie les projections dans l'ordre de dessin, du plus éloigné au plus proche, si bien que ceux de devant recouvrent ceux de derrière. Trier sur la face la plus proche suffit : deux articles ne se chevauchent pas (RG-06), donc deux rectangles qui se recouvrent dans une vue sont séparés en profondeur. Ces fonctions sont développées en TDD, comme le validateur.
 
 ### 5.9 Vue par étape
 
@@ -249,7 +254,7 @@ Côté données, un article à placer est une unité de la tournée qui n'a pas 
 Dans une vue, un article peut être entièrement masqué par ceux de devant : sur la première maquette, par exemple, les fenêtres cachent la vitre de toit en vue de côté.
 
 - **Signalement** : chaque cadre indique le nombre d'articles cachés (« 2 articles cachés dans cette vue »). Un clic ouvre leur liste.
-- **Vue plus adaptée** : pour un article caché, l'application propose de passer à une vue où il est visible (« Voir dans la vue Dessus »). La fonction `projeter` fournit déjà ce qu'il faut pour le savoir.
+- **Vue plus adaptée** : pour un article caché, l'application propose de passer à une vue où il est visible (« Voir dans la vue Dessus »). `projeterPlan` marque chaque article entièrement masqué par ceux de devant, et `vuesOuVisible(uniteId, plan, unites, camion)` liste les vues où il se voit. Le plan transmis ne contient que les articles affichés : ceux qui sont masqués par le filtre de profondeur ou montrés en silhouette ne cachent rien et ne sont pas comptés.
 - **Filtre de profondeur** : un curseur à deux poignées limite l'affichage à une tranche de profondeur. Par exemple, en vue de côté gauche, seulement les articles situés entre 0 et 1 m de la paroi gauche. Les articles hors tranche sont masqués, et la tranche choisie reste affichée en clair. Tant qu'un filtre est actif, un bandeau dans le cadre l'indique (« Filtre actif : moitié fond · 6 articles masqués ») avec un bouton « Tout afficher », et le contour du camion change d'aspect. Les articles masqués par le filtre ne sont pas comptés comme cachés. Ce point vient de la maquette : un filtre actif y a été pris pour une erreur d'affichage.
 - **Survol** : au survol ou au focus d'un article, ceux qui le recouvrent deviennent semi-transparents.
 
@@ -270,7 +275,11 @@ Dans une vue, un article peut être entièrement masqué par ceux de devant : su
 - La caisse est cotée dans chaque vue : la longueur sous la vue, la largeur ou la hauteur sur le côté. Trait de 1 px `cote`, flèches aux extrémités, valeur en millimètres en IBM Plex Mono (« 7 200 mm »).
 - L'article sélectionné affiche ses propres cotes, en `action` : ses dimensions et sa distance au fond.
 - Les cotes appartiennent au calque de libellés : elles suivent le zoom en position, mais gardent une taille lisible.
-- Une fonction pure `coter(placement, vue)` renvoie les segments et les valeurs à afficher, développée en TDD comme `projeter`.
+- Deux fonctions pures, développées en TDD comme `projeter` :
+  - `coterCaisse(camion, vue)` renvoie les cotes de la caisse ;
+  - `coter(placement, unite, camion, vue)` renvoie celles de l'article : ses dimensions telles qu'il est posé, puis sa distance au fond.
+
+  Chaque cote donne sa mesure, sa valeur en millimètres et son segment, posé sur le bord mesuré. Le calque de libellés le décale vers l'extérieur. En vues avant et arrière, la distance au fond est dans l'axe du regard : elle n'a pas de segment et s'affiche en texte.
 
 ### 5.14 États superposés d'un bloc
 

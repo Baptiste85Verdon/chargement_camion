@@ -73,9 +73,20 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 5 · Projections et cotes
 
-- [ ] Fait — branche `feat/p1-projections`
+- [x] Fait — branche `feat/p1-projections`
 - Cahier technique : sections 5.8 et 5.13.
-- `projeter(placement, vue)` pour les cinq vues, avec la profondeur et l'ordre de dessin ; détection des articles cachés ; `coter(placement, vue)`. En TDD sur le jeu « couloirs ».
+- `projeter(placement, unite, camion, vue)` pour les cinq vues, avec la profondeur et l'ordre de dessin ; détection des articles cachés ; `coter(placement, unite, camion, vue)`. En TDD sur le jeu « couloirs ».
+
+## Étape 4b · Équilibre du placeur
+
+- [ ] Fait — branche `feat/p1-equilibre-placeur`
+- Cahier technique : sections 4.3, 4.4 et 4.5 ; demande de fusion de l'étape 4, « Écart connu : équilibre d'`optimiser` sur « couloirs » ».
+- Constat de départ : sur « couloirs », `optimiser` donne un plan complet et valide, mais à 66 / 34 au pire moment (après C3), contre 59 / 41 pour la référence. Le placeur ne crée de points qu'au bord des unités posées depuis le coin gauche et n'atteint pas la paroi droite.
+- **Piste retenue : points projetés contre la paroi opposée.** Après chaque unité posée, le placeur ajoute un quatrième point candidat, celui « à côté », poussé jusqu'à la paroi d'en face. Les 8 variantes sont lancées avec et sans ce point, soit 16, et la comparaison de 4.4 garde la meilleure.
+- **Complément, seulement si la piste 1 ne suffit pas** : des déplacements en plus des échanges à l'étape 3 de 4.4. On retire une unité sans rien dessus, ou toute une commande, pour la replacer ailleurs ; le coup est gardé aux mêmes conditions qu'un échange (validateur, calage, équilibre).
+- Proposer les modifications du cahier qui en découlent (4.3 étape 5, 4.4 étapes 1 et 3, seuils provisoires de la section 10) avant de les faire.
+- **Critère de réussite** : sur « couloirs », `optimiser` obtient 59 / 41 ou mieux au pire moment, sans article en trop ni article mal calé. Le test marqué `it.fails` dans `optimiser.test.ts` passe pour de vrai, en `it`.
+- Mesurer le temps de calcul de `placer` et d'`optimiser` sur « couloirs » avant et après, et noter les deux dans la demande de fusion.
 
 ## Étape 6 · Données et validations de saisie
 
