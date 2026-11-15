@@ -39,6 +39,7 @@ import ApercuArticle from '@/composants/ApercuArticle.vue'
 import Badge from '@/composants/Badge.vue'
 import Bandeau from '@/composants/Bandeau.vue'
 import Bouton from '@/composants/Bouton.vue'
+import BoutonEnregistrer from '@/composants/BoutonEnregistrer.vue'
 import Carte from '@/composants/Carte.vue'
 import CaseACocher from '@/composants/CaseACocher.vue'
 import Champ from '@/composants/Champ.vue'
@@ -372,9 +373,11 @@ async function reactiver() {
           <Bouton @click="archiver">{{ t.archiver }}</Bouton>
         </template>
       </template>
-      <Bouton variante="principal" taille="grande" type="submit" form="formulaire-article">
-        {{ t.enregistrer }}
-      </Bouton>
+      <BoutonEnregistrer
+        :libelle="t.enregistrer"
+        :modifie="modifie"
+        formulaire="formulaire-article"
+      />
     </template>
   </EntetePage>
 

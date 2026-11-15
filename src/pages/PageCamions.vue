@@ -17,6 +17,8 @@ import Bandeau from '@/composants/Bandeau.vue'
 import Bouton from '@/composants/Bouton.vue'
 import EntetePage from '@/composants/EntetePage.vue'
 import LienBouton from '@/composants/LienBouton.vue'
+import TableauTriable, { type ColonneTableau } from '@/composants/TableauTriable.vue'
+import type { EtatTri } from '@/composants/tri'
 import { formaterDate, formaterMillimetres, formaterVolume } from '@/composants/format'
 
 const t = textes.camions
@@ -67,6 +69,34 @@ const echelle = (camion: ModeleCamion) => `${(camion.longueur / plusLongue.value
 const dimensions = (c: ModeleCamion) =>
   [c.longueur, c.largeur, c.hauteur].map(formaterMillimetres).join(' × ')
 
+/** Modèles triés par nom par défaut ; un clic sur un en-tête change le tri. */
+const tri = ref<EtatTri | null>({ cle: 'nom', sens: 'croissant' })
+
+const colonnes: ColonneTableau<ModeleCamion>[] = [
+  { cle: 'nom', libelle: t.colonnes.modele, valeur: (c) => c.nom, classe: 'camions__nom' },
+  {
+    cle: 'echelle',
+    libelle: t.colonnes.echelle,
+    valeur: (c) => c.longueur,
+    classe: 'camions__echelle',
+  },
+  {
+    cle: 'caisse',
+    libelle: t.colonnes.caisse,
+    valeur: (c) => [c.longueur, c.largeur, c.hauteur],
+    classe: 'donnees',
+  },
+  {
+    cle: 'volume',
+    libelle: t.colonnes.volume,
+    valeur: (c) => c.longueur * c.largeur * c.hauteur,
+    nombre: true,
+    classe: 'donnees',
+  },
+  { cle: 'tournees', libelle: t.colonnes.tournees, valeur: tourneesDe },
+  { cle: 'action', libelle: t.colonnes.action, libelleCache: true, classe: 'camions__action' },
+]
+
 async function reactiver(camion: ModeleCamion) {
   try {
     await depots.camions.reactiver(camion.id)
@@ -96,49 +126,34 @@ async function reactiver(camion: ModeleCamion) {
 
   <template v-else>
     <div class="cadre">
-      <table class="tableau">
-        <caption class="visuellement-cache">
-          {{
-            t.legende
-          }}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">{{ t.colonnes.modele }}</th>
-            <th scope="col" class="camions__echelle">{{ t.colonnes.echelle }}</th>
-            <th scope="col">{{ t.colonnes.caisse }}</th>
-            <th scope="col" class="nombre">{{ t.colonnes.volume }}</th>
-            <th scope="col">{{ t.colonnes.tournees }}</th>
-            <th scope="col">
-              <span class="visuellement-cache">{{ t.colonnes.action }}</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="camion in actifs" :key="camion.id">
-            <th scope="row" class="camions__nom">{{ camion.nom }}</th>
-            <td class="camions__echelle">
-              <div
-                class="caisse"
-                :style="{ width: echelle(camion) }"
-                role="img"
-                :aria-label="t.echelle(formaterMillimetres(camion.longueur))"
-              >
-                <span aria-hidden="true">{{ t.fond }}</span>
-                <span aria-hidden="true">{{ t.portes }}</span>
-              </div>
-            </td>
-            <td class="donnees">{{ dimensions(camion) }}</td>
-            <td class="donnees nombre">{{ formaterVolume(camion) }}</td>
-            <td>{{ tourneesDe(camion) }}</td>
-            <td class="camions__action">
-              <LienBouton :vers="`/camions/${camion.id}`" :libelle="t.ouvrir(camion.nom)">
-                {{ textes.referentiels.ouvrirLaFiche }}
-              </LienBouton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <TableauTriable
+        v-model:tri="tri"
+        :colonnes="colonnes"
+        :lignes="actifs"
+        :cle-ligne="(c) => c.id"
+        :legende="t.legende"
+        entete-ligne="nom"
+      >
+        <template #echelle="{ ligne }">
+          <div
+            class="caisse"
+            :style="{ width: echelle(ligne) }"
+            role="img"
+            :aria-label="t.echelle(formaterMillimetres(ligne.longueur))"
+          >
+            <span aria-hidden="true">{{ t.fond }}</span>
+            <span aria-hidden="true">{{ t.portes }}</span>
+          </div>
+        </template>
+        <template #caisse="{ ligne }">{{ dimensions(ligne) }}</template>
+        <template #volume="{ ligne }">{{ formaterVolume(ligne) }}</template>
+        <template #tournees="{ ligne }">{{ tourneesDe(ligne) }}</template>
+        <template #action="{ ligne }">
+          <LienBouton :vers="`/camions/${ligne.id}`" :libelle="t.ouvrir(ligne.nom)">
+            {{ textes.referentiels.ouvrirLaFiche }}
+          </LienBouton>
+        </template>
+      </TableauTriable>
     </div>
 
     <div class="archives">
@@ -202,21 +217,22 @@ async function reactiver(camion: ModeleCamion) {
   border-radius: var(--rayon-carte);
 }
 
-.camions__nom {
+/* Cellules dessinées par TableauTriable : `:deep` les atteint. */
+:deep(.camions__nom) {
   font: var(--typo-bouton);
   white-space: nowrap;
 }
 
-.camions__nom a {
+:deep(.camions__nom) a {
   color: var(--encre);
 }
 
-.camions__echelle {
+:deep(.camions__echelle) {
   width: 32%;
 }
 
 /* La caisse vue de dessus, à l'échelle : Fond à gauche, Portes à droite. */
-.caisse {
+:deep(.caisse) {
   display: flex;
   justify-content: space-between;
   min-width: max-content;
@@ -228,7 +244,7 @@ async function reactiver(camion: ModeleCamion) {
   border-radius: var(--rayon-code);
 }
 
-.camions__action {
+:deep(.camions__action) {
   text-align: right;
 }
 
