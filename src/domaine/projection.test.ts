@@ -4,6 +4,7 @@ import {
   VUES,
   dimensionsVue,
   estRecouvert,
+  plusGrandeZoneVisible,
   projeter,
   projeterPlan,
   vuesOuVisible,
@@ -185,5 +186,26 @@ describe('vuesOuVisible : proposer une vue plus adaptée', () => {
 
   it('suit l’ordre du sélecteur de vue', () => {
     expect(VUES).toEqual(['dessus', 'gauche', 'droite', 'avant', 'arriere'])
+  })
+})
+
+describe('plusGrandeZoneVisible', () => {
+  const cible = { x: 0, y: 0, largeur: 100, hauteur: 100 }
+
+  it('rend toute la cible quand rien ne la couvre', () => {
+    expect(plusGrandeZoneVisible(cible, [])).toEqual(cible)
+  })
+
+  it('assemble les cases libres voisines en un seul rectangle', () => {
+    // Un carré couvre le coin bas droit : le plus grand rectangle libre est
+    // la bande du haut ou celle de gauche, de même surface ; la première trouvée reste.
+    const devant = [{ x: 60, y: 60, largeur: 40, hauteur: 40 }]
+    expect(plusGrandeZoneVisible(cible, devant)).toEqual({ x: 0, y: 0, largeur: 100, hauteur: 60 })
+  })
+
+  it('ne rend rien pour une cible entièrement couverte', () => {
+    expect(
+      plusGrandeZoneVisible(cible, [{ x: -10, y: -10, largeur: 200, hauteur: 200 }]),
+    ).toBeNull()
   })
 })

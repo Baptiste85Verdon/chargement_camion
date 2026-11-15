@@ -11,6 +11,7 @@ import {
   profondeurVue,
   recouvrants,
   repereArticle,
+  zoneVisible,
 } from './contenu-vue'
 
 const jeu = chargerJeuEssai('couloirs')
@@ -104,6 +105,9 @@ describe('composerVue : vue par étape (5.9)', () => {
     const silhouettes = vue.blocs.filter((b) => b.etat === 'silhouette')
     expect(ids(silhouettes)).toEqual(['A08', 'A09', 'A10', 'A11', 'A12'])
     expect(vue.blocs.slice(0, 5).every((b) => b.etat === 'silhouette')).toBe(true)
+    // Entre elles, de la plus éloignée à la plus proche.
+    const proches = silhouettes.map((b) => b.profondeur.proche)
+    expect(proches).toEqual([...proches].sort((a, b) => b - a))
   })
 
   it('ne compte jamais une silhouette comme cachée, et elle ne cache rien', () => {
@@ -170,5 +174,37 @@ describe('decrireEtape (5.9, description en texte)', () => {
 
   it('un article contre la paroi droite', () => {
     expect(etape('A08').paroi).toBe('droite')
+  })
+})
+
+describe('zoneVisible (5.1, code de commande)', () => {
+  const { blocs } = composerVue(plan, unites, camion, 'gauche')
+
+  it('rend tout le bloc d’un article que rien ne recouvre', () => {
+    const a01 = blocs.find((b) => b.uniteId === 'A01')
+    expect(zoneVisible('A01', blocs)).toEqual(a01?.rect)
+  })
+
+  it('rend la partie qui dépasse d’un article en partie recouvert', () => {
+    // A02 (1 100 mm de haut) dépasse de 50 mm au-dessus de A01 (1 050 mm).
+    expect(zoneVisible('A02', blocs)).toEqual({ x: 0, y: 1400, largeur: 1200, hauteur: 50 })
+  })
+
+  it('ne rend rien pour un article entièrement caché', () => {
+    expect(zoneVisible('A04', blocs)).toBeNull()
+  })
+
+  it('une silhouette est aussi recouverte par les silhouettes plus proches', () => {
+    const vue = composerVue(plan, unites, camion, 'gauche', { etape: 7, silhouettes: true })
+    // A11 dépasse de A06 et A07 entre 800 et 1 350 mm de haut ; A10, même
+    // fenêtre, est juste derrière elle.
+    expect(zoneVisible('A11', vue.blocs)).toEqual({ x: 3700, y: 1150, largeur: 1500, hauteur: 550 })
+    expect(zoneVisible('A10', vue.blocs)).toBeNull()
+  })
+
+  it('une silhouette est recouverte par tous les articles affichés', () => {
+    const vue = composerVue(plan, unites, camion, 'gauche', { etape: 7, silhouettes: true })
+    // A12, carton de C2, est derrière A06 et A07, chargés avant lui.
+    expect(zoneVisible('A12', vue.blocs)).toBeNull()
   })
 })

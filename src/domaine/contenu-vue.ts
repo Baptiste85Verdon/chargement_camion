@@ -13,8 +13,10 @@ import { boiteDe, estPoseSur, trouverUnite } from './geometrie'
 import {
   type Projection,
   type ProjectionPlan,
+  type Rectangle,
   type Vue,
   projeter,
+  plusGrandeZoneVisible,
   projeterPlan,
 } from './projection'
 import type { Camion, Orientation, Placement, Unite } from './types'
@@ -122,7 +124,14 @@ export function composerVue(
   }))
   const formes: BlocVue[] = gardes
     .filter((m) => m.etat === 'silhouette')
-    .map((m) => ({ ...m.projection, cache: false, rang: m.placement.rang, etat: 'silhouette' }))
+    .map((m): BlocVue => ({
+      ...m.projection,
+      cache: false,
+      rang: m.placement.rang,
+      etat: 'silhouette',
+    }))
+    // Entre elles aussi, de la plus éloignée à la plus proche.
+    .sort((a, b) => b.profondeur.proche - a.profondeur.proche)
 
   return {
     blocs: [...formes, ...projetes],
@@ -153,6 +162,28 @@ export function recouvrants(uniteId: string, blocs: BlocVue[]): string[] {
         Math.min(r.y + r.hauteur, b.rect.y + b.rect.hauteur) - Math.max(r.y, b.rect.y) > 0,
     )
     .map((b) => b.uniteId)
+}
+
+/**
+ * La plus grande partie visible d'un bloc, où poser son code de commande
+ * (5.1) : centré sur le bloc entier, le code d'un article en partie
+ * recouvert tomberait sur celui de devant. `null` si rien ne se voit.
+ * Une silhouette est dessinée sous tous les articles affichés, et sous les
+ * silhouettes plus proches qu'elle.
+ */
+export function zoneVisible(uniteId: string, blocs: BlocVue[]): Rectangle | null {
+  const cible = blocs.find((b) => b.uniteId === uniteId)
+  if (!cible) return null
+  const devant = blocs
+    .filter(
+      (b) =>
+        b.uniteId !== uniteId &&
+        (b.etat === 'silhouette'
+          ? cible.etat === 'silhouette' && b.profondeur.proche < cible.profondeur.proche
+          : cible.etat === 'silhouette' || b.profondeur.proche < cible.profondeur.proche),
+    )
+    .map((b) => b.rect)
+  return plusGrandeZoneVisible(cible.rect, devant)
 }
 
 /** Ce que dit la description d'une étape (5.9), avant sa mise en texte. */

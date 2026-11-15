@@ -118,15 +118,14 @@ function decouper(debut: number, fin: number, bords: number[]): [number, number]
 }
 
 /**
- * `cible` est-il entièrement couvert par la réunion des rectangles `devant` ?
+ * Découpe `cible` en une grille dont les lignes passent par tous les bords
+ * des rectangles `devant`, et dit pour chaque case si elle reste libre.
  *
- * Méthode : on découpe la cible en une grille dont les lignes passent par
- * tous les bords des rectangles de devant. Dans chaque case de cette grille,
- * aucun bord ne passe : un rectangle couvre donc la case entière ou pas du
- * tout. Il suffit de tester le centre de chaque case. Le calcul est exact,
- * sans pas d'échantillonnage.
+ * Dans chaque case de cette grille, aucun bord ne passe : un rectangle
+ * couvre donc la case entière ou pas du tout. Il suffit de tester le centre
+ * de chaque case. Le calcul est exact, sans pas d'échantillonnage.
  */
-export function estRecouvert(cible: Rectangle, devant: Rectangle[]): boolean {
+function grilleVisible(cible: Rectangle, devant: Rectangle[]) {
   const colonnes = decouper(
     cible.x,
     cible.x + cible.largeur,
@@ -137,17 +136,60 @@ export function estRecouvert(cible: Rectangle, devant: Rectangle[]): boolean {
     cible.y + cible.hauteur,
     devant.flatMap((r) => [r.y, r.y + r.hauteur]),
   )
-  for (const [xa, xb] of colonnes) {
-    for (const [ya, yb] of lignes) {
+  /** libre[ligne][colonne] : la case n'est couverte par aucun rectangle. */
+  const libre = lignes.map(([ya, yb]) =>
+    colonnes.map(([xa, xb]) => {
       const cx = (xa + xb) / 2
       const cy = (ya + yb) / 2
-      const couverte = devant.some(
+      return !devant.some(
         (r) => cx > r.x && cx < r.x + r.largeur && cy > r.y && cy < r.y + r.hauteur,
       )
-      if (!couverte) return false
+    }),
+  )
+  return { colonnes, lignes, libre }
+}
+
+/** `cible` est-il entièrement couvert par la réunion des rectangles `devant` ? */
+export function estRecouvert(cible: Rectangle, devant: Rectangle[]): boolean {
+  return grilleVisible(cible, devant).libre.every((ligne) => ligne.every((l) => !l))
+}
+
+/**
+ * Le plus grand rectangle de `cible` qu'aucun rectangle `devant` ne couvre,
+ * ou `null` si tout est couvert.
+ *
+ * Sur la grille de `grilleVisible`, on essaie chaque bande de lignes
+ * consécutives (de la ligne k à la ligne l) : une colonne y est ouverte si
+ * toutes ses cases de la bande sont libres. Une suite de colonnes ouvertes
+ * voisines forme un rectangle libre ; on garde le plus grand en surface.
+ */
+export function plusGrandeZoneVisible(cible: Rectangle, devant: Rectangle[]): Rectangle | null {
+  const { colonnes, lignes, libre } = grilleVisible(cible, devant)
+  let meilleure: Rectangle | null = null
+  let aire = 0
+  for (let k = 0; k < lignes.length; k++) {
+    const ouvertes = colonnes.map(() => true)
+    for (let l = k; l < lignes.length; l++) {
+      const haut = lignes[k]?.[0] ?? 0
+      const hauteur = (lignes[l]?.[1] ?? 0) - haut
+      let debut = -1
+      for (let c = 0; c < colonnes.length; c++) {
+        ouvertes[c] = (ouvertes[c] ?? false) && (libre[l]?.[c] ?? false)
+        if (!ouvertes[c]) {
+          debut = -1
+          continue
+        }
+        if (debut < 0) debut = c
+        const gauche = colonnes[debut]?.[0] ?? 0
+        const largeur = (colonnes[c]?.[1] ?? 0) - gauche
+        if (largeur * hauteur > aire) {
+          aire = largeur * hauteur
+          meilleure = { x: gauche, y: haut, largeur, hauteur }
+        }
+      }
     }
   }
-  return true
+  return meilleure
 }
 
 /**
