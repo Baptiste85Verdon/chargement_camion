@@ -14,6 +14,14 @@ export const TOLERANCE_CONTACT = 20
 export const SEUIL_APPUI = 0.6
 
 /**
+ * Règle 10 du validateur (RG-04) : un article de plus de `POIDS_LOURD` kg
+ * n'a pas sa base à plus de `HAUTEUR_MAX_LOURD` mm du plancher. Une grosse
+ * masse en hauteur déstabilise le camion. Valeurs provisoires (section 10).
+ */
+export const POIDS_LOURD = 500
+export const HAUTEUR_MAX_LOURD = 1000
+
+/**
  * Part minimale d'une grande face d'un article debout qui doit être couverte
  * par les articles contre lesquels il s'appuie (RG-19).
  */
