@@ -11,6 +11,7 @@ import {
   profondeurVue,
   recouvrants,
   repereArticle,
+  situer,
   zoneVisible,
 } from './contenu-vue'
 
@@ -206,5 +207,28 @@ describe('zoneVisible (5.1, code de commande)', () => {
     const vue = composerVue(plan, unites, camion, 'gauche', { etape: 7, silhouettes: true })
     // A12, carton de C2, est derrière A06 et A07, chargés avant lui.
     expect(zoneVisible('A12', vue.blocs)).toBeNull()
+  })
+})
+
+describe('situer (6, nom accessible d’un article)', () => {
+  const situation = (id: string) => {
+    const p = plan.find((x) => x.uniteId === id)
+    const u = unites.find((x) => x.id === id)
+    if (!p || !u) throw new Error(id)
+    return situer(p, u, camion)
+  }
+
+  it('découpe la caisse en tiers : fond, milieu, portes ; gauche, axe, droite', () => {
+    // A07 : de 2 400 à 6 400 mm du fond, de 0 à 1 000 mm de la paroi gauche.
+    expect(situation('A07')).toEqual({ longueur: 'milieu', largeur: 'gauche' })
+    // A01 : palette au fond, contre la paroi gauche.
+    expect(situation('A01')).toEqual({ longueur: 'fond', largeur: 'gauche' })
+    // A08 : poutre le long de la paroi droite, centrée à 4 200 mm du fond.
+    expect(situation('A08')).toEqual({ longueur: 'milieu', largeur: 'droite' })
+  })
+
+  it('se fie au centre de l’article : A12, carton au milieu de la largeur', () => {
+    // A12 : de 1 240 à 1 840 mm de la paroi gauche, centre à 1 540 mm.
+    expect(situation('A12').largeur).toBe('axe')
   })
 })

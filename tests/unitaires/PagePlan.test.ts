@@ -120,7 +120,23 @@ describe('Plan de chargement : cadres de vue (5.8)', () => {
       ?.findAll('.calque__bouton')
       .map((b) => b.attributes('aria-label'))
     expect(noms?.length).toBeGreaterThan(0)
-    expect(noms?.every((n) => /^A\d\d, .+, commande C\d .+, étape \d+$/.test(n ?? ''))).toBe(true)
+    // Repère, article, commande, orientation, position dans la caisse, appui, étape.
+    const forme =
+      /^A\d\d, .+, commande C\d .+, (à plat|debout|contre une paroi), (au fond|au milieu|près des portes) (à gauche|dans l'axe|à droite), (au plancher|sur A\d\d(, A\d\d)*), étape \d+$/
+    expect(noms?.every((n) => forme.test(n ?? ''))).toBe(true)
+  })
+
+  it('6 : le nom d’un article dit sa pose, sa place dans la caisse et ce qui le porte', async () => {
+    const { page } = await ouvrir()
+    // A07, plaques de plâtre de C3 : de 1 200 à 3 700 mm du fond, de 1 200 à
+    // 2 400 mm de la paroi gauche, posées à 1 050 mm sur A06.
+    const nom = cadres(page)[0]
+      ?.findAll('.calque__bouton')
+      .map((b) => texte({ text: () => b.attributes('aria-label') ?? '' }))
+      .find((n) => n.startsWith('A07,'))
+    expect(nom).toBe(
+      'A07, Paquet de plaques BA13 250 × 120, commande C3 SCI Martin, à plat, au milieu à droite, sur A06, étape 7',
+    )
   })
 
   it('cote la caisse : longueur et largeur en vue de dessus', async () => {

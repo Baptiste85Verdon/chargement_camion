@@ -20,7 +20,14 @@
  * pincement à deux doigts sur tablette.
  */
 import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
-import { type BlocVue, type ContenuVue, recouvrants, zoneVisible } from '@/domaine/contenu-vue'
+import {
+  type BlocVue,
+  type ContenuVue,
+  decrireEtape,
+  recouvrants,
+  situer,
+  zoneVisible,
+} from '@/domaine/contenu-vue'
 import { coter, coterCaisse } from '@/domaine/cotes'
 import { trouverUnite } from '@/domaine/geometrie'
 import { type Vue, dimensionsVue } from '@/domaine/projection'
@@ -158,10 +165,45 @@ const zones = computed(
 )
 const visibles = computed(() => props.contenu.blocs.filter((b) => zones.value.get(b.uniteId)))
 
+const minuscule = (texte: string) => texte.charAt(0).toLocaleLowerCase('fr') + texte.slice(1)
+
+/**
+ * Ce que le nom accessible dit de la pose et de la place de chaque article
+ * (cahier technique 6) : orientation, position approximative dans la caisse
+ * (`situer`), et ce sur quoi il repose (`decrireEtape`).
+ */
+const poses = computed(() => {
+  const poses = new Map<string, { orientation: string; situation: string; support: string }>()
+  for (const p of props.plan) {
+    const unite = props.unites.find((u) => u.id === p.uniteId)
+    if (!unite) continue
+    const s = situer(p, unite, props.camion)
+    const { poseSur } = decrireEtape(p, props.plan, props.unites, props.camion)
+    poses.set(p.uniteId, {
+      orientation: minuscule(textes.orientations[p.orientation]),
+      situation: `${t.situation.longueur[s.longueur]} ${t.situation.largeur[s.largeur]}`,
+      support: poseSur.length
+        ? t.sur(poseSur.map((id) => props.infos.get(id)?.repere ?? id).join(', '))
+        : t.description.plancher,
+    })
+  }
+  return poses
+})
+
 function nomBloc(b: BlocVue): string {
   const i = info(b)
-  if (!i) return b.uniteId
-  const morceaux = [t.nomBloc(i.repere, i.nom, `C${i.code}`, i.destination, i.etape)]
+  const pose = poses.value.get(b.uniteId)
+  if (!i || !pose) return b.uniteId
+  const morceaux = [
+    t.nomBloc({
+      repere: i.repere,
+      nom: i.nom,
+      code: `C${i.code}`,
+      destination: i.destination,
+      ...pose,
+      etape: i.etape,
+    }),
+  ]
   if (b.etat === 'enCours') morceaux.push(t.enCours)
   if (b.etat === 'silhouette') morceaux.push(t.pasEncoreCharge)
   return morceaux.join(', ')

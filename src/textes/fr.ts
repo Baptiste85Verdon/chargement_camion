@@ -240,9 +240,25 @@ export const textes = {
     voirDansVue: (vue: string) => `Voir dans la vue ${vue}`,
     visibleAutreCadre: (vue: string) => `Visible dans l'autre cadre (vue ${vue})`,
     cacheToutesVues: 'Caché dans toutes les vues : utilisez le filtre de profondeur.',
-    // Blocs (nom accessible, 5.1, 5.9)
-    nomBloc: (repere: string, nom: string, code: string, destination: string, etape: number) =>
-      `${repere}, ${nom}, commande ${code} ${destination}, étape ${etape}`,
+    // Blocs : nom accessible (5.1, 5.9, 6), par exemple « A07, Botte de
+    // planches de pin, commande C3 SCI Martin, à plat, au milieu à gauche,
+    // sur A06, étape 7 ».
+    nomBloc: (article: {
+      repere: string
+      nom: string
+      code: string
+      destination: string
+      orientation: string
+      situation: string
+      support: string
+      etape: number
+    }) =>
+      `${article.repere}, ${article.nom}, commande ${article.code} ${article.destination}, ${article.orientation}, ${article.situation}, ${article.support}, étape ${article.etape}`,
+    situation: {
+      longueur: { fond: 'au fond', milieu: 'au milieu', portes: 'près des portes' },
+      largeur: { gauche: 'à gauche', axe: "dans l'axe", droite: 'à droite' },
+    },
+    sur: (reperes: string) => `sur ${reperes}`,
     pasEncoreCharge: 'pas encore chargé',
     enCours: 'étape en cours',
     // Article sélectionné

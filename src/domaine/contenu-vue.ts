@@ -186,6 +186,30 @@ export function zoneVisible(uniteId: string, blocs: BlocVue[]): Rectangle | null
   return plusGrandeZoneVisible(cible.rect, devant)
 }
 
+/** Position approximative d'un article dans la caisse, pour son nom accessible (6). */
+export interface Situation {
+  /** Tiers de la longueur : près du fond, au milieu, près des portes. */
+  longueur: 'fond' | 'milieu' | 'portes'
+  /** Tiers de la largeur : côté paroi gauche, dans l'axe, côté paroi droite. */
+  largeur: 'gauche' | 'axe' | 'droite'
+}
+
+/**
+ * Situe un article en découpant la caisse en tiers, d'après son centre :
+ * « au milieu à gauche ». Assez précis pour se repérer à l'oreille ; les
+ * cotes exactes sont dans le tableau des placements.
+ */
+export function situer(p: Placement, unite: Unite, camion: Camion): Situation {
+  const b = boiteDe(p, unite)
+  const tiers = (centre: number, total: number) => Math.min(2, Math.floor((3 * centre) / total))
+  const longueurs = ['fond', 'milieu', 'portes'] as const
+  const largeurs = ['gauche', 'axe', 'droite'] as const
+  return {
+    longueur: longueurs[tiers((b.x0 + b.x1) / 2, camion.longueur)] ?? 'milieu',
+    largeur: largeurs[tiers((b.y0 + b.y1) / 2, camion.largeur)] ?? 'axe',
+  }
+}
+
 /** Ce que dit la description d'une étape (5.9), avant sa mise en texte. */
 export interface DescriptionEtape {
   orientation: Orientation
