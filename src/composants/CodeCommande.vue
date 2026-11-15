@@ -4,11 +4,20 @@
  * commande »). Toujours la même forme : cartouche en `code-commande`, fond
  * `cmdN-fond`, contour de 2 px `cmdN-bord`, coins `rayon-code`. Le texte reste
  * en `encre` : c'est le code, pas la couleur, qui identifie la commande.
+ *
+ * Deux états du plan (charte, « Articles atténués et silhouettes ») :
+ * - `attenue` : une autre commande est mise en évidence (fond `attenue-fond`,
+ *   contour `attenue-bord`, texte `texte-doux`) ;
+ * - `silhouette` : étape à venir (fond `surface`, contour pointillé
+ *   `bordure-forte`, texte `texte-doux`).
  */
 import { computed } from 'vue'
 import { teinteCommande } from './teinte-commande'
 
-const props = defineProps<{ numero: number }>()
+const props = withDefaults(
+  defineProps<{ numero: number; etat?: 'normal' | 'attenue' | 'silhouette' }>(),
+  { etat: 'normal' },
+)
 
 const teinte = computed(() => teinteCommande(props.numero))
 </script>
@@ -16,7 +25,13 @@ const teinte = computed(() => teinteCommande(props.numero))
 <template>
   <span
     class="code-commande"
-    :class="[`code-commande--t${teinte.teinte}`, { 'code-commande--hachure': teinte.hachure }]"
+    :class="[
+      `code-commande--t${teinte.teinte}`,
+      {
+        'code-commande--hachure': teinte.hachure && props.etat === 'normal',
+        [`code-commande--${props.etat}`]: props.etat !== 'normal',
+      },
+    ]"
     >C{{ props.numero }}</span
   >
 </template>
@@ -77,5 +92,19 @@ const teinte = computed(() => teinteCommande(props.numero))
     var(--cmd-fond) 0 var(--espace-1),
     var(--surface) var(--espace-1) var(--espace-2)
   );
+}
+
+/* Les états du plan passent après les teintes : ils les remplacent. */
+.code-commande--attenue {
+  color: var(--texte-doux);
+  background: var(--attenue-fond);
+  border-color: var(--attenue-bord);
+}
+
+.code-commande--silhouette {
+  color: var(--texte-doux);
+  background: var(--surface);
+  border-style: dashed;
+  border-color: var(--bordure-forte);
 }
 </style>

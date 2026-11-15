@@ -36,6 +36,13 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/PagePreparation.vue'),
     props: true,
   },
+  // Plan de chargement (étape 10).
+  {
+    path: '/tournees/:id/plan',
+    name: 'plan',
+    component: () => import('@/pages/PagePlan.vue'),
+    props: true,
+  },
   {
     path: '/tournees/:tourneeId/commandes/nouvelle',
     name: 'nouvelle-commande',

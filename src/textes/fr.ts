@@ -115,8 +115,9 @@ export const textes = {
     lancer: 'Lancer le calcul',
     calculEnCours: 'Calcul en cours…',
     apresCalcul: "Le plan s'ouvre ensuite pour relecture et ajustement.",
+    voirPlan: 'Voir le plan',
     planCalcule: (version: number, places: number) =>
-      `Plan version ${version} calculé : ${places} ${places > 1 ? 'articles placés' : 'article placé'}. La page du plan arrive à l'étape suivante du développement.`,
+      `Plan version ${version} calculé : ${places} ${places > 1 ? 'articles placés' : 'article placé'}.`,
     planEnTrop: (n: number, codes: string) =>
       `${n} ${n > 1 ? 'articles ne rentrent pas' : 'article ne rentre pas'} (${codes}) : ils seront à reporter (RG-10, RG-11).`,
     dernierPlan: (version: number, date: string) =>
@@ -125,6 +126,160 @@ export const textes = {
       date: 'Date de livraison',
       modeleCamionId: 'Camion',
       commandes: 'Commandes',
+    },
+  },
+
+  /** Plan de chargement (captures 04, 04c, 04d, 04e ; CF 4.4 ; CT 5). */
+  plan: {
+    titre: 'Plan de chargement',
+    introuvable: "Cette tournée n'existe plus. Revenez à l'accueil pour actualiser la liste.",
+    aucunPlan: 'Aucun plan calculé pour cette tournée',
+    aucunPlanAide: 'Lancez le calcul depuis la préparation de la tournée.',
+    sansCamion: "La tournée n'a pas de camion. Choisissez-en un, puis relancez le calcul.",
+    retourPreparation: 'Préparer la tournée',
+    resume: (camion: string, caisse: string, commandes: number, places: number) =>
+      `${camion} · caisse ${caisse} mm · ${commandes} ${commandes > 1 ? 'commandes' : 'commande'} · ${places} ${places > 1 ? 'articles placés' : 'article placé'}`,
+    enTrop: (n: number) => `${n} en trop`,
+    version: (version: number, date: string) => `version ${version} du ${date}`,
+    aRecalculer: 'Plan à recalculer',
+    aRecalculerAide:
+      'Le camion a changé depuis le calcul : ce plan est dessiné dans la nouvelle caisse. Relancez le calcul depuis la préparation.',
+    affichage: "Mode d'affichage",
+    modes: { complet: 'Plan complet', etape: 'Par étape' },
+    commandes: 'Commandes',
+    legendeCommande: (rang: string, articles: number) => `livrée ${rang} · ${articles} art.`,
+    toutAfficher: 'Tout afficher',
+    miseEnEvidence: (code: string) =>
+      `${code} mise en évidence. Les autres commandes sont grisées.`,
+    finMiseEnEvidence: 'Toutes les commandes sont affichées.',
+    // Vue par étape (5.9)
+    precedent: 'Précédent',
+    suivant: 'Suivant',
+    etapeSur: (n: number, total: number) => `Étape ${n} sur ${total}`,
+    curseurEtape: 'Étape affichée',
+    silhouettes: 'Montrer les étapes suivantes',
+    etapeVide: (total: number) =>
+      `Étape 0 sur ${total} : camion vide. Passez à l'étape suivante pour voir le premier article à charger.`,
+    description: {
+      distance: (mm: string) => `à ${mm} mm du fond`,
+      paroi: { gauche: 'contre la paroi gauche', droite: 'contre la paroi droite' },
+      poseSur: (reperes: string) => `posé sur ${reperes}`,
+      plancher: 'au plancher',
+    },
+    etiquetteEtape: (n: number) => `Étape ${n}`,
+    // Cadres de vue (5.8)
+    vues: {
+      dessus: 'Dessus',
+      gauche: 'Gauche',
+      droite: 'Droite',
+      avant: 'Avant',
+      arriere: 'Arrière',
+    },
+    titresVues: {
+      dessus: 'Vue de dessus',
+      gauche: 'Côté gauche',
+      droite: 'Côté droit',
+      avant: 'Avant (fond)',
+      arriere: 'Arrière (portes)',
+    },
+    sousTitresVues: {
+      dessus: "Vu d'en haut · fond à gauche, portes à droite",
+      gauche: 'Vu depuis la paroi gauche · fond à gauche',
+      droite: 'Vu depuis la paroi droite · fond à droite',
+      avant: 'Vu depuis le fond, vers les portes',
+      arriere: 'Vu depuis les portes, vers le fond',
+    },
+    choixVue: 'Vue',
+    dejaAffichee: (vue: string) => `${vue}, déjà affichée dans l'autre cadre`,
+    reperes: {
+      fond: 'Fond (cabine)',
+      portes: 'Portes · entrée des articles',
+      paroiGauche: 'Paroi gauche',
+      paroiDroite: 'Paroi droite',
+      gauche: 'Gauche',
+      droite: 'Droite',
+      depuisPortes: 'vu depuis les portes',
+      depuisFond: 'vu depuis le fond',
+    },
+    pictogramme: {
+      dessus: 'Point de vue : au-dessus de la caisse',
+      gauche: 'Point de vue : contre la paroi gauche',
+      droite: 'Point de vue : contre la paroi droite',
+      avant: 'Point de vue : au fond, côté cabine',
+      arriere: 'Point de vue : aux portes',
+    },
+    dessin: (vue: string, caisse: string, n: number) =>
+      `${vue}, caisse de ${caisse} mm, ${n} ${n > 1 ? 'articles affichés' : 'article affiché'}. Le détail est dans le tableau des placements.`,
+    // Zoom (5.11)
+    zoomPlus: 'Zoom +',
+    zoomMoins: 'Zoom −',
+    ajuster: 'Ajuster',
+    zoomActuel: 'Zoom actuel',
+    deplacerVue: (vue: string) =>
+      `${vue} zoomée : faites glisser le fond de la vue, ou utilisez les flèches du clavier, pour déplacer la zone visible.`,
+    // Filtre de profondeur (5.10)
+    profondeur: 'Profondeur',
+    profondeurDe: 'De',
+    profondeurA: 'À',
+    profondeurValeur: (de: string, a: string) => `${de} à ${a} mm`,
+    depuis: {
+      dessus: 'du plafond',
+      gauche: 'de la paroi gauche',
+      droite: 'de la paroi droite',
+      avant: 'du fond',
+      arriere: 'des portes',
+    },
+    filtreActif: 'Filtre de profondeur actif',
+    filtreDetail: (de: string, a: string, depuis: string, masques: number) =>
+      `de ${de} à ${a} mm ${depuis} · ${masques} ${masques > 1 ? 'articles masqués' : 'article masqué'}`,
+    // Articles cachés (5.10)
+    caches: (n: number) =>
+      `${n} ${n > 1 ? "articles cachés derrière d'autres" : "article caché derrière d'autres"}`,
+    voirCaches: 'Voir la liste',
+    masquerCaches: 'Masquer la liste',
+    voirDansVue: (vue: string) => `Voir dans la vue ${vue}`,
+    visibleAutreCadre: (vue: string) => `Visible dans l'autre cadre (vue ${vue})`,
+    cacheToutesVues: 'Caché dans toutes les vues : utilisez le filtre de profondeur.',
+    // Blocs (nom accessible, 5.1, 5.9)
+    nomBloc: (repere: string, nom: string, code: string, destination: string, etape: number) =>
+      `${repere}, ${nom}, commande ${code} ${destination}, étape ${etape}`,
+    pasEncoreCharge: 'pas encore chargé',
+    enCours: 'étape en cours',
+    // Article sélectionné
+    selection: 'Article sélectionné',
+    selectionVide:
+      "Sélectionnez un article dans une vue, dans le tableau ou dans l'ordre de chargement pour afficher son détail.",
+    deselectionner: 'Désélectionner',
+    articleSelectionne: (repere: string, nom: string) => `${repere} ${nom} sélectionné.`,
+    detail: {
+      commande: 'Commande',
+      etape: 'Étape',
+      dimensions: 'L × l × h posé',
+      position: 'Position',
+      orientation: 'Orientation',
+      poids: 'Poids',
+    },
+    position: (fond: string, paroi: string, plancher: string) =>
+      `${fond} du fond · ${paroi} de la paroi gauche · ${plancher} du plancher`,
+    fragile: 'fragile',
+    formeNote: (forme: string) =>
+      `Forme ${forme} : la place réservée est celle de sa boîte englobante (RG-18).`,
+    // Ordre de chargement et tableau
+    ordre: 'Ordre de chargement',
+    ordreSousTitre: 'du fond vers les portes',
+    placements: 'Placements',
+    placementsSousTitre:
+      'Positions en mm depuis le fond, la paroi gauche et le plancher · alternative textuelle des vues',
+    colonnes: {
+      etape: 'Étape',
+      commande: 'Cde',
+      article: 'Article',
+      dimensions: 'L × l × h',
+      fond: 'Du fond',
+      paroi: 'De la paroi gauche',
+      plancher: 'Du plancher',
+      orientation: 'Orientation',
+      poids: 'Poids',
     },
   },
 
