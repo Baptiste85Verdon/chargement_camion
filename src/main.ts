@@ -12,6 +12,10 @@ import './styles/jetons.css'
 import './styles/base.css'
 
 import App from './App.vue'
+import { creerDepots } from './donnees'
 import { routeur } from './router'
+import { CLE_DEPOTS } from './stores/depots'
 
-createApp(App).use(createPinia()).use(routeur).mount('#app')
+const depots = await creerDepots()
+
+createApp(App).use(createPinia()).use(routeur).provide(CLE_DEPOTS, depots).mount('#app')
