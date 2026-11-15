@@ -42,7 +42,8 @@ export const textes = {
   /** Préparation d'une tournée (captures 02 et 02e, CF 4.2). */
   preparation: {
     titre: 'Préparation de la tournée',
-    ariane: (date: string) => `Tournée du ${date}`,
+    ariane: (date: string) =>
+      `Tournée du ${date.charAt(0).toLocaleLowerCase('fr')}${date.slice(1)}`,
     nouvelle: 'Nouvelle tournée',
     introuvable: "Cette tournée n'existe plus. Revenez à l'accueil pour actualiser la liste.",
     dateAFixer: 'Date à fixer',

@@ -390,6 +390,7 @@ async function lancer() {
         <fieldset
           class="camions"
           :class="{ 'camions--erreur': erreur('modeleCamionId') }"
+          role="radiogroup"
           aria-required="true"
           :aria-invalid="erreur('modeleCamionId') ? 'true' : undefined"
           :aria-describedby="erreur('modeleCamionId') ? 'tournee-camion-erreur' : undefined"
@@ -789,6 +790,7 @@ async function lancer() {
 
 .commandes .nombre {
   text-align: right;
+  white-space: nowrap;
 }
 
 /* Lien étiré : toute la ligne ouvre la commande, un seul lien au clavier. */

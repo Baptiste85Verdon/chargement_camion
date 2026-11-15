@@ -231,16 +231,18 @@ async function supprimer() {
             </template>
             <span v-else class="doux">{{ t.origineInconnue }}</span>
           </td>
-          <td class="motif">
-            <span class="motif__titre">{{
-              e.element.motif === 'depassement' ? t.depassement : t.signalement
-            }}</span>
-            <span>{{
-              e.element.motif === 'depassement'
-                ? t.motifDepassement(camionDe(e.origine)?.nom ?? '')
-                : t.motifSignalement
-            }}</span>
-            <span class="doux">{{ t.reporteLe(formaterDate(e.element.reporteLe)) }}</span>
+          <td>
+            <span class="motif">
+              <span class="motif__titre">{{
+                e.element.motif === 'depassement' ? t.depassement : t.signalement
+              }}</span>
+              <span>{{
+                e.element.motif === 'depassement'
+                  ? t.motifDepassement(camionDe(e.origine)?.nom ?? '')
+                  : t.motifSignalement
+              }}</span>
+              <span class="doux">{{ t.reporteLe(formaterDate(e.element.reporteLe)) }}</span>
+            </span>
           </td>
           <td>
             <span class="affectation">

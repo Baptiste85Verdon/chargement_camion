@@ -120,6 +120,10 @@ async function charger() {
     if (existante) {
       origine.value = existante.commande
       form.value = formulaireDepuisCommande(existante.commande, existante.lignes)
+      // Un poids estimé se signale dès l'ouverture (capture 03b).
+      form.value.lignes.forEach((l, i) => {
+        if (l.poidsEstime) quitter(`lignes.${i}.poids`)
+      })
     } else {
       const numeros = [...commandes, ...enAttente].map((c) => c.commande.numero)
       form.value = formulaireVideCommande(numeroSuivant(numeros, new Date().getFullYear()))
@@ -837,9 +841,13 @@ async function annuler() {
   font: var(--typo-bouton);
 }
 
-.resultat__detail,
-.resultat__dims {
+.resultat__detail {
   font: var(--typo-legende);
+  color: var(--texte-doux);
+}
+
+/* Les dimensions gardent IBM Plex Mono (classe donnees). */
+.resultat__dims {
   color: var(--texte-doux);
 }
 
@@ -951,7 +959,7 @@ async function annuler() {
 }
 
 .dimensions__saisie {
-  width: calc(var(--espace-7) * 2.5);
+  width: calc(var(--espace-7) * 2);
 }
 
 .quantite--erreur .quantite__saisie,
@@ -991,7 +999,7 @@ async function annuler() {
 }
 
 .poids__saisie {
-  width: calc(var(--espace-7) * 2.5);
+  width: calc(var(--espace-7) * 2);
 }
 
 .poids__unite {
