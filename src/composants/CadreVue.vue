@@ -39,7 +39,8 @@ const props = defineProps<{
   /** Étape affichée en vue par étape ; absente : plan complet. */
   etape: number | null
   silhouettes: boolean
-  selection: string | null
+  selection: readonly string[]
+  centreGravite?: { x: number; y: number } | null
   enEvidence: number | null
 }>()
 
@@ -192,6 +193,7 @@ const mm = (v: number) => formaterMillimetres(v)
       :unites="props.unites"
       :infos="props.infos"
       :selection="props.selection"
+      :centre-gravite="props.centreGravite"
       :en-evidence="props.enEvidence"
       :filtre-actif="filtreActif"
       :titre="t.titresVues[vue]"

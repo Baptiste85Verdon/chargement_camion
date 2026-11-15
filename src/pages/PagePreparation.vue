@@ -19,12 +19,13 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import type { FicheArticle, ModeleCamion, PlanChargement, Tournee } from '@/domaine/modele'
 import { resumerLignes } from '@/domaine/saisie-commande'
-import { calculerPlan, deplacer } from '@/domaine/tournee'
+import { deplacer } from '@/domaine/tournee'
 import { validerTournee } from '@/domaine/validation'
 import type { CommandeAvecLignes } from '@/donnees/depots'
 import { ErreurDonnees } from '@/donnees/erreurs'
 import { useAnnonces } from '@/stores/annonces'
 import { useAttente } from '@/stores/attente'
+import { calculerEtEnregistrer } from '@/stores/calcul'
 import { utiliserDepots } from '@/stores/depots'
 import { textes } from '@/textes/fr'
 import Annonce from '@/composants/Annonce.vue'
@@ -367,19 +368,9 @@ async function lancer() {
   if (!c || calcul.value) return
   calcul.value = true
   try {
-    const { placements, enTrop } = calculerPlan(commandes.value, articles.value, c)
-    const { plan } = await depots.plans.enregistrerVersion(props.id, placements)
+    const { plan, annonce } = await calculerEtEnregistrer(depots, props.id, c)
     dernierPlan.value = plan
-    const rangs = new Map(commandes.value.map((x) => [x.commande.id, x.commande.rangLivraison]))
-    const codes = [...new Set(enTrop.map((u) => `C${rangs.get(u.commandeId) ?? 0}`))].join(', ')
-    annonces.deposer(
-      [
-        t.planCalcule(plan.version, placements.length),
-        enTrop.length > 0 ? t.planEnTrop(enTrop.length, codes) : '',
-      ]
-        .filter(Boolean)
-        .join(' '),
-    )
+    annonces.deposer(annonce)
     await routeur.push(`/tournees/${props.id}/plan`)
   } catch (e) {
     alerter(e)
