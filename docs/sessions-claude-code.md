@@ -90,7 +90,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 4c · Règles de stabilité
 
-- [ ] Fait — branche `feat/p1-regles-stabilite`
+- [x] Fait — branche `feat/p1-regles-stabilite`
 - Cahier fonctionnel : RG-04, RG-07. Cahier technique : sections 4.2 (règles 7, 9 et 10), 8 et 10 ; demande de fusion de l'étape 4b, « Constats métier » et « Proposition : étape 4c ».
 - Constat de départ : sur « couloirs », le plan d'`optimiser` respecte toutes les règles, mais il empile deux paquets de BA13 sur chant, pose une palette de 1 225 kg sur une autre, et met les fenêtres de C2 en hauteur, au fond, derrière des bottes de C3 plus basses.
 - Validateur, en TDD, un test par règle :
