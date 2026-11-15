@@ -404,6 +404,85 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
         attente.delete(elementId)
         return cible.id
       },
+      // Mêmes règles que la fonction SQL reporter_articles : tout est vérifié
+      // avant la première écriture, pour ne rien changer en cas de refus.
+      async reporterArticles(tourneeId, reports, motif) {
+        const tournee = tournees.get(tourneeId)
+        if (!tournee) throw new ErreurDonnees('introuvable')
+        if (tournee.statut !== 'enPreparation') throw new ErreurDonnees('contrainte')
+        const verifies = reports.map((r) => {
+          const ligne = lignes.get(r.ligneCommandeId)
+          const commande = ligne && commandes.get(ligne.commandeId)
+          if (!ligne || !commande || commande.tourneeId !== tourneeId) {
+            throw new ErreurDonnees('introuvable')
+          }
+          if (r.quantite < 1 || r.quantite > ligne.quantite) throw new ErreurDonnees('contrainte')
+          return { ligne, commande, quantite: r.quantite }
+        })
+        for (const { ligne, commande, quantite } of verifies) {
+          let citee = ligne.id
+          if (quantite < ligne.quantite) {
+            lignes.set(ligne.id, { ...ligne, quantite: ligne.quantite - quantite })
+            citee = ecrire(lignes, { ...copie(ligne), id: undefined, quantite }).id
+            // Unités gardées : renumérotées 1, 2… dans chaque plan, sans bouger.
+            const parPlan = new Map<string, PlacementEnregistre[]>()
+            for (const p of placements.values()) {
+              if (p.ligneCommandeId !== ligne.id) continue
+              parPlan.set(p.planId, [...(parPlan.get(p.planId) ?? []), p])
+            }
+            for (const liste of parPlan.values()) {
+              liste
+                .sort((a, b) => a.numeroUnite - b.numeroUnite)
+                .forEach((p, i) => placements.set(p.id, { ...p, numeroUnite: i + 1 }))
+            }
+          }
+          ecrire(attente, {
+            commandeId: commande.id,
+            ligneCommandeId: citee,
+            tourneeOrigineId: tourneeId,
+            rangOrigine: commande.rangLivraison,
+            motif,
+            reporteLe: new Date().toISOString(),
+          })
+        }
+      },
+      // Mêmes règles que la fonction SQL reporter_commande.
+      async reporterCommande(commandeId, motif) {
+        const commande = commandes.get(commandeId)
+        const tournee = commande?.tourneeId ? tournees.get(commande.tourneeId) : undefined
+        if (!commande || !tournee || commande.rangLivraison === null) {
+          throw new ErreurDonnees('introuvable')
+        }
+        if (tournee.statut !== 'enPreparation') throw new ErreurDonnees('contrainte')
+        const rang = commande.rangLivraison
+        for (const e of attente.values()) if (e.commandeId === commandeId) attente.delete(e.id)
+        ecrire(attente, {
+          commandeId,
+          ligneCommandeId: null,
+          tourneeOrigineId: tournee.id,
+          rangOrigine: rang,
+          motif,
+          reporteLe: new Date().toISOString(),
+        })
+        commandes.set(commandeId, { ...commande, tourneeId: null, rangLivraison: null })
+        for (const c of commandes.values()) {
+          if (c.tourneeId === tournee.id && (c.rangLivraison ?? 0) > rang) {
+            commandes.set(c.id, { ...c, rangLivraison: (c.rangLivraison ?? 0) - 1 })
+          }
+        }
+        const dernier = [...plans.values()]
+          .filter((p) => p.tourneeId === tournee.id)
+          .sort((a, b) => b.version - a.version)[0]
+        const siennes = new Set(lignesDe(commandeId).map((l) => l.id))
+        if (
+          dernier &&
+          [...placements.values()].some(
+            (p) => p.planId === dernier.id && siennes.has(p.ligneCommandeId),
+          )
+        ) {
+          plans.set(dernier.id, { ...dernier, aRecalculer: true })
+        }
+      },
       async supprimer(id) {
         const element = attente.get(id)
         if (element?.ligneCommandeId === null) supprimerCommande(element.commandeId)

@@ -814,6 +814,158 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
         expect(await depots.attente.lister()).toEqual([])
       })
 
+      it('RG-11 : reporte toutes les unités d’une ligne, qui reste dans sa commande', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { commande, lignes } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-5', destination: 'Couverture Bernard', rangLivraison: 1 },
+          [ligne(article.id, { quantite: 1 }), ligne(article.id)],
+        )
+        const [l1, l2] = lignes
+
+        await depots.attente.reporterArticles(
+          t.id,
+          [{ ligneCommandeId: l2?.id ?? '', quantite: 2 }],
+          'depassement',
+        )
+
+        expect(await depots.attente.lister()).toEqual([
+          expect.objectContaining({
+            commandeId: commande.id,
+            ligneCommandeId: l2?.id,
+            tourneeOrigineId: t.id,
+            rangOrigine: 1,
+            motif: 'depassement',
+          }),
+        ])
+        const relue = await depots.commandes.obtenir(commande.id)
+        expect(relue?.lignes.map((l) => [l.id, l.quantite])).toEqual([
+          [l1?.id, 1],
+          [l2?.id, 2],
+        ])
+      })
+
+      it('RG-11 : reporte une partie d’une ligne : la ligne est scindée en deux', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { commande, lignes } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-5', destination: 'Couverture Bernard', rangLivraison: 1 },
+          [ligne(article.id, { quantite: 3, dimsPropres: { l: 1200, w: 1000, h: 1100 } })],
+        )
+        const l1 = lignes[0]?.id ?? ''
+        // Unités 1 et 3 placées, unité 2 en trop.
+        await depots.plans.enregistrerVersion(t.id, [
+          poser(l1, 1),
+          { ...poser(l1, 2), numeroUnite: 3, x: 1200 },
+        ])
+
+        await depots.attente.reporterArticles(
+          t.id,
+          [{ ligneCommandeId: l1, quantite: 1 }],
+          'depassement',
+        )
+
+        const relue = await depots.commandes.obtenir(commande.id)
+        expect(relue?.lignes).toHaveLength(2)
+        const [gardee, reportee] = relue?.lignes ?? []
+        expect(gardee).toMatchObject({ id: l1, quantite: 2 })
+        expect(reportee).toMatchObject({
+          articleId: article.id,
+          quantite: 1,
+          dimsPropres: { l: 1200, w: 1000, h: 1100 },
+        })
+        expect(reportee?.id).not.toBe(l1)
+        expect(await depots.attente.lister()).toEqual([
+          expect.objectContaining({ commandeId: commande.id, ligneCommandeId: reportee?.id }),
+        ])
+        // Les unités restées dans le plan sont renumérotées 1 et 2, sans bouger.
+        const plan = await depots.plans.obtenirDernier(t.id)
+        expect(plan?.placements.map((p) => [p.ligneCommandeId, p.numeroUnite, p.x])).toEqual([
+          [l1, 1, 0],
+          [l1, 2, 1200],
+        ])
+      })
+
+      it('RG-11 : refuse de reporter plus d’unités que la ligne n’en a', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { lignes } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-5', destination: 'Couverture Bernard', rangLivraison: 1 },
+          [ligne(article.id)],
+        )
+        await expect(
+          depots.attente.reporterArticles(
+            t.id,
+            [{ ligneCommandeId: lignes[0]?.id ?? '', quantite: 3 }],
+            'depassement',
+          ),
+        ).rejects.toMatchObject({ code: 'contrainte' })
+        expect(await depots.attente.lister()).toEqual([])
+      })
+
+      it('RG-11 : reporte une commande entière : elle quitte la tournée, les rangs se resserrent', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const ids: string[] = []
+        for (const [numero, rang] of [
+          ['CMD-1', 1],
+          ['CMD-2', 2],
+          ['CMD-3', 3],
+        ] as const) {
+          const { commande } = await depots.commandes.enregistrer(
+            { tourneeId: t.id, numero, destination: numero, rangLivraison: rang },
+            [ligne(article.id)],
+          )
+          ids.push(commande.id)
+        }
+        const deuxieme = await depots.commandes.obtenir(ids[1] ?? '')
+        const l2 = deuxieme?.lignes[0]?.id ?? ''
+        // Une ligne de C2 déjà reportée seule : la commande entière la reprend.
+        await depots.attente.reporterArticles(
+          t.id,
+          [{ ligneCommandeId: l2, quantite: 2 }],
+          'depassement',
+        )
+        await depots.plans.enregistrerVersion(t.id, [poser(l2, 1)])
+
+        await depots.attente.reporterCommande(ids[1] ?? '', 'depassement')
+
+        expect(await depots.attente.lister()).toEqual([
+          expect.objectContaining({
+            commandeId: ids[1],
+            ligneCommandeId: null,
+            tourneeOrigineId: t.id,
+            rangOrigine: 2,
+            motif: 'depassement',
+          }),
+        ])
+        expect((await depots.commandes.obtenir(ids[1] ?? ''))?.commande).toMatchObject({
+          tourneeId: null,
+          rangLivraison: null,
+        })
+        const restantes = await depots.commandes.listerParTournee(t.id)
+        expect(restantes.map((c) => [c.commande.numero, c.commande.rangLivraison])).toEqual([
+          ['CMD-1', 1],
+          ['CMD-3', 2],
+        ])
+        // Le plan avait des articles de la commande : il est à recalculer.
+        expect((await depots.plans.obtenirDernier(t.id))?.plan.aRecalculer).toBe(true)
+      })
+
+      it('RG-11 : refuse un report depuis une tournée qui n’est plus en préparation', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { commande } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-5', destination: 'Couverture Bernard', rangLivraison: 1 },
+          [ligne(article.id)],
+        )
+        await depots.tournees.enregistrer({ ...t, statut: 'enChargement' })
+        await expect(
+          depots.attente.reporterCommande(commande.id, 'depassement'),
+        ).rejects.toMatchObject({ code: 'contrainte' })
+        expect(await depots.attente.lister()).toEqual([])
+      })
+
       it('refuse d’affecter à une tournée qui n’est plus en préparation', async () => {
         const article = await depots.articles.enregistrer(ba13)
         const t = await tournee()

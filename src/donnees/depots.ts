@@ -15,6 +15,7 @@ import type {
   FicheArticle,
   LigneDeCommande,
   ModeleCamion,
+  MotifAttente,
   PlacementEnregistre,
   PlanChargement,
   StatutPlacement,
@@ -177,6 +178,35 @@ export interface ElementAttenteRepository {
    * en préparation, `introuvable` si l'élément ou la tournée n'existe plus.
    */
   affecter(elementId: string, tourneeId: string): Promise<string>
+  /**
+   * « Reporter les articles en trop » (RG-11), en une seule opération
+   * (fonction SQL `reporter_articles`). Pour chaque ligne, `quantite` unités
+   * sans placement rejoignent la liste d'attente :
+   * - toute la ligne : elle reste dans sa commande d'origine, citée par un
+   *   élément en attente ; le calcul l'ignore désormais ;
+   * - une partie : la ligne est scindée ; la partie reportée devient une ligne
+   *   à part, à la fin de la commande, citée par l'élément ; les placements
+   *   de la partie gardée sont renumérotés 1, 2… sans bouger.
+   * Rejette `introuvable` si une ligne n'appartient pas à une commande de la
+   * tournée, `contrainte` si une quantité dépasse celle de la ligne ou si la
+   * tournée n'est plus en préparation. Rien n'est changé en cas de refus.
+   */
+  reporterArticles(
+    tourneeId: string,
+    reports: { ligneCommandeId: string; quantite: number }[],
+    motif: MotifAttente,
+  ): Promise<void>
+  /**
+   * « Reporter toute la commande » (RG-11), en une seule opération (fonction
+   * SQL `reporter_commande`) : la commande quitte sa tournée et rejoint la
+   * liste d'attente avec son rang d'origine ; les commandes livrées après elle
+   * avancent d'un rang ; les éléments qui citaient déjà une de ses lignes sont
+   * remplacés par la commande entière. Si le dernier plan plaçait un de ses
+   * articles, il est marqué « à recalculer ». Rejette `contrainte` si la
+   * tournée n'est plus en préparation, `introuvable` sans commande ou hors
+   * tournée.
+   */
+  reporterCommande(commandeId: string, motif: MotifAttente): Promise<void>
   /**
    * Retire l'élément de la liste (RG-22, après confirmation). Une commande
    * entière en attente est supprimée avec lui ; des articles reportés

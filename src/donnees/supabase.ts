@@ -38,6 +38,7 @@ import {
   type LigneLigneCommande,
   type LignePlacement,
   type LignePlan,
+  motifAttente,
 } from './supabase-lignes'
 
 /** Ce que renvoie toute requête supabase-js. */
@@ -376,6 +377,26 @@ function depotAttente(client: SupabaseClient): ElementAttenteRepository {
         await client.rpc('affecter_element_attente', {
           p_element_id: elementId,
           p_tournee_id: tourneeId,
+        }),
+      )
+    },
+    async reporterArticles(tourneeId, reports, motif) {
+      verifier(
+        await client.rpc('reporter_articles', {
+          p_tournee_id: tourneeId,
+          p_reports: reports.map((r) => ({
+            ligne_commande_id: r.ligneCommandeId,
+            quantite: r.quantite,
+          })),
+          p_motif: motifAttente.versBase(motif),
+        }),
+      )
+    },
+    async reporterCommande(commandeId, motif) {
+      verifier(
+        await client.rpc('reporter_commande', {
+          p_commande_id: commandeId,
+          p_motif: motifAttente.versBase(motif),
         }),
       )
     },
