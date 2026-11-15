@@ -32,6 +32,8 @@ const props = withDefaults(
     inputmode?: 'text' | 'numeric' | 'decimal'
     donnees?: boolean
     autocomplete?: string
+    /** `date` : sélecteur de date du navigateur, valeur au format AAAA-MM-JJ. */
+    type?: 'text' | 'date'
   }>(),
   {
     id: undefined,
@@ -44,10 +46,11 @@ const props = withDefaults(
     inputmode: 'text',
     donnees: false,
     autocomplete: 'off',
+    type: 'text',
   },
 )
 
-const emit = defineEmits<{ blur: [] }>()
+const emit = defineEmits<{ blur: []; change: [] }>()
 const valeur = defineModel<string>({ required: true })
 
 const idAuto = useId()
@@ -86,7 +89,7 @@ const descriptions = computed(() => {
         v-model="valeur"
         class="champ__saisie"
         :class="{ 'champ__saisie--donnees': props.donnees, 'champ__saisie--unite': props.unite }"
-        type="text"
+        :type="props.type"
         :inputmode="props.inputmode"
         :autocomplete="props.autocomplete"
         :disabled="props.desactive"
@@ -94,6 +97,7 @@ const descriptions = computed(() => {
         :aria-invalid="props.erreur ? 'true' : undefined"
         :aria-describedby="descriptions"
         @blur="emit('blur')"
+        @change="emit('change')"
       />
       <span v-if="props.unite" :id="idUnite" class="champ__unite">{{ props.unite }}</span>
     </div>

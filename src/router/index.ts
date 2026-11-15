@@ -29,6 +29,34 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/PageFicheCamion.vue'),
     props: true,
   },
+  // Tournées et commandes (étape 9).
+  {
+    path: '/tournees/:id',
+    name: 'preparation',
+    component: () => import('@/pages/PagePreparation.vue'),
+    props: true,
+  },
+  {
+    path: '/tournees/:tourneeId/commandes/nouvelle',
+    name: 'nouvelle-commande',
+    component: () => import('@/pages/PageSaisieExpress.vue'),
+    props: true,
+  },
+  {
+    path: '/tournees/:tourneeId/commandes/:commandeId',
+    name: 'commande',
+    component: () => import('@/pages/PageSaisieExpress.vue'),
+    props: true,
+  },
+  {
+    path: '/attente',
+    name: 'attente',
+    component: () => import('@/pages/PageAttente.vue'),
+    // `?tournee=<id>` : la tournée proposée d'avance pour l'affectation.
+    props: (route) => ({
+      tournee: typeof route.query.tournee === 'string' ? route.query.tournee : undefined,
+    }),
+  },
   // Vitrine des composants de base (étape 7), hors navigation ; chargée à la demande.
   { path: '/vitrine', name: 'vitrine', component: () => import('@/pages/PageVitrine.vue') },
 ]

@@ -25,6 +25,7 @@ const props = withDefaults(
       <h1 class="entete-page__titre">
         {{ props.titre }}
         <span v-if="props.mention" class="entete-page__mention">{{ props.mention }}</span>
+        <slot name="apres-titre" />
       </h1>
       <p v-if="props.sousTitre" class="entete-page__sous-titre">{{ props.sousTitre }}</p>
     </div>

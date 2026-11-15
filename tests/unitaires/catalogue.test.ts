@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compterParFamille, filtrerCatalogue } from '@/domaine/catalogue'
+import { chercherArticles, compterParFamille, filtrerCatalogue } from '@/domaine/catalogue'
 import type { FicheArticle } from '@/domaine/modele'
 
 const article = (id: string, nom: string, famille: FicheArticle['famille'], reference?: string) =>
@@ -54,5 +54,16 @@ describe('catalogue : recherche et filtre (CF 4.6)', () => {
     expect(comptes.get('Fenêtres')).toBe(1)
     expect(comptes.get('Maçonnerie')).toBe(0)
     expect(comptes.size).toBe(9)
+  })
+})
+
+describe('recherche de la saisie express', () => {
+  it('cherche dans le nom, la référence et la famille, sans accents', () => {
+    expect(chercherArticles(catalogue, 'fenetres').map((a) => a.id)).toContain('1')
+    expect(chercherArticles(catalogue, 'fen-pvc').map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('rend tout le catalogue pour une recherche vide', () => {
+    expect(chercherArticles(catalogue, '  ')).toHaveLength(catalogue.length)
   })
 })

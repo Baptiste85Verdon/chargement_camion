@@ -23,6 +23,13 @@ const TRACES = {
   coche: [chemin('M20 6 9 17l-5-5')],
   'chevron-droite': [chemin('m9 18 6-6-6-6')],
   'chevron-bas': [chemin('m6 9 6 6 6-6')],
+  'chevron-haut': [chemin('m18 15-6-6-6 6')],
+  /** Corbeille : retirer une ligne, supprimer un élément en attente. */
+  corbeille: [
+    chemin('M3 6h18'),
+    chemin('M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'),
+    chemin('M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'),
+  ],
   fermer: [chemin('M18 6 6 18'), chemin('m6 6 12 12')],
   plus: [chemin('M5 12h14'), chemin('M12 5v14')],
   /** Tri des tableaux : colonne triable, tri croissant, tri décroissant. */
