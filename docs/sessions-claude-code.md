@@ -144,7 +144,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 9 · Tournées, commandes et liste d'attente
 
-- [ ] Fait — branche `feat/p1-tournees-commandes`
+- [x] Fait — branche `feat/p1-tournees-commandes`
 - Captures 01, 02, 02e, 03, 03b, 03e, 10. Cahier fonctionnel : sections 4.1 à 4.3 et 4.8, RG-03, RG-11.
 - Accueil, préparation d'une tournée (ordre de livraison), saisie express (poids estimé), liste d'attente, lancement du calcul.
 - Enregistrement d'une commande en une seule opération « tout ou rien » (fonction SQL appelée par le dépôt), au lieu des trois requêtes de l'étape 6.
