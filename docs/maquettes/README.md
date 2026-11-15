@@ -61,3 +61,5 @@ Relevés en relisant les captures. On ne retouche pas la maquette : on corrige d
 - **08e, fiche article** : le cadre d'erreur des orientations autorisées est très arrondi. La charte limite les rayons à 8 px : appliquer le contour d'erreur standard de 2 px.
 - **08 et 08e** : « Fragile » et « Dessus porteur » peuvent être cochés ensemble. Un article fragile ne supporte rien (RG-04) : l'interface doit le montrer, par exemple en désactivant « Dessus porteur » avec une explication quand « Fragile » est coché.
 - **Renvois de règles** : vérifier dans chaque message que le numéro de RG cité est le bon. L'appui relève de RG-04, et non de RG-08.
+- **08, fiche article** : pas de champ Poids nu (RG-05, poids maximal retenu).
+- **07 et 08, dimensions des fenêtres** : le catalogue affiche les fenêtres dans leur taille posée debout (1 500 × 180 × 1 350). Les dimensions enregistrées sont celles de la pose à plat (cahier technique, 4.7) : 1 500 × 1 350 × 180. Le catalogue et la fiche article affichent les dimensions à plat, avec la mention « à plat » visible.

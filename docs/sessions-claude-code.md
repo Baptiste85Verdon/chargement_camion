@@ -103,7 +103,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 6 · Données et validations de saisie
 
-- [ ] Fait — branche `feat/p1-donnees`
+- [x] Fait — branche `feat/p1-donnees`
 - Cahier technique : sections 3, 6.1, 7.1, 7.2.
 - Vérifier que `.env.local` existe avec l'URL et la clé publique. Le porteur relie la CLI Supabase au projet lui-même si un mot de passe est demandé.
 - Migrations SQL (tables, contraintes `NOT NULL`, `CHECK`, `UNIQUE`, `GRANT` au rôle `anon` et politiques RLS : voir la section Supabase de `CLAUDE.md`), données de démarrage (RG-01, avec la tournée T-2026-118 du jeu « couloirs »).
@@ -126,12 +126,17 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 - [ ] Fait — branche `feat/p1-referentiels`
 - Captures 07, 08, 08e, 09, 09b, 09e. Cahier fonctionnel : sections 4.6 et 4.7, RG-18, RG-21, RG-22.
 - Catalogue avec recherche et filtre, fiche article (case « Peut être livré nu », orientations par défaut selon la famille, forme, dessus porteur), modèles de camions et fiche camion.
+- Archivage (décision de l'étape 6, RG-21 et RG-22) : bouton « Archiver » dans la fiche article et la fiche camion ; suppression d'un élément utilisé remplacée par la proposition d'archiver ; mention « archivé » dans les anciennes commandes et les anciens plans ; articles archivés absents du catalogue et de la saisie express, camions archivés absents du choix du camion. Les dépôts (`archiver`, `lister({ avecArchives })`) sont prêts.
+- Réactivation : bouton « Réactiver » dans la liste des éléments archivés, et méthode `reactiver` à ajouter aux dépôts. Un article ne peut pas être réactivé si un article actif a repris sa référence (l'index unique le refuse déjà) : le message le dit.
+- Dimensions : le catalogue et la fiche article affichent les dimensions à plat, avec la mention « à plat » visible (écart connu des captures 07 et 08).
 
 ## Étape 9 · Tournées, commandes et liste d'attente
 
 - [ ] Fait — branche `feat/p1-tournees-commandes`
 - Captures 01, 02, 02e, 03, 03b, 03e, 10. Cahier fonctionnel : sections 4.1 à 4.3 et 4.8, RG-03, RG-11.
 - Accueil, préparation d'une tournée (ordre de livraison), saisie express (poids estimé), liste d'attente, lancement du calcul.
+- Enregistrement d'une commande en une seule opération « tout ou rien » (fonction SQL appelée par le dépôt), au lieu des trois requêtes de l'étape 6.
+- Modifier une commande ne vide pas tout son placement : changer le numéro, le client ou la ville ne touche pas au plan ; seules les lignes vraiment changées (article, quantité, dimensions, poids) perdent leur placement et passent dans la zone « Articles à placer », avec un message. Le dépôt de l'étape 6 remplace encore toutes les lignes : son test de contrat « remplace toutes les lignes » est à revoir.
 
 ## Étape 10 · Plan de chargement
 

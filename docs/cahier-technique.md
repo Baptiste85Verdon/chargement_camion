@@ -50,11 +50,11 @@ L'origine est le coin du fond, côté gauche, au plancher.
 
 | Table | Colonnes principales | Remarques |
 | --- | --- | --- |
-| `article` | id, nom, famille, longueur, largeur et hauteur emballées, longueur, largeur et hauteur nues (facultatives), poids, fragile, orientations autorisées, forme, dessus\_porteur | Dimensions de la boîte englobante (RG-18). Orientations parmi : à plat, debout, contre une paroi (RG-02, RG-04). Forme parmi : rectangulaire, cylindrique, irrégulière ; dessus\_porteur vaut faux par défaut pour une forme non rectangulaire |
-| `modele_camion` | id, nom, longueur, largeur et hauteur utiles | Données d'exemple au premier lancement (RG-01) |
-| `tournee` | id, date, modele\_camion\_id, statut | Statuts : en préparation, prête, en chargement, chargée |
-| `commande` | id, tournee\_id (vide si en attente), numéro, destination, rang de livraison | Le rang fixe l'ordre de chargement (RG-07) |
-| `ligne_commande` | id, commande\_id, article\_id, quantité, emballé ou nu, dimensions propres à la commande (facultatives), poids propre à la commande (facultatif), poids estimé (oui ou non) | Ces valeurs ne modifient jamais le catalogue. Le poids proposé au prorata du volume est marqué estimé (RG-03) |
+| `article` | id, référence (facultative), nom, famille, longueur, largeur et hauteur emballées, longueur, largeur et hauteur nues (facultatives), poids, fragile, orientations autorisées, forme, dessus\_porteur, date d'archivage (facultative) | Référence unique parmi les articles actifs. Un article utilisé ne se supprime pas, il s'archive (RG-21). Dimensions de la boîte englobante (RG-18). Orientations parmi : à plat, debout, contre une paroi (RG-02, RG-04). Forme parmi : rectangulaire, cylindrique, irrégulière ; dessus\_porteur vaut faux par défaut pour une forme non rectangulaire |
+| `modele_camion` | id, nom, longueur, largeur et hauteur utiles, date d'archivage (facultative) | Données d'exemple au premier lancement (RG-01). Un camion utilisé ne se supprime pas, il s'archive ; pas d'archivage pendant une tournée en préparation, prête ou en chargement (RG-21) |
+| `tournee` | id, référence (unique, T-2026-118), date, modele\_camion\_id, statut | Statuts : en préparation, prête, en chargement, chargée. Date et camion vides tant qu'ils sont à fixer ; obligatoires dès que la tournée quitte l'état « en préparation » |
+| `commande` | id, tournee\_id (vide si en attente), numéro, destination, ville (facultative), rang de livraison | Le rang fixe l'ordre de chargement (RG-07) |
+| `ligne_commande` | id, commande\_id, numéro de ligne, article\_id, quantité, emballé ou nu, dimensions propres à la commande (facultatives), poids propre à la commande (facultatif), poids estimé (oui ou non) | Ces valeurs ne modifient jamais le catalogue. Le poids proposé au prorata du volume est marqué estimé (RG-03). Le numéro de ligne garde l'ordre de saisie |
 | `plan_chargement` | id, tournee\_id, numéro de version, date de calcul | Une nouvelle version à chaque simulation, pour garder l'historique |
 | `placement` | id, plan\_id, ligne\_commande\_id, numéro d'unité, x, y, z, orientation, rang de chargement, statut | Un placement par unité physique ; il sert aussi d'étape de chargement, avec les statuts à faire, chargé et en problème |
 | `signalement` | id, placement\_id, type, commentaire, longueur, largeur et hauteur mesurées (facultatives), action, résultat de la revérification, date | RG-12 à RG-16 |
@@ -347,11 +347,13 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
   interface ResultatValidation { erreurs: Probleme[]; avertissements: Probleme[] }
   function validerArticle(saisie: SaisieArticle, contexte: { catalogue: Article[]; camions: Camion[] }): ResultatValidation
   function validerCamion(saisie: SaisieCamion): ResultatValidation
-  function validerCommande(saisie: SaisieCommande, contexte: { commandesDeLaTournee: Commande[] }): ResultatValidation
+  function validerSuppressionCamion(camion: Camion, tournees: Tournee[]): ResultatValidation // vaut aussi avant l'archivage
+  function validerCommande(saisie: SaisieCommande, contexte: { commandesDeLaTournee: Commande[]; catalogue?: Article[]; camion?: Camion }): ResultatValidation
+  function validerTournee(saisie: SaisieTournee, contexte: { nombreCommandes: number; lancement: boolean }): ResultatValidation
   function validerSignalement(saisie: SaisieSignalement, prevu: Unite): ResultatValidation
   ```
 
-  Chaque problème porte un `code` stable (`obligatoire`, `entierPositif`, `tailleIncomplete`, `doublon`…). Le message vient d'un fichier de textes, pour rester cohérent d'un formulaire à l'autre.
+  Chaque problème porte un `code` stable (`obligatoire`, `entierPositif`, `tailleIncomplete`, `doublon`…). Le message vient d'un fichier de textes, pour rester cohérent d'un formulaire à l'autre. Les articles et camions archivés sont ignorés par les contrôles de doublon et de taille. Le catalogue et le camion de `validerCommande` servent à l'avertissement « ne rentre pas dans le camion » (RG-10).
 - **Saisie des nombres** : champs texte avec `inputmode="numeric"` pour les millimètres et `inputmode="decimal"` pour les kilogrammes. Les espaces sont acceptées (« 1 250 »), ainsi que la virgule décimale pour le poids. La valeur est convertie en millimètres entiers ou en kilogrammes avant validation.
 - **Moment de la vérification** : à la sortie du champ (`blur`), puis à l'enregistrement. Une erreur affichée est revérifiée à chaque frappe, pour disparaître dès que la valeur est juste. Le bouton d'enregistrement n'est jamais désactivé.
 - **Affichage** :
@@ -373,7 +375,7 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
 
 ### 7.1 Couche d'accès aux données
 
-L'application ne parle jamais directement à Supabase : elle passe par des **dépôts**, un par objet métier. Par exemple `ArticleRepository` ou `TourneeRepository`, avec des méthodes comme `lister`, `obtenir`, `enregistrer` et `supprimer`.
+L'application ne parle jamais directement à Supabase : elle passe par des **dépôts**, un par objet métier. Par exemple `ArticleRepository` ou `TourneeRepository`, avec des méthodes comme `lister`, `obtenir`, `enregistrer` et `supprimer`. Les dépôts des articles et des modèles de camions ajoutent `archiver`. Leur `lister` ne rend que les éléments actifs, sauf avec l'option `{ avecArchives: true }`, et `obtenir` rend aussi un élément archivé, pour les commandes et les plans qui le citent. `supprimer` rejette un élément déjà utilisé (`utilise`) : l'interface propose alors l'archivage.
 
 En V1, une implémentation Supabase de ces dépôts est fournie. Plus tard, une implémentation qui appelle votre API la remplacera sans que les pages ni l'algorithme changent. Pour les tests, une implémentation en mémoire évite de dépendre du réseau.
 
