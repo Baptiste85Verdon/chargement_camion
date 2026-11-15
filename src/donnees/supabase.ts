@@ -143,6 +143,14 @@ function archivable<T extends { id: string; archiveLe?: string }, L>(
         await client.from(table).update({ archive_le: new Date().toISOString() }).eq('id', id),
       )
     },
+    async reactiver(id) {
+      const element = await depot.obtenir(id)
+      if (!element) throw new ErreurDonnees('introuvable')
+      if (element.archiveLe === undefined) return
+      // Pour un article, l'index unique article_reference_actif_key refuse
+      // une référence reprise entre-temps : erreur 23505, traduite en doublon.
+      verifier(await client.from(table).update({ archive_le: null }).eq('id', id))
+    },
   }
 }
 
@@ -182,6 +190,27 @@ function depotCommandes(client: SupabaseClient): CommandeRepository {
           .from('commande')
           .select(COMMANDE_AVEC_LIGNES)
           .is('tournee_id', null)
+          .order('cree_le', { ascending: true }),
+      )
+      return lignes.map(commandeAvecLignes)
+    },
+
+    /**
+     * Deux requêtes : les commandes qui citent l'article, puis ces commandes
+     * avec toutes leurs lignes (filtrer directement la relation ne rendrait
+     * que les lignes de l'article).
+     */
+    async listerParArticle(articleId) {
+      const citees = resultat<{ commande_id: string }[]>(
+        await client.from('ligne_commande').select('commande_id').eq('article_id', articleId),
+      )
+      const ids = [...new Set(citees.map((l) => l.commande_id))]
+      if (ids.length === 0) return []
+      const lignes = resultat<LigneCommandeAvecLignes[]>(
+        await client
+          .from('commande')
+          .select(COMMANDE_AVEC_LIGNES)
+          .in('id', ids)
           .order('cree_le', { ascending: true }),
       )
       return lignes.map(commandeAvecLignes)

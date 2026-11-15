@@ -114,6 +114,15 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
         avantArchivage?.(id)
         table.set(id, { ...element, archiveLe: new Date().toISOString() })
       },
+      async reactiver(id) {
+        const element = table.get(id)
+        if (!element) throw new ErreurDonnees('introuvable')
+        if (estActif(element)) return
+        const reactive: T = { ...element }
+        delete reactive.archiveLe
+        // Même règle d'unicité qu'à l'enregistrement (index sur les actifs).
+        await depot.enregistrer(reactive)
+      },
     }
   }
 
@@ -227,6 +236,12 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
       },
       async listerSansTournee() {
         return [...commandes.values()].filter((c) => c.tourneeId === null).map(avecLignes)
+      },
+      async listerParArticle(articleId) {
+        const ids = new Set(
+          [...lignes.values()].filter((l) => l.articleId === articleId).map((l) => l.commandeId),
+        )
+        return [...commandes.values()].filter((c) => ids.has(c.id)).map(avecLignes)
       },
       async obtenir(id) {
         const commande = commandes.get(id)

@@ -297,6 +297,29 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
         expect((await depots.commandes.obtenir(commande.id))?.lignes).toHaveLength(1)
       })
 
+      it('liste les commandes qui utilisent un article, avec toutes leurs lignes', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const autre = await depots.articles.enregistrer(fenetre)
+        const t = await tournee()
+        const { commande: c1 } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'SCI Martin', rangLivraison: 1 },
+          [ligne(autre.id), ligne(article.id)],
+        )
+        await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-2', destination: 'Client', rangLivraison: 2 },
+          [ligne(autre.id)],
+        )
+        const { commande: c3 } = await depots.commandes.enregistrer(
+          { tourneeId: null, numero: 'CMD-3', destination: 'En attente', rangLivraison: null },
+          [ligne(article.id, { quantite: 1 })],
+        )
+
+        const trouvees = await depots.commandes.listerParArticle(article.id)
+        expect(trouvees.map((c) => c.commande.id).sort()).toEqual([c1.id, c3.id].sort())
+        expect(trouvees.find((c) => c.commande.id === c1.id)?.lignes).toHaveLength(2)
+        expect(await depots.commandes.listerParArticle('inconnu')).toEqual([])
+      })
+
       it('liste à part les commandes sans tournée (liste d’attente)', async () => {
         const article = await depots.articles.enregistrer(ba13)
         const t = await tournee()
@@ -450,6 +473,42 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
         await expect(
           depots.articles.archiver('00000000-0000-4000-8000-000000000000'),
         ).rejects.toMatchObject({ code: 'introuvable' })
+      })
+
+      it('RG-21 : un article réactivé revient dans la liste', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        await depots.articles.archiver(article.id)
+        await depots.articles.reactiver(article.id)
+        const liste = await depots.articles.lister()
+        expect(liste.map((a) => a.id)).toEqual([article.id])
+        expect(liste[0]?.archiveLe).toBeUndefined()
+      })
+
+      it('réactiver un élément déjà actif est sans effet, un élément inconnu est refusé', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        await depots.articles.reactiver(article.id)
+        expect(await depots.articles.obtenir(article.id)).toEqual(article)
+        await expect(
+          depots.articles.reactiver('00000000-0000-4000-8000-000000000000'),
+        ).rejects.toMatchObject({ code: 'introuvable' })
+      })
+
+      it('RG-21 : un article dont la référence a été reprise ne se réactive pas', async () => {
+        const ancien = await depots.articles.enregistrer(ba13)
+        await depots.articles.archiver(ancien.id)
+        await depots.articles.enregistrer({ ...ba13, nom: 'BA13 nouvelle gamme' })
+        await expect(depots.articles.reactiver(ancien.id)).rejects.toMatchObject({
+          code: 'doublon',
+          champ: 'reference',
+        })
+        expect((await depots.articles.obtenir(ancien.id))?.archiveLe).toEqual(expect.any(String))
+      })
+
+      it('RG-21 : un camion archivé se réactive', async () => {
+        const camion = await depots.camions.enregistrer(porteur72)
+        await depots.camions.archiver(camion.id)
+        await depots.camions.reactiver(camion.id)
+        expect((await depots.camions.lister()).map((c) => c.id)).toEqual([camion.id])
       })
 
       it('RG-21 : un camion utilisé par une tournée en cours ne s’archive pas', async () => {

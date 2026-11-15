@@ -51,6 +51,12 @@ export interface DepotArchivable<T extends { id: string; archiveLe?: string }> e
   lister(options?: OptionsListe): Promise<T[]>
   /** Archive maintenant ; sans effet sur un élément déjà archivé. */
   archiver(id: string): Promise<void>
+  /**
+   * Remet un élément archivé dans les listes ; sans effet sur un élément
+   * actif. Pour un article, rejette `doublon` (champ `reference`) si un
+   * article actif a repris sa référence entre-temps.
+   */
+  reactiver(id: string): Promise<void>
 }
 
 /** Catalogue, trié par nom. Référence unique parmi les articles actifs. */
@@ -83,6 +89,12 @@ export interface CommandeRepository {
   listerParTournee(tourneeId: string): Promise<CommandeAvecLignes[]>
   /** Commandes sans tournée, celles de la liste d'attente. */
   listerSansTournee(): Promise<CommandeAvecLignes[]>
+  /**
+   * Commandes dont au moins une ligne cite l'article, avec toutes leurs
+   * lignes, dans ou hors tournée. Sert à la fiche article (« Commandes en
+   * cours ») et à choisir entre suppression et archivage (RG-22).
+   */
+  listerParArticle(articleId: string): Promise<CommandeAvecLignes[]>
   obtenir(id: string): Promise<CommandeAvecLignes | null>
   /**
    * Crée ou modifie la commande, puis remplace toutes ses lignes par celles
