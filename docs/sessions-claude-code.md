@@ -79,7 +79,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 4b · Équilibre du placeur
 
-- [ ] Fait — branche `feat/p1-equilibre-placeur`
+- [x] Fait — branche `feat/p1-equilibre-placeur`
 - Cahier technique : sections 4.3, 4.4 et 4.5 ; demande de fusion de l'étape 4, « Écart connu : équilibre d'`optimiser` sur « couloirs » ».
 - Constat de départ : sur « couloirs », `optimiser` donne un plan complet et valide, mais à 66 / 34 au pire moment (après C3), contre 59 / 41 pour la référence. Le placeur ne crée de points qu'au bord des unités posées depuis le coin gauche et n'atteint pas la paroi droite.
 - **Piste retenue : points projetés contre la paroi opposée.** Après chaque unité posée, le placeur ajoute un quatrième point candidat, celui « à côté », poussé jusqu'à la paroi d'en face. Les 8 variantes sont lancées avec et sans ce point, soit 16, et la comparaison de 4.4 garde la meilleure.
