@@ -199,13 +199,14 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
   - Une **erreur** bloque l'enregistrement : champ obligatoire vide, valeur invalide, doublon interdit. Elle s'affiche sous le champ, en rouge, avec une icône et un message qui dit comment corriger : « Indiquez un nombre entier de millimètres, par exemple 1 250. » À l'enregistrement, un résumé en haut du formulaire compte les champs à corriger (« 2 champs à corriger »), avec un lien vers chacun.
   - Un **avertissement** ne bloque pas : il s'affiche en ambre sous le champ, et l'utilisateur peut enregistrer.
   - Il n'y a pas de bornes de plausibilité : une valeur valide mais inhabituelle n'est pas signalée, l'utilisateur en juge lui-même.
+  - Un article ou un modèle de camion déjà utilisé ne se supprime pas : il s'archive. Il disparaît alors des listes et des choix (catalogue, saisie express, choix du camion), mais reste visible, avec la mention « archivé », dans les commandes, les tournées et les plans qui l'utilisent. Seul un élément jamais utilisé peut être supprimé. Un élément archivé peut être réactivé depuis la liste des éléments archivés.
   - Les règles par formulaire :
 
     | Formulaire | Erreurs (bloquantes) | Avertissements |
     | --- | --- | --- |
-    | Fiche article | Nom, famille, poids et les trois dimensions emballées obligatoires. Dimensions en millimètres entiers supérieurs à 0 ; poids supérieur à 0, virgule acceptée. Case « Peut être livré nu » cochée : les trois dimensions nues sont obligatoires, et chacune est inférieure ou égale à la dimension emballée correspondante ; case décochée : les champs nus sont masqués. Au moins une orientation cochée | Nom déjà utilisé par un autre article. Article qui ne rentre dans aucun modèle de camion, quelle que soit l'orientation. Orientation contraire à RG-04, par exemple « à plat » autorisé pour une fenêtre |
-    | Fiche camion | Nom et les trois dimensions utiles obligatoires, en millimètres entiers supérieurs à 0. Suppression refusée si le camion est utilisé par une tournée en préparation, prête ou en chargement, avec un message qui cite ces tournées | — |
-    | Saisie express | Numéro et destination obligatoires ; numéro unique dans la tournée. Au moins une ligne. Quantité entière d'au moins 1. Dimensions propres : les trois ou aucune, entières et supérieures à 0. Poids propre supérieur à 0 | Poids estimé au prorata du volume (RG-03). Article qui ne rentre pas dans le camion de la tournée, quelle que soit l'orientation : il finira en trop (RG-10) |
+    | Fiche article | Référence facultative, mais unique parmi les articles actifs : un article archivé peut laisser sa référence à son remplaçant. Nom, famille, poids et les trois dimensions emballées obligatoires. Dimensions en millimètres entiers supérieurs à 0 ; poids supérieur à 0, virgule acceptée. Case « Peut être livré nu » cochée : les trois dimensions nues sont obligatoires, et chacune est inférieure ou égale à la dimension emballée correspondante ; case décochée : les champs nus sont masqués. Au moins une orientation cochée | Nom déjà utilisé par un autre article. Article qui ne rentre dans aucun modèle de camion actif, quelle que soit l'orientation autorisée. Orientation contraire à RG-04, par exemple « à plat » autorisé pour une fenêtre |
+    | Fiche camion | Nom et les trois dimensions utiles obligatoires, en millimètres entiers supérieurs à 0. Suppression et archivage refusés si le camion est utilisé par une tournée en préparation, prête ou en chargement, avec un message qui cite ces tournées. Un camion utilisé seulement par des tournées chargées s'archive | — |
+    | Saisie express | Numéro et destination obligatoires ; numéro unique dans la tournée. Au moins une ligne. Quantité entière d'au moins 1. Dimensions propres : les trois ou aucune, entières et supérieures à 0. Poids propre supérieur à 0 | Poids estimé au prorata du volume (RG-03). Article qui ne rentre pas dans le camion de la tournée, quelle que soit l'orientation autorisée : il finira en trop (RG-10) |
     | Préparation d'une tournée | Date et camion obligatoires. Au moins une commande avant « Lancer le calcul » | — |
     | Signalement | Type de problème et action obligatoires. Dimensions mesurées : les trois ou aucune, supérieures à 0 | « Article plus grand que prévu » alors qu'aucune mesure ne dépasse les dimensions prévues |
     | Raccourcis clavier | Une touche ne sert qu'à une action (« La touche R sert déjà à Faire pivoter »). Un raccourci prend effet tout de suite : le refus est immédiat, sans bouton d'enregistrement | — |
@@ -213,14 +214,15 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
 - **RG-22** *(numérotée à la suite)* : fenêtres de confirmation.
   - Une fenêtre de confirmation s'ouvre seulement avant une action destructrice ou irréversible, jamais pour signaler une erreur de saisie.
   - Cas couverts :
-    - supprimer un article, un modèle de camion, une commande, une tournée ou un élément en attente ;
+    - supprimer un article ou un modèle de camion jamais utilisé, une commande, une tournée ou un élément en attente ;
+    - supprimer un article ou un modèle de camion déjà utilisé : la fenêtre explique qu'il ne peut pas être supprimé et propose de l'archiver (« Cet article est utilisé dans 2 commandes. Archivez-le : il ne sera plus proposé, et restera visible dans ces commandes. », bouton « Archiver l'article », de ton neutre, et « Annuler ») ;
     - annuler tout le chargement (RG-13) ;
     - retirer une commande entière (RG-13) ;
     - enregistrer un modèle de camion utilisé par une tournée en cours ;
     - quitter un formulaire qui contient des modifications non enregistrées.
   - Forme :
     - un titre en question (« Supprimer « Poutre lamellé-collé » ? ») ;
-    - la conséquence concrète (« Cet article est utilisé dans 2 commandes en préparation. ») ;
+    - la conséquence concrète (« Cet article n'est utilisé dans aucune commande. Il sera définitivement supprimé. ») ;
     - un bouton qui nomme l'action (« Supprimer l'article »), et un bouton « Annuler ». Le bouton d'action est rouge quand l'action supprime ou fait perdre des données : supprimer, quitter sans enregistrer, abandonner un signalement. Le bouton qui ouvre la fenêtre reste en style secondaire.
   - Le focus va d'abord sur « Annuler ». La touche Échap ferme la fenêtre sans rien faire.
 
