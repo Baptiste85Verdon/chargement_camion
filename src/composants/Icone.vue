@@ -25,6 +25,11 @@ const TRACES = {
   'chevron-bas': [chemin('m6 9 6 6 6-6')],
   fermer: [chemin('M18 6 6 18'), chemin('m6 6 12 12')],
   plus: [chemin('M5 12h14'), chemin('M12 5v14')],
+  /** Loupe : champ de recherche du catalogue. */
+  recherche: [
+    { balise: 'circle', attributs: { cx: '11', cy: '11', r: '8' } },
+    chemin('m21 21-4.3-4.3'),
+  ],
   moins: [chemin('M5 12h14')],
   clavier: [
     { balise: 'rect', attributs: { width: '20', height: '16', x: '2', y: '4', rx: '2' } },

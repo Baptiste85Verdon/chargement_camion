@@ -123,7 +123,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 8 · Référentiels
 
-- [ ] Fait — branche `feat/p1-referentiels`
+- [x] Fait — branche `feat/p1-referentiels`
 - Captures 07, 08, 08e, 09, 09b, 09e. Cahier fonctionnel : sections 4.6 et 4.7, RG-18, RG-21, RG-22.
 - Catalogue avec recherche et filtre, fiche article (case « Peut être livré nu », orientations par défaut selon la famille, forme, dessus porteur), modèles de camions et fiche camion.
 - Archivage (décision de l'étape 6, RG-21 et RG-22) : bouton « Archiver » dans la fiche article et la fiche camion ; suppression d'un élément utilisé remplacée par la proposition d'archiver ; mention « archivé » dans les anciennes commandes et les anciens plans ; articles archivés absents du catalogue et de la saisie express, camions archivés absents du choix du camion. Les dépôts (`archiver`, `lister({ avecArchives })`) sont prêts.

@@ -16,6 +16,9 @@ export default defineConfig({
   // Les tests tournent sur la version construite, comme en production.
   webServer: {
     command: `npm run build && npx vite preview --port ${port} --strictPort`,
+    // Dépôts en mémoire, remplis avec supabase/seed.sql : les tests ne
+    // touchent jamais la vraie base, et chaque page rechargée repart à zéro.
+    env: { VITE_DONNEES: 'memoire' },
     port,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
