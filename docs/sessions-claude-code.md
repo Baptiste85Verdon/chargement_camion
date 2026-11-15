@@ -152,7 +152,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 10a · Plan de chargement : les vues
 
-- [ ] Fait — branche `feat/p1-plan-vues`
+- [x] Fait — branche `feat/p1-plan-vues`
 - Captures 04, 04c, 04d, 04e. Cahier technique : sections 5.1, 5.8 à 5.12 et 5.14.
 - Utilisable seule une fois fusionnée : la page du plan affiche le dernier plan calculé d'une tournée, sans les fonctions de l'étape 10b.
 - Ce qui est à construire :
