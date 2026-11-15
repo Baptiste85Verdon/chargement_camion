@@ -88,8 +88,10 @@ Pour un article placé à une position et dans une orientation données, le vali
 
    Les règles 5 et 6 sont contrôlées dans les deux sens : ce qui porte l'article, et ce qui est posé sur lui.
 
-7. **Accès au déchargement (RG-07)** : pour un article A, tout article situé entre A et les portes dans le même couloir, c'est-à-dire qui chevauche A en largeur et en hauteur, doit être livré au plus tard en même temps que A. C'est aussi le cas de tout article posé sur A. Un article livré tôt peut donc être plus au fond dans un autre couloir, ou posé sur des articles livrés plus tard.
+7. **Accès au déchargement (RG-07)** : pour un article A, est gênant tout article situé entre A et les portes qui chevauche A en largeur et occupe une hauteur entre le plancher et le dessus de A, c'est-à-dire dont le bas est plus bas que le dessus de A. Tout article gênant doit être livré au plus tard en même temps que A. C'est aussi le cas de tout article posé sur A. Un article livré tôt peut donc être plus au fond dans un autre couloir, ou posé sur des articles livrés plus tard s'il n'a devant lui, dans sa bande, que des articles livrés au plus tard en même temps que lui.
 8. **Calage des articles debout (RG-19)** : un article debout a au moins une grande face en contact avec une paroi, ou avec des articles qui couvrent au moins `SEUIL_CALAGE` de cette face (0,5 provisoire). Deux faces sont en contact quand leur écart ne dépasse pas `TOLERANCE_CONTACT` (20 mm provisoire). Les articles debout en contact forment un groupe, calculé de proche en proche : au moins l'un d'eux doit s'appuyer contre une paroi ou contre un article qui n'est pas debout.
+9. **Articles debout au plancher (RG-04)** : un article debout ou contre une paroi est posé au plancher, et rien n'est posé sur lui. Comme les règles 5 et 6, elle est contrôlée dans les deux sens.
+10. **Lourds au plancher (RG-04)** : un article de plus de `POIDS_LOURD` (500 kg) n'a pas sa base à plus de `HAUTEUR_MAX_LOURD` (1 000 mm) du plancher. Les deux valeurs sont provisoires, voir les points ouverts.
 
 À côté des règles, le validateur fournit `diagnostiquerCalage`. Cette fonction liste les autres articles mal calés : ceux sans contact côté fond, ou sans contact d'aucun côté en largeur. C'est un avertissement, jamais un refus.
 
@@ -101,7 +103,7 @@ Le validateur ne renvoie pas un simple oui ou non. Il renvoie la liste des règl
 2. **Trier** : d'abord par rang de livraison décroissant, puisque la dernière commande livrée va au fond. Puis, à l'intérieur d'une commande, les plus lourds d'abord, et à poids égal les plus volumineux.
 3. **Tenir une liste de points candidats** : au départ, il n'y en a qu'un, le coin du fond au plancher (0, 0, 0).
 4. **Chercher une place** pour chaque unité : on essaie chaque orientation autorisée sur chaque point candidat, en parcourant les points du fond vers les portes, puis du bas vers le haut. Parmi les essais que le validateur accepte, on retient celui qui a le meilleur score. Le premier critère est la **compacité** : on préfère la position qui laisse le plus de longueur libre côté portes, donc celle qui comble les espaces vides au fond et sur les côtés. Le deuxième critère est le **calage** : il départage les positions de compacité égale ou proche (moins de 100 mm d'écart, valeur provisoire), en préférant la plus grande surface de contact avec les parois et les autres articles. Seules les faces verticales comptent : le fond, les parois latérales et les autres articles, à `TOLERANCE_CONTACT` près ; ni le plancher ni le dessus, puisque le calage empêche de glisser sur les côtés. Le troisième critère, en cas d'égalité, est l'équilibre du poids entre la gauche et la droite.
-5. **Mettre à jour les points** : une fois l'unité placée, on ajoute trois nouveaux points candidats à ses coins. Le premier est devant elle, côté portes, le deuxième à sa droite, le troisième au-dessus.
+5. **Mettre à jour les points** : une fois l'unité placée, on ajoute trois nouveaux points candidats à ses coins. Le premier est devant elle, côté portes, le deuxième à côté d'elle dans le sens de parcours, le troisième au-dessus. Une variante ajoute en plus un quatrième point : le point « à côté », poussé jusqu'à la paroi d'en face, à la même distance du fond et à la même hauteur. Sans lui, le placeur n'atteint jamais la paroi opposée et la charge penche d'un côté.
 6. **Gérer le dépassement** : une unité qui ne trouve aucune place est mise dans la liste des articles en trop (RG-10).
 7. **Produire le résultat** : la liste des placements, dans l'ordre où ils ont été trouvés, est aussi l'ordre de chargement. Le résultat comprend en plus la liste des articles en trop.
 
@@ -109,11 +111,12 @@ Le validateur ne renvoie pas un simple oui ou non. Il renvoie la liste des règl
 
 Un seul passage du placeur ne regarde l'équilibre qu'en dernier recours. On cherche donc le meilleur plan en deux temps.
 
-1. **Plusieurs variantes** : le placeur est lancé plusieurs fois, huit fois à titre provisoire. Chaque variante change une seule chose :
+1. **Plusieurs variantes** : le placeur est lancé plusieurs fois, seize fois à titre provisoire. Chaque variante change une seule chose :
    - le sens de parcours en largeur, de la gauche vers la droite ou l'inverse, pour tout le plan ou commande par commande ;
-   - l'ordre des unités de même rang et de poids proche.
+   - l'ordre des unités de même rang et de poids proche ;
+   - la présence du point contre la paroi opposée (4.3, étape 5).
 
-   Les huit variantes croisent quatre sens de parcours (tout depuis la gauche, tout depuis la droite, en alternant commande par commande à partir de la gauche, puis à partir de la droite) avec deux ordres (l'ordre du tri, puis l'ordre inversé dans chaque groupe d'unités consécutives de même rang et de poids proche). Deux unités sont de poids proche quand la plus légère pèse au moins 90 % de la plus lourde (`ECART_POIDS_PROCHE`, provisoire).
+   Les seize variantes croisent quatre sens de parcours (tout depuis la gauche, tout depuis la droite, en alternant commande par commande à partir de la gauche, puis à partir de la droite) avec deux ordres (l'ordre du tri, puis l'ordre inversé dans chaque groupe d'unités consécutives de même rang et de poids proche), chacune sans puis avec le point contre la paroi opposée. Deux unités sont de poids proche quand la plus légère pèse au moins 90 % de la plus lourde (`ECART_POIDS_PROCHE`, provisoire).
 2. **Comparer les variantes**, dans cet ordre :
    - le moins d'articles en trop ;
    - le moins d'articles mal calés (`diagnostiquerCalage`) ;
@@ -452,8 +455,9 @@ Le développement suit une démarche **TDD** : écrire un test qui échoue, écr
 - Le validateur **accepte** le jeu « couloirs » : aucune règle enfreinte, aucun article mal calé.
 - Sur la variante, le validateur **refuse** A10 et A11, car ce sont des articles debout sans calage (RG-19). `diagnostiquerCalage` signale en plus A12, qui ne touche rien côté fond.
 - Deux fenêtres debout face à face, seules au milieu de la caisse, sont **refusées** : leur groupe ne s'appuie sur rien.
+- Deux paquets de BA13 contre une paroi, l'un sur l'autre, sont **refusés** (règle 9). Une palette de 1 225 kg posée sur une autre, sa base à 1 050 mm du plancher, est **refusée** (règle 10). Un carton de C2 posé sur une palette au fond, derrière des bottes de C3 plus basses que lui, est **refusé** (règle 7).
 - Le placeur, à partir des mêmes commandes, trouve une solution sans article en trop, acceptée par le validateur. Le nombre d'articles mal calés est mesuré et suivi d'une version à l'autre.
-- `mesurerEquilibre` donne, pour le jeu « couloirs », 55 / 45 au départ et 59 / 41 après C1, donc le statut « À surveiller ». `optimiser`, à partir des mêmes commandes, trouve un plan dont le pire moment est au moins aussi équilibré.
+- `mesurerEquilibre` donne, pour le jeu « couloirs », 55 / 45 au départ et 59 / 41 après C1, donc le statut « À surveiller ». `optimiser`, à partir des mêmes commandes, trouve un plan dont le pire moment est au moins aussi équilibré. Sur ce jeu, `optimiser` obtient 58 / 42 au pire moment.
 
 **Intégration continue** : GitHub Actions lance la vérification des types, le contrôle du style, puis les tests Vitest et Playwright, à chaque envoi de code et à chaque demande de fusion. Le déploiement n'a lieu que si tout passe.
 
@@ -528,7 +532,9 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
 - [ ] **Hébergeur statique** : à choisir au premier déploiement.
 - [ ] **Hypothèse** : une seule tablette suit une tournée à la fois.
 - [ ] **Seuils de calage** : `SEUIL_CALAGE` (0,5), `TOLERANCE_CONTACT` (20 mm) et l'écart de compacité du placeur (100 mm), provisoires, à confirmer avec un professionnel.
-- [ ] **Seuils d'équilibre et variantes** : `SEUILS_EQUILIBRE` (55 % et 60 %), nombre de variantes du placeur (8), poids proches (`ECART_POIDS_PROCHE` : la plus légère pèse au moins 90 % de la plus lourde) et nombre maximal d'essais d'échange (`MAX_ESSAIS_ECHANGES`, 500), provisoires.
+- [ ] **Seuils d'équilibre et variantes** : `SEUILS_EQUILIBRE` (55 % et 60 %), nombre de variantes du placeur (16), poids proches (`ECART_POIDS_PROCHE` : la plus légère pèse au moins 90 % de la plus lourde) et nombre maximal d'essais d'échange (`MAX_ESSAIS_ECHANGES`, 500), provisoires.
+- [ ] **Lourds en hauteur** : `POIDS_LOURD` (500 kg) et `HAUTEUR_MAX_LOURD` (1 000 mm), provisoires, à confirmer avec un professionnel.
+- [ ] **Passage pour un article long** : quelle est la largeur minimale d'un passage pour glisser un article long au plancher ? À valider avec un professionnel. Sur « couloirs », `optimiser` glisse les poutres de C1 (6 m) dans un passage de 400 mm entre deux palettes ; aucune règle ne l'interdit aujourd'hui.
 
 ## 11. État du projet
 

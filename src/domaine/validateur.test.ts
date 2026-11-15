@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
-import { SEUIL_APPUI, SEUIL_CALAGE, TOLERANCE_CONTACT } from './constantes'
+import {
+  HAUTEUR_MAX_LOURD,
+  POIDS_LOURD,
+  SEUIL_APPUI,
+  SEUIL_CALAGE,
+  TOLERANCE_CONTACT,
+} from './constantes'
 import type { Camion, Placement, Unite } from './types'
 import { valider, validerPlan } from './validateur'
 
@@ -167,7 +173,7 @@ describe('valider : appui (règle 4, RG-04)', () => {
   })
 
   it('RG-04 : refuse une unité suspendue en l’air', () => {
-    expect(valider(poser('P2', 0, 0, 1001), [p1], unites, camion)).toEqual([
+    expect(valider(poser('P2', 1200, 0, 500), [p1], unites, camion)).toEqual([
       { regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: 'P2' },
     ])
   })
@@ -295,6 +301,44 @@ describe('valider : accès au déchargement (règle 7, RG-07)', () => {
   it('RG-07 : accepte deux articles de la même commande l’un devant l’autre', () => {
     expect(valider(poser('T1', 0, 0), [poser('T2', 1200, 0)], unites, camion)).toEqual([])
   })
+
+  // Règle 7 élargie : un article livré plus tard gêne dès que son bas est
+  // plus bas que le dessus de A, même s'il ne chevauche pas A en hauteur.
+  // On ne fait pas passer un article par-dessus le chargement.
+  describe('par-dessus le chargement', () => {
+    /** Carton 600 × 600 × 600, livré au rang 1. */
+    const carton: Unite = { ...livree('T3', 1), dims: { l: 600, w: 600, h: 600 }, poids: 30 }
+    /** Botte basse 1 200 × 1 000 × 400, livrée au rang 2 comme la palette R2. */
+    const botte: Unite = { ...livree('B2', 2), dims: { l: 1200, w: 1000, h: 400 } }
+    const tous = [...unites, carton, botte]
+    // Au fond : la palette R2 (z 0 à 1 000) et le carton posé dessus (z 1 000
+    // à 1 600). Devant, côté portes : la botte B2 (z 0 à 400), plus basse.
+    const r2 = poser('R2', 0, 0)
+    const t3 = poser('T3', 0, 200, 1000)
+    const b2 = poser('B2', 1200, 0)
+    const plan = [r2, t3, b2]
+
+    it('RG-07 : refuse un article derrière un article livré plus tard et plus bas que son dessus', () => {
+      expect(valider(t3, plan, tous, camion)).toEqual([
+        { regle: 'RG-07', motif: 'accesBloque', uniteId: 'T3', autreUniteId: 'B2' },
+      ])
+      expect(valider(b2, plan, tous, camion)).toEqual([
+        { regle: 'RG-07', motif: 'bloqueAcces', uniteId: 'B2', autreUniteId: 'T3' },
+      ])
+    })
+
+    it('RG-07 : accepte un article livré plus tard dont le bas est au niveau du dessus de A', () => {
+      // T1 au plancher (z 0 à 1 000). Devant, T2 de la même commande, et sur
+      // T2 la palette R2, livrée plus tard, de z 1 000 à 2 000.
+      const plan2 = [poser('T1', 0, 0), poser('T2', 1200, 0), poser('R2', 1200, 0, 1000)]
+      expect(valider(poser('T1', 0, 0), plan2, unites, camion)).toEqual([])
+    })
+
+    it('RG-07 : accepte un article livré plus tard devant A, hors de sa bande en largeur', () => {
+      const plan3 = [r2, t3, poser('B2', 1200, 1400)]
+      expect(valider(t3, plan3, tous, camion)).toEqual([])
+    })
+  })
 })
 
 describe('valider : calage des articles debout (règle 8, RG-19)', () => {
@@ -364,6 +408,107 @@ describe('valider : calage des articles debout (règle 8, RG-19)', () => {
     expect(valider(f2, [f1, f2], unites, camion)).toEqual([
       { regle: 'RG-19', motif: 'deboutNonCale', uniteId: 'F2' },
     ])
+  })
+})
+
+describe('valider : articles debout au plancher (règle 9, RG-04)', () => {
+  /** Paquet de BA13 2 500 × 1 200 × 250, soit 2 500 × 250 × 1 200 contre une paroi. */
+  function plaque(id: string): Unite {
+    return {
+      ...palette(id),
+      dims: { l: 2500, w: 1200, h: 250 },
+      poids: 500,
+      orientations: ['aPlat', 'contreParoi'],
+    }
+  }
+  /** Fenêtre 1 500 × 180 × 1 350 debout. */
+  const fenetre: Unite = {
+    ...palette('F1'),
+    dims: { l: 1500, w: 1350, h: 180 },
+    poids: 45,
+    fragile: true,
+    orientations: ['debout'],
+  }
+  const carton: Unite = { ...palette('K1'), dims: { l: 600, w: 200, h: 200 }, poids: 30 }
+  const unites = [palette('P1'), plaque('B1'), plaque('B2'), fenetre, carton]
+
+  function contreParoi(uniteId: string, z: number): Placement {
+    return { uniteId, x: 0, y: 0, z, orientation: 'contreParoi', rang: 1 }
+  }
+
+  it('RG-04 : accepte une plaque contre une paroi, seule au plancher', () => {
+    expect(valider(contreParoi('B1', 0), [], unites, camion)).toEqual([])
+  })
+
+  it('RG-04 : refuse une plaque contre une paroi posée sur une autre plaque contre une paroi', () => {
+    const b1 = contreParoi('B1', 0)
+    const b2 = contreParoi('B2', 1200)
+    expect(valider(b2, [b1, b2], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'deboutHorsPlancher', uniteId: 'B2' },
+      { regle: 'RG-04', motif: 'surDebout', uniteId: 'B2', autreUniteId: 'B1' },
+    ])
+    // Vu du dessous : un article est posé sur B1.
+    expect(valider(b1, [b1, b2], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'deboutCharge', uniteId: 'B1', autreUniteId: 'B2' },
+    ])
+  })
+
+  it('RG-04 : refuse une fenêtre debout posée sur une palette, même bien appuyée et calée', () => {
+    const f1: Placement = { uniteId: 'F1', x: 0, y: 0, z: 1000, orientation: 'debout', rang: 1 }
+    expect(valider(f1, [poser('P1', 0, 0)], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'deboutHorsPlancher', uniteId: 'F1' },
+    ])
+  })
+
+  it('RG-04 : refuse un article à plat posé sur une plaque contre une paroi', () => {
+    const b1 = contreParoi('B1', 0)
+    const k1 = poser('K1', 0, 0, 1200)
+    expect(valider(k1, [b1, k1], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'surDebout', uniteId: 'K1', autreUniteId: 'B1' },
+    ])
+    expect(valider(b1, [b1, k1], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'deboutCharge', uniteId: 'B1', autreUniteId: 'K1' },
+    ])
+  })
+
+  it('RG-04 : accepte une plaque à plat posée sur une palette', () => {
+    const socle: Unite = { ...palette('P1'), dims: { l: 2500, w: 1200, h: 1000 } }
+    const b1 = poser('B1', 0, 0, 1000)
+    expect(valider(b1, [poser('P1', 0, 0)], [socle, plaque('B1')], camion)).toEqual([])
+  })
+})
+
+describe('valider : lourds en hauteur (règle 10, RG-04)', () => {
+  /** Palette de parpaings 1 200 × 1 000 × 1 050, de `poids` kg. */
+  function parpaings(id: string, poids: number): Unite {
+    return { ...palette(id), dims: { l: 1200, w: 1000, h: 1050 }, poids }
+  }
+  /** Socle de 1 000 mm de haut, plus lourd que tout ce qu'il porte. */
+  const socle: Unite = { ...palette('S1'), poids: 2000 }
+  const unites = [
+    parpaings('A01', 1225),
+    parpaings('A03', 1225),
+    parpaings('M1', POIDS_LOURD),
+    parpaings('M2', POIDS_LOURD + 1),
+    socle,
+  ]
+
+  it(`RG-04 : refuse un article de plus de ${POIDS_LOURD} kg dont la base est à plus de ${HAUTEUR_MAX_LOURD} mm du plancher`, () => {
+    const a01 = poser('A01', 0, 0)
+    expect(valider(poser('A03', 0, 0, 1050), [a01], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'lourdEnHauteur', uniteId: 'A03' },
+    ])
+    expect(valider(poser('M2', 0, 0, 1050), [a01], unites, camion)).toEqual([
+      { regle: 'RG-04', motif: 'lourdEnHauteur', uniteId: 'M2' },
+    ])
+  })
+
+  it(`RG-04 : accepte un article de ${POIDS_LOURD} kg pile posé en hauteur`, () => {
+    expect(valider(poser('M1', 0, 0, 1050), [poser('A01', 0, 0)], unites, camion)).toEqual([])
+  })
+
+  it(`RG-04 : accepte un lourd dont la base est à ${HAUTEUR_MAX_LOURD} mm pile du plancher`, () => {
+    expect(valider(poser('A03', 0, 0, 1000), [poser('S1', 0, 0)], unites, camion)).toEqual([])
   })
 })
 

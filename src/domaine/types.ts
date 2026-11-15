@@ -124,6 +124,10 @@ export type MotifRegle =
   | 'accesBloque'
   | 'bloqueAcces'
   | 'deboutNonCale'
+  | 'deboutHorsPlancher'
+  | 'surDebout'
+  | 'deboutCharge'
+  | 'lourdEnHauteur'
 
 /** Une règle enfreinte par un placement : ce que renvoie le validateur. */
 export interface RegleEnfreinte {

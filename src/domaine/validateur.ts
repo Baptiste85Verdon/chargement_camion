@@ -2,14 +2,8 @@
 // « ce placement est-il permis ? ». Il renvoie la liste des règles enfreintes,
 // vide si le placement est permis.
 import { estDebout, estDeboutCale, type Occupation, occupationDe } from './calage'
-import { SEUIL_APPUI, TOLERANCE_CONTACT } from './constantes'
-import {
-  type Boite,
-  estPoseSur,
-  seChevauchent,
-  surfaceCommuneXY,
-  surfaceCommuneYZ,
-} from './geometrie'
+import { HAUTEUR_MAX_LOURD, POIDS_LOURD, SEUIL_APPUI, TOLERANCE_CONTACT } from './constantes'
+import { type Boite, estPoseSur, recouvrement, seChevauchent, surfaceCommuneXY } from './geometrie'
 import type { Camion, MotifRegle, NumeroRegle, Placement, RegleEnfreinte, Unite } from './types'
 
 /** Règle 1 : l'unité ne dépasse d'aucune paroi, ni du plancher, ni du plafond. */
@@ -46,19 +40,21 @@ function estBienAppuyee(b: Boite, dessous: Occupation[]): boolean {
   return appui >= SEUIL_APPUI * base
 }
 
-/** Ce qui ne va pas quand un article est posé sur un autre (règles 5 et 6). */
-type DefautPile = 'dessousFragile' | 'dessousNonPorteur' | 'dessousPlusLeger'
+/** Ce qui ne va pas quand un article est posé sur un autre (règles 5, 6 et 9). */
+type DefautPile = 'dessousFragile' | 'dessousNonPorteur' | 'dessousPlusLeger' | 'dessousDebout'
 
 /**
- * Règles 5 et 6 pour une pile de deux articles : rien sur un fragile (RG-04)
- * ni sur un dessus non porteur (RG-18), pas de lourd sur un léger (RG-04 ;
- * le poids ne sert qu'au placement, RG-05).
+ * Règles 5, 6 et 9 pour une pile de deux articles : rien sur un fragile
+ * (RG-04) ni sur un dessus non porteur (RG-18), pas de lourd sur un léger
+ * (RG-04 ; le poids ne sert qu'au placement, RG-05), rien sur un article
+ * debout ou contre une paroi (RG-04).
  */
-function defautsDePile(dessus: Unite, dessous: Unite): DefautPile[] {
+function defautsDePile(dessus: Occupation, dessous: Occupation): DefautPile[] {
   const defauts: DefautPile[] = []
-  if (dessous.fragile) defauts.push('dessousFragile')
-  if (!dessous.porteur) defauts.push('dessousNonPorteur')
-  if (dessous.poids < dessus.poids) defauts.push('dessousPlusLeger')
+  if (dessous.unite.fragile) defauts.push('dessousFragile')
+  if (!dessous.unite.porteur) defauts.push('dessousNonPorteur')
+  if (dessous.unite.poids < dessus.unite.poids) defauts.push('dessousPlusLeger')
+  if (estDebout(dessous)) defauts.push('dessousDebout')
   return defauts
 }
 
@@ -77,16 +73,26 @@ const MOTIFS_PILE: Record<
     vuDuDessous: 'nonPorteurCharge',
   },
   dessousPlusLeger: { regle: 'RG-04', vuDuDessus: 'surPlusLeger', vuDuDessous: 'sousPlusLourd' },
+  dessousDebout: { regle: 'RG-04', vuDuDessus: 'surDebout', vuDuDessous: 'deboutCharge' },
+}
+
+/**
+ * Règle 10 : une grosse masse en hauteur déstabilise le camion. Un article de
+ * plus de `POIDS_LOURD` n'a pas sa base à plus de `HAUTEUR_MAX_LOURD` du
+ * plancher. Les deux bornes sont permises.
+ */
+function estLourdEnHauteur(unite: Unite, b: Boite): boolean {
+  return unite.poids > POIDS_LOURD && b.z0 > HAUTEUR_MAX_LOURD
 }
 
 /**
  * Règle 7 (RG-07) : `b` gêne la sortie de `a` par les portes. C'est le cas
- * s'il est entre `a` et les portes dans le même couloir, c'est-à-dire plus
- * près des portes et en recouvrement avec `a` en largeur et en hauteur, ou
- * s'il est posé sur `a`.
+ * s'il est posé sur `a`, ou s'il est entre `a` et les portes dans la même
+ * bande en largeur et que son bas est plus bas que le dessus de `a` : pour
+ * sortir `a`, il faudrait le faire passer par-dessus `b`.
  */
 function gene(b: Boite, a: Boite): boolean {
-  const devant = b.x0 >= a.x1 && surfaceCommuneYZ(a, b) > 0
+  const devant = b.x0 >= a.x1 && recouvrement(a.y0, a.y1, b.y0, b.y1) > 0 && b.z0 < a.z1
   return devant || estPoseSur(b, a)
 }
 
@@ -137,17 +143,27 @@ export function valider(
     enfreintes.push({ regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: unite.id })
   }
 
-  // Règles 5 et 6, dans les deux sens : les articles qui portent `p`, puis
+  // Règle 9 : un article debout ou contre une paroi est posé au plancher.
+  // L'autre sens (rien n'est posé sur lui) est contrôlé avec les piles.
+  if (estDebout(cible) && boite.z0 > 0) {
+    enfreintes.push({ regle: 'RG-04', motif: 'deboutHorsPlancher', uniteId: unite.id })
+  }
+
+  if (estLourdEnHauteur(unite, boite)) {
+    enfreintes.push({ regle: 'RG-04', motif: 'lourdEnHauteur', uniteId: unite.id })
+  }
+
+  // Règles 5, 6 et 9, dans les deux sens : les articles qui portent `p`, puis
   // ceux que `p` porte. Le second cas arrive quand on glisse `p` sous un
   // article déjà posé (déplacement manuel, échange d'`optimiser`).
   for (const v of dessous) {
-    for (const defaut of defautsDePile(unite, v.unite)) {
+    for (const defaut of defautsDePile(cible, v)) {
       const { regle, vuDuDessus } = MOTIFS_PILE[defaut]
       enfreintes.push({ regle, motif: vuDuDessus, uniteId: unite.id, autreUniteId: v.unite.id })
     }
   }
   for (const v of voisins.filter((v) => estPoseSur(v.boite, boite))) {
-    for (const defaut of defautsDePile(v.unite, unite)) {
+    for (const defaut of defautsDePile(v, cible)) {
       const { regle, vuDuDessous } = MOTIFS_PILE[defaut]
       enfreintes.push({ regle, motif: vuDuDessous, uniteId: unite.id, autreUniteId: v.unite.id })
     }
