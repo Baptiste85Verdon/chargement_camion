@@ -72,7 +72,9 @@ const idErreur = computed(() => `${idChamp.value}-erreur`)
 }
 
 .liste__mention {
-  font: var(--typo-interface);
+  /* Graisse normale, mais hauteur de ligne du libellé : la mention n’agrandit
+     pas la ligne, et les champs d’une même rangée restent alignés. */
+  font-weight: 400;
   color: var(--texte-doux);
 }
 

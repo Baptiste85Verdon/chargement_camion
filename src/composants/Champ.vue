@@ -8,6 +8,9 @@
  *
  * - libellé au-dessus, suivi de « (obligatoire) » en texte, jamais d'astérisque ;
  * - unité (« mm », « kg ») à droite dans le champ ;
+ * - texte d'aide sous le champ, avant les messages : le libellé tient alors
+ *   sur une ligne, et les champs d'une même rangée restent alignés, qu'ils
+ *   aient une aide ou non ;
  * - erreur : contour de 2 px `erreur`, et dessous l'icône et le message en
  *   `erreur-texte` ; `aria-invalid` et `aria-describedby` relient le message ;
  * - avertissement : contour inchangé, icône triangle et message en ambre.
@@ -82,7 +85,6 @@ const descriptions = computed(() => {
         textes.composants.obligatoire
       }}</span>
     </label>
-    <p v-if="props.aide" :id="idAide" class="champ__aide">{{ props.aide }}</p>
     <div class="champ__cadre">
       <input
         :id="idChamp"
@@ -101,6 +103,7 @@ const descriptions = computed(() => {
       />
       <span v-if="props.unite" :id="idUnite" class="champ__unite">{{ props.unite }}</span>
     </div>
+    <p v-if="props.aide" :id="idAide" class="champ__aide">{{ props.aide }}</p>
     <p v-if="props.erreur" :id="idErreur" class="champ__message champ__message--erreur">
       <Icone nom="erreur" :taille="16" />
       <span>
@@ -135,7 +138,9 @@ const descriptions = computed(() => {
 }
 
 .champ__mention {
-  font: var(--typo-interface);
+  /* Graisse normale, mais hauteur de ligne du libellé : la mention n’agrandit
+     pas la ligne, et les champs d’une même rangée restent alignés. */
+  font-weight: 400;
   color: var(--texte-doux);
 }
 
