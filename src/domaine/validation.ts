@@ -86,6 +86,8 @@ export interface SaisieCamion {
 }
 
 export interface SaisieLigne {
+  /** Identifiant de la ligne enregistrée ; absent pour une ligne ajoutée. */
+  id?: string
   articleId: string
   quantite: string
   nu: boolean
@@ -164,13 +166,13 @@ const memeNom = (a: string, b: string) =>
  * - `invalide` : les trois sont remplis, mais l'un n'est pas un entier > 0 ;
  * - `ok` : les trois dimensions, en millimètres.
  */
-type LectureDimensions =
+export type LectureDimensions =
   | { etat: 'vide' }
   | { etat: 'incomplete' }
   | { etat: 'invalide' }
   | { etat: 'ok'; dims: Dimensions }
 
-function lireDimensions(saisie: SaisieDimensions): LectureDimensions {
+export function lireDimensions(saisie: SaisieDimensions): LectureDimensions {
   const champs = [saisie.l, saisie.w, saisie.h]
   const remplis = champs.filter((c) => !estVide(c)).length
   if (remplis === 0) return { etat: 'vide' }
