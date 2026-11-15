@@ -22,7 +22,7 @@ import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { type BlocVue, type ContenuVue, recouvrants, zoneVisible } from '@/domaine/contenu-vue'
 import { coter, coterCaisse } from '@/domaine/cotes'
 import { trouverUnite } from '@/domaine/geometrie'
-import { type Vue, dimensionsVue, estRecouvert } from '@/domaine/projection'
+import { type Vue, dimensionsVue } from '@/domaine/projection'
 import type { Camion, Placement, Unite } from '@/domaine/types'
 import { textes } from '@/textes/fr'
 import Icone from './Icone.vue'
@@ -144,12 +144,18 @@ const rayon = computed(() => enMm(3))
 const pasHachure = computed(() => enMm(8))
 
 /** Articles visibles : ni cachés, ni silhouettes recouvertes par les articles affichés. */
-const visibles = computed(() => {
-  const affiches = props.contenu.blocs.filter((b) => b.etat !== 'silhouette').map((b) => b.rect)
-  return props.contenu.blocs.filter((b) =>
-    b.etat === 'silhouette' ? !estRecouvert(b.rect, affiches) : !b.cache,
-  )
-})
+/**
+ * Partie visible de chaque bloc (`zoneVisible`) : rien pour un article
+ * caché, ni pour une silhouette recouverte par les articles affichés ou par
+ * des silhouettes plus proches.
+ */
+const zones = computed(
+  () =>
+    new Map(
+      props.contenu.blocs.map((b) => [b.uniteId, zoneVisible(b.uniteId, props.contenu.blocs)]),
+    ),
+)
+const visibles = computed(() => props.contenu.blocs.filter((b) => zones.value.get(b.uniteId)))
 
 function nomBloc(b: BlocVue): string {
   const i = info(b)
@@ -180,7 +186,7 @@ const libelles = computed(() => {
   return visibles.value
     .filter((b) => dansCadrage(b.rect))
     .map((b) => {
-      const zone = zoneVisible(b.uniteId, props.contenu.blocs) ?? b.rect
+      const zone = zones.value.get(b.uniteId) ?? b.rect
       const largeur = zone.largeur * echelle.value
       const hauteur = zone.hauteur * echelle.value
       const interieur = largeur >= SEUIL_CODE_PX && hauteur >= SEUIL_CODE_PX
@@ -528,6 +534,7 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
           <span
             v-if="enCours"
             class="calque__etape"
+            :class="{ 'calque__etape--dedans': (enCours.rect.y - cadrage.y) * echelle < 24 }"
             :style="{ left: pctX(enCours.rect.x), top: pctY(enCours.rect.y) }"
             aria-hidden="true"
             >{{ t.etiquetteEtape(enCours.rang) }}</span
@@ -936,6 +943,11 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
   border: 1px solid var(--action);
   border-radius: var(--rayon-code);
   transform: translateY(calc(-100% - var(--espace-1)));
+}
+
+/* Bloc collé au haut de la vue : l'étiquette passe dans son coin, sans mordre sur les repères. */
+.calque__etape--dedans {
+  transform: translate(var(--espace-2), var(--espace-2));
 }
 
 .calque__cote {

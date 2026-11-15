@@ -75,6 +75,7 @@ test.describe('parcours de préparation', () => {
     await expect(page.getByText('Chantier Les Pins est maintenant livrée en 4e.')).toBeVisible()
 
     await page.getByRole('button', { name: 'Lancer le calcul' }).click()
+    await expect(page).toHaveURL(new RegExp(`${T118}/plan$`))
     await expect(page.getByText(/Plan version 1 calculé : 13 articles placés/)).toBeVisible()
   })
 
