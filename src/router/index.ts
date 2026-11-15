@@ -17,6 +17,18 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/PageFicheArticle.vue'),
     props: true,
   },
+  { path: '/camions', name: 'camions', component: () => import('@/pages/PageCamions.vue') },
+  {
+    path: '/camions/nouveau',
+    name: 'nouveau-camion',
+    component: () => import('@/pages/PageFicheCamion.vue'),
+  },
+  {
+    path: '/camions/:id',
+    name: 'fiche-camion',
+    component: () => import('@/pages/PageFicheCamion.vue'),
+    props: true,
+  },
   // Vitrine des composants de base (étape 7), hors navigation ; chargée à la demande.
   { path: '/vitrine', name: 'vitrine', component: () => import('@/pages/PageVitrine.vue') },
 ]
