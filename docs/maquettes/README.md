@@ -63,6 +63,8 @@ Relevés en relisant les captures. On ne retouche pas la maquette : on corrige d
 - **Renvois de règles** : vérifier dans chaque message que le numéro de RG cité est le bon. L'appui relève de RG-04, et non de RG-08.
 - **08, fiche article** : pas de champ Poids nu (RG-05, poids maximal retenu).
 - **07 et 08, dimensions des fenêtres** : le catalogue affiche les fenêtres dans leur taille posée debout (1 500 × 180 × 1 350). Les dimensions enregistrées sont celles de la pose à plat (cahier technique, 4.7) : 1 500 × 1 350 × 180. Le catalogue et la fiche article affichent les dimensions à plat, avec la mention « à plat » visible.
+- **04d, filtre de profondeur** : la capture propose des boutons « Tout », « −1 couche » et « −2 couches ». Le cahier technique (5.10) demande un curseur à deux poignées, qui limite la vue à une tranche de profondeur en millimètres : c'est lui qu'il faut coder, avec le bandeau « Filtre de profondeur actif » et « Tout afficher ».
+- **04 et suivantes, articles cachés** : le bandeau propose « Masquer le premier plan » et une seule vue de remplacement. Le cahier technique (5.10) demande le décompte des articles cachés, leur liste au clic et, pour chacun, une vue où il se voit (« Voir dans la vue Droite »).
 
 ## Écarts validés avec la maquette
 
