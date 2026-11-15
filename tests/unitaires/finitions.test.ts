@@ -64,20 +64,6 @@ describe('TableauTriable', () => {
     expect(tableau.findAll('th[aria-sort]')).toHaveLength(0)
   })
 
-  it('le bouton « Rétablir l’ordre de départ » n’apparaît qu’après un tri, et le rétablit', async () => {
-    const tableau = monterTableau()
-    const retablir = () =>
-      tableau.findAll('button').find((b) => b.text() === textes.tableau.retablir)
-    expect(retablir()).toBeUndefined()
-    await tableau
-      .findAll('thead button')
-      .find((b) => b.text() === 'Poids')
-      ?.trigger('click')
-    await retablir()?.trigger('click')
-    expect(noms(tableau)).toEqual(['Palette1225', 'Carton30', 'Botte800'])
-    expect(retablir()).toBeUndefined()
-  })
-
   it('l’en-tête triable est un vrai bouton, utilisable au clavier', () => {
     const tableau = monterTableau()
     const boutons = tableau.findAll('thead button')
@@ -98,6 +84,52 @@ describe('TableauTriable', () => {
     const action = tableau.findAll('thead th').at(2)
     expect(action?.find('button').exists()).toBe(false)
     expect(action?.find('.visuellement-cache').text()).toBe('Action')
+  })
+})
+
+describe('TableauTriable : lignes qui ouvrent une fiche', () => {
+  function monterAvecLien() {
+    return mount(TableauTriable<Ligne>, {
+      props: {
+        colonnes,
+        lignes,
+        cleLigne: (l: Ligne) => l.id,
+        legende: 'Articles',
+        enteteLigne: 'nom',
+        lien: (l: Ligne) => `/articles/${l.id}`,
+      },
+      slots: { action: '<button type="button">Réactiver</button>' },
+      global: { stubs: { RouterLink: { props: ['to'], template: '<a :href="to"><slot /></a>' } } },
+    })
+  }
+
+  it('le nom est le seul lien de la ligne, vers la fiche', () => {
+    const premiere = monterAvecLien().get('tbody tr')
+    const liens = premiere.findAll('a')
+    expect(liens).toHaveLength(1)
+    expect(liens[0]?.attributes('href')).toBe('/articles/1')
+    expect(liens[0]?.text()).toBe('Palette')
+    expect(liens[0]?.classes()).toContain('tableau__lien')
+    expect(premiere.classes()).toContain('tableau__ligne--lien')
+  })
+
+  it('un chevron décoratif termine chaque ligne', () => {
+    const tableau = monterAvecLien()
+    expect(tableau.get('tbody tr td.tableau__chevron svg').attributes('aria-hidden')).toBe('true')
+    // L'en-tête de cette colonne n'est lu que par les lecteurs d'écran.
+    expect(tableau.get('thead th.tableau__chevron').text()).toBe(textes.tableau.fiche)
+  })
+
+  it('les autres boutons de la ligne restent présents, hors du lien', () => {
+    const premiere = monterAvecLien().get('tbody tr')
+    expect(premiere.get('button').text()).toBe('Réactiver')
+    expect(premiere.find('a button').exists()).toBe(false)
+  })
+
+  it('sans lien, pas de chevron ni de ligne cliquable', () => {
+    const tableau = monterTableau()
+    expect(tableau.find('.tableau__chevron').exists()).toBe(false)
+    expect(tableau.find('.tableau__ligne--lien').exists()).toBe(false)
   })
 })
 
@@ -170,7 +202,7 @@ describe('fiches : indication de modification et aperçu', () => {
     expect(page.get('.apercu__nu').attributes('width')).toBe('1300')
   })
 
-  it('modèles de camions : le tri par nom revient au troisième clic ou avec le bouton', async () => {
+  it('modèles de camions : le tri par nom revient au troisième clic', async () => {
     const { page } = await monterPage('/camions')
     const modeles = () => page.findAll('tbody th').map((th) => th.text())
     const parNom = ['Fourgon 20 m³', 'Porteur 6,2 m', 'Porteur 7,2 m', 'Porteur 8,5 m']
@@ -181,14 +213,15 @@ describe('fiches : indication de modification et aperçu', () => {
     expect(modeles()).toEqual(['Porteur 8,5 m', 'Porteur 7,2 m', 'Porteur 6,2 m', 'Fourgon 20 m³'])
     await volume()?.trigger('click')
     expect(modeles()).toEqual(parNom)
+  })
 
-    await volume()?.trigger('click')
-    await page
-      .findAll('button')
-      .find((b) => b.text() === textes.tableau.retablir)
-      ?.trigger('click')
-    expect(modeles()).toEqual(parNom)
-    expect(page.findAll('button').some((b) => b.text() === textes.tableau.retablir)).toBe(false)
+  it('modèles de camions : pas de bouton « Ouvrir la fiche », le nom mène à la fiche', async () => {
+    const { page } = await monterPage('/camions')
+    const ligne = page.findAll('tbody tr').find((tr) => tr.text().includes('Porteur 7,2 m'))
+    expect(ligne?.findAll('a').map((a) => a.attributes('href'))).toEqual([
+      '/camions/c0000000-0000-4000-8000-000000000001',
+    ])
+    expect(page.text()).not.toContain('Ouvrir la fiche')
   })
 
   it('les modèles de camions sont triés par nom par défaut', async () => {

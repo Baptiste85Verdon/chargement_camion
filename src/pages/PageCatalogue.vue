@@ -83,7 +83,7 @@ const colonnes: ColonneTableau<FicheArticle>[] = [
     valeur: (a) => a.reference ?? '',
     classe: 'donnees catalogue__doux',
   },
-  { cle: 'nom', libelle: t.colonnes.article, valeur: (a) => a.nom, classe: 'catalogue__nom' },
+  { cle: 'nom', libelle: t.colonnes.article, valeur: (a) => a.nom },
   { cle: 'famille', libelle: t.colonnes.famille, valeur: (a) => FAMILLES.indexOf(a.famille) },
   // Dimensions : la longueur d'abord, puis la largeur, puis la hauteur.
   {
@@ -103,6 +103,26 @@ const colonnes: ColonneTableau<FicheArticle>[] = [
   { cle: 'fragile', libelle: t.colonnes.fragile, valeur: (a) => a.fragile },
   { cle: 'forme', libelle: t.colonnes.forme, valeur: (a) => textes.formes[a.forme] },
   { cle: 'orientations', libelle: t.colonnes.orientations, valeur: orientations },
+]
+
+/** Articles archivés : même tableau, triables, avec « Réactiver » sur chaque ligne. */
+const triArchives = ref<EtatTri | null>(null)
+const colonnesArchives: ColonneTableau<FicheArticle>[] = [
+  {
+    cle: 'reference',
+    libelle: t.colonnes.reference,
+    valeur: (a) => a.reference ?? '',
+    classe: 'donnees catalogue__doux',
+  },
+  { cle: 'nom', libelle: t.colonnes.article, valeur: (a) => a.nom },
+  { cle: 'famille', libelle: t.colonnes.famille, valeur: (a) => a.famille },
+  {
+    cle: 'archiveLe',
+    libelle: t.colonnes.archiveLe,
+    valeur: (a) => a.archiveLe ?? '',
+    classe: 'donnees',
+  },
+  { cle: 'action', libelle: t.colonnes.action, libelleCache: true },
 ]
 
 async function reactiver(article: FicheArticle) {
@@ -179,13 +199,11 @@ async function reactiver(article: FicheArticle) {
         :cle-ligne="(a) => a.id"
         :legende="t.legende"
         entete-ligne="nom"
+        :lien="(a) => `/catalogue/${a.id}`"
       >
         <template #reference="{ ligne }">{{
           ligne.reference ?? textes.referentiels.aucun
         }}</template>
-        <template #nom="{ ligne }">
-          <RouterLink :to="`/catalogue/${ligne.id}`">{{ ligne.nom }}</RouterLink>
-        </template>
         <template #famille="{ ligne }">{{ ligne.famille }}</template>
         <template #emballee="{ ligne }">{{ formaterDimensions(ligne.dimsEmballees) }}</template>
         <template #nue="{ ligne }">
@@ -216,35 +234,27 @@ async function reactiver(article: FicheArticle) {
         <h2 id="titre-archives" class="archives__titre">{{ t.archives.titre }}</h2>
         <p class="archives__intro">{{ t.archives.intro }}</p>
         <p v-if="archives.length === 0" class="etat">{{ t.archives.aucun }}</p>
-        <table v-else class="tableau">
-          <thead>
-            <tr>
-              <th scope="col">{{ t.colonnes.reference }}</th>
-              <th scope="col">{{ t.colonnes.article }}</th>
-              <th scope="col">{{ t.colonnes.famille }}</th>
-              <th scope="col">{{ t.colonnes.archiveLe }}</th>
-              <th scope="col">{{ t.colonnes.action }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="article in archives" :key="article.id">
-              <td class="donnees catalogue__doux">
-                {{ article.reference ?? textes.referentiels.aucun }}
-              </td>
-              <th scope="row" class="catalogue__nom">
-                <RouterLink :to="`/catalogue/${article.id}`">{{ article.nom }}</RouterLink>
-              </th>
-              <td>{{ article.famille }}</td>
-              <td class="donnees">{{ formaterDate(article.archiveLe ?? '') }}</td>
-              <td>
-                <Bouton taille="petite" @click="reactiver(article)">
-                  {{ textes.referentiels.reactiver }}
-                  <span class="visuellement-cache">{{ article.nom }}</span>
-                </Bouton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <TableauTriable
+          v-else
+          v-model:tri="triArchives"
+          :colonnes="colonnesArchives"
+          :lignes="archives"
+          :cle-ligne="(a) => a.id"
+          :legende="t.archives.titre"
+          entete-ligne="nom"
+          :lien="(a) => `/catalogue/${a.id}`"
+        >
+          <template #reference="{ ligne }">{{
+            ligne.reference ?? textes.referentiels.aucun
+          }}</template>
+          <template #archiveLe="{ ligne }">{{ formaterDate(ligne.archiveLe ?? '') }}</template>
+          <template #action="{ ligne }">
+            <Bouton taille="petite" @click="reactiver(ligne)">
+              {{ textes.referentiels.reactiver }}
+              <span class="visuellement-cache">{{ ligne.nom }}</span>
+            </Bouton>
+          </template>
+        </TableauTriable>
       </section>
     </div>
   </template>
@@ -317,20 +327,6 @@ async function reactiver(article: FicheArticle) {
 /* Cellules dessinées par TableauTriable : `:deep` les atteint. */
 :deep(.catalogue__doux) {
   color: var(--texte-doux);
-}
-
-:deep(.catalogue__nom) {
-  font: var(--typo-bouton);
-}
-
-:deep(.catalogue__nom) a {
-  color: var(--encre);
-  text-decoration: none;
-}
-
-:deep(.catalogue__nom) a:hover {
-  color: var(--action);
-  text-decoration: underline;
 }
 
 .catalogue__vide {

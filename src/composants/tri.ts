@@ -59,7 +59,3 @@ export function sensSuivant(
   if (actuel.sens === 'croissant') return { cle, sens: 'decroissant' }
   return depart
 }
-
-/** Vrai si le tri affiché est celui de départ. */
-export const estTriDepart = (actuel: EtatTri | null, depart: EtatTri | null) =>
-  actuel?.cle === depart?.cle && actuel?.sens === depart?.sens

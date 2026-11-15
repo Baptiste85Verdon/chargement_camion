@@ -28,7 +28,6 @@ export const textes = {
     archive: 'archivé',
     archiveLe: (date: string) => `Archivé le ${date}`,
     reactiver: 'Réactiver',
-    ouvrirLaFiche: 'Ouvrir la fiche',
     aucun: '—',
     quitterTitre: 'Quitter sans enregistrer ?',
     quitterConsequence: 'Vos modifications seront perdues.',
@@ -174,7 +173,6 @@ export const textes = {
     echelle: (longueur: string) => `Caisse de ${longueur} mm de long`,
     fond: 'Fond',
     portes: 'Portes',
-    ouvrir: (nom: string) => `Ouvrir la fiche ${nom}`,
     archives: {
       afficher: (n: number) => `Afficher les modèles archivés (${n})`,
       masquer: 'Masquer les modèles archivés',
@@ -254,7 +252,8 @@ export const textes = {
 
   /** Tableaux triables. */
   tableau: {
-    retablir: 'Rétablir l’ordre de départ',
+    /** En-tête, lu seulement, de la colonne du chevron. */
+    fiche: 'Fiche',
     trieePar: (colonne: string, sens: 'croissant' | 'decroissant') =>
       `, triée par ${colonne}, ordre ${sens === 'croissant' ? 'croissant' : 'décroissant'}`,
   },

@@ -95,7 +95,25 @@ const colonnes: ColonneTableau<ModeleCamion>[] = [
     classe: 'donnees',
   },
   { cle: 'tournees', libelle: t.colonnes.tournees, valeur: tourneesDe },
-  { cle: 'action', libelle: t.colonnes.action, libelleCache: true, classe: 'camions__action' },
+]
+
+/** Modèles archivés : même tableau, avec « Réactiver » sur chaque ligne. */
+const triArchives = ref<EtatTri | null>(TRI_DEPART)
+const colonnesArchives: ColonneTableau<ModeleCamion>[] = [
+  { cle: 'nom', libelle: t.colonnes.modele, valeur: (c) => c.nom, classe: 'camions__nom' },
+  {
+    cle: 'caisse',
+    libelle: t.colonnes.caisse,
+    valeur: (c) => [c.longueur, c.largeur, c.hauteur],
+    classe: 'donnees',
+  },
+  {
+    cle: 'archiveLe',
+    libelle: t.colonnes.archiveLe,
+    valeur: (c) => c.archiveLe ?? '',
+    classe: 'donnees',
+  },
+  { cle: 'action', libelle: t.colonnes.action, libelleCache: true },
 ]
 
 async function reactiver(camion: ModeleCamion) {
@@ -130,6 +148,7 @@ async function reactiver(camion: ModeleCamion) {
       <TableauTriable
         v-model:tri="tri"
         :tri-depart="TRI_DEPART"
+        :lien="(c) => `/camions/${c.id}`"
         :colonnes="colonnes"
         :lignes="actifs"
         :cle-ligne="(c) => c.id"
@@ -150,11 +169,6 @@ async function reactiver(camion: ModeleCamion) {
         <template #caisse="{ ligne }">{{ dimensions(ligne) }}</template>
         <template #volume="{ ligne }">{{ formaterVolume(ligne) }}</template>
         <template #tournees="{ ligne }">{{ tourneesDe(ligne) }}</template>
-        <template #action="{ ligne }">
-          <LienBouton :vers="`/camions/${ligne.id}`" :libelle="t.ouvrir(ligne.nom)">
-            {{ textes.referentiels.ouvrirLaFiche }}
-          </LienBouton>
-        </template>
       </TableauTriable>
     </div>
 
@@ -176,31 +190,26 @@ async function reactiver(camion: ModeleCamion) {
         <h2 id="titre-camions-archives" class="archives__titre">{{ t.archives.titre }}</h2>
         <p class="archives__intro">{{ t.archives.intro }}</p>
         <p v-if="archives.length === 0" class="etat">{{ t.archives.aucun }}</p>
-        <table v-else class="tableau">
-          <thead>
-            <tr>
-              <th scope="col">{{ t.colonnes.modele }}</th>
-              <th scope="col">{{ t.colonnes.caisse }}</th>
-              <th scope="col">{{ t.colonnes.archiveLe }}</th>
-              <th scope="col">{{ t.colonnes.action }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="camion in archives" :key="camion.id">
-              <th scope="row" class="camions__nom">
-                <RouterLink :to="`/camions/${camion.id}`">{{ camion.nom }}</RouterLink>
-              </th>
-              <td class="donnees">{{ dimensions(camion) }}</td>
-              <td class="donnees">{{ formaterDate(camion.archiveLe ?? '') }}</td>
-              <td>
-                <Bouton taille="petite" @click="reactiver(camion)">
-                  {{ textes.referentiels.reactiver }}
-                  <span class="visuellement-cache">{{ camion.nom }}</span>
-                </Bouton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <TableauTriable
+          v-else
+          v-model:tri="triArchives"
+          :colonnes="colonnesArchives"
+          :tri-depart="TRI_DEPART"
+          :lignes="archives"
+          :cle-ligne="(c) => c.id"
+          :legende="t.archives.titre"
+          entete-ligne="nom"
+          :lien="(c) => `/camions/${c.id}`"
+        >
+          <template #caisse="{ ligne }">{{ dimensions(ligne) }}</template>
+          <template #archiveLe="{ ligne }">{{ formaterDate(ligne.archiveLe ?? '') }}</template>
+          <template #action="{ ligne }">
+            <Bouton taille="petite" @click="reactiver(ligne)">
+              {{ textes.referentiels.reactiver }}
+              <span class="visuellement-cache">{{ ligne.nom }}</span>
+            </Bouton>
+          </template>
+        </TableauTriable>
       </section>
     </div>
   </template>
@@ -225,10 +234,6 @@ async function reactiver(camion: ModeleCamion) {
   white-space: nowrap;
 }
 
-:deep(.camions__nom) a {
-  color: var(--encre);
-}
-
 :deep(.camions__echelle) {
   width: 32%;
 }
@@ -244,10 +249,6 @@ async function reactiver(camion: ModeleCamion) {
   background: var(--camion-fond);
   border: 2px solid var(--camion-contour);
   border-radius: var(--rayon-code);
-}
-
-:deep(.camions__action) {
-  text-align: right;
 }
 
 .archives {
