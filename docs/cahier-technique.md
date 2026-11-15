@@ -534,6 +534,7 @@ Le dossier `domaine/` n'importe rien de Vue ni de Supabase. Cette règle peut ê
 - [ ] **Seuils de calage** : `SEUIL_CALAGE` (0,5), `TOLERANCE_CONTACT` (20 mm) et l'écart de compacité du placeur (100 mm), provisoires, à confirmer avec un professionnel.
 - [ ] **Seuils d'équilibre et variantes** : `SEUILS_EQUILIBRE` (55 % et 60 %), nombre de variantes du placeur (16), poids proches (`ECART_POIDS_PROCHE` : la plus légère pèse au moins 90 % de la plus lourde) et nombre maximal d'essais d'échange (`MAX_ESSAIS_ECHANGES`, 500), provisoires.
 - [ ] **Lourds en hauteur** : `POIDS_LOURD` (500 kg) et `HAUTEUR_MAX_LOURD` (1 000 mm), provisoires, à confirmer avec un professionnel.
+- [ ] **Passage pour un article long** : quelle est la largeur minimale d'un passage pour glisser un article long au plancher ? À valider avec un professionnel. Sur « couloirs », `optimiser` glisse les poutres de C1 (6 m) dans un passage de 400 mm entre deux palettes ; aucune règle ne l'interdit aujourd'hui.
 
 ## 11. État du projet
 
