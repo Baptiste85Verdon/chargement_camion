@@ -259,7 +259,7 @@ Le parcours de préparation, de l'accueil jusqu'au mode quai, suit simplement l'
 - **Rapidité de saisie** : la saisie express permet de créer une commande et ses articles en quelques actions.
 - **Messages** : chaque blocage ou alerte explique la règle en cause en langage courant (RG-08, RG-09, RG-10, RG-19).
 - **Formulaires** : les erreurs de saisie s'affichent sous les champs, jamais dans une fenêtre surgissante (RG-21). Les modifications non enregistrées sont signalées près du bouton d'enregistrement (RG-21). Les fenêtres de confirmation sont réservées aux actions destructrices ou irréversibles (RG-22).
-- **Tableaux** : les listes en tableau (catalogue, modèles de camions) se trient par colonne, d'un clic ou au clavier sur l'en-tête ; le sens du tri est indiqué par une flèche et annoncé aux lecteurs d'écran.
+- **Tableaux** : les listes en tableau (catalogue, modèles de camions) se trient par colonne, d'un clic ou au clavier sur l'en-tête : ordre croissant, puis décroissant, puis retour à l'ordre de départ. Le sens du tri est indiqué par une flèche et annoncé aux lecteurs d'écran. Un bouton « Rétablir l'ordre de départ » permet aussi d'y revenir à tout moment.
 - **Données d'exemple** : l'application est utilisable dès le premier lancement grâce à la base générée (RG-01).
 
 ### Charte graphique et principes d'interface

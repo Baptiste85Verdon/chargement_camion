@@ -376,7 +376,8 @@ La cible est le niveau AA des WCAG 2.2, comme le fixe le cahier fonctionnel.
 ### 6.3 Tableaux triables
 
 - **Un seul composant** `TableauTriable`, générique : il reçoit les colonnes (libellé, valeur de tri facultative, alignement) et les lignes ; chaque cellule est remplie par un emplacement nommé.
-- **En-tête** : une colonne triable contient un vrai `<button>`, qui se déclenche à la souris, à Entrée et à Espace. Le premier clic trie en ordre croissant, le suivant inverse le sens. Une flèche montre le sens (jamais la couleur seule).
+- **En-tête** : une colonne triable contient un vrai `<button>`, qui se déclenche à la souris, à Entrée et à Espace. Clics successifs sur un même en-tête : ordre croissant, ordre décroissant, puis retour au tri de départ. Une flèche montre le sens (jamais la couleur seule).
+- **Retour au tri de départ** : dès que le tri s'écarte de celui de départ, un bouton « Rétablir l'ordre de départ » apparaît au-dessus du tableau ; il disparaît une fois l'ordre rétabli.
 - **Accessibilité** : la colonne triée porte `aria-sort` (`ascending` ou `descending`), les autres n'en portent pas ; la légende du tableau, lue par les lecteurs d'écran, rappelle le tri en cours.
 - **Comparaison** : fonctions pures (`composants/tri.ts`), testées sans interface. Textes comparés à la française, sans tenir compte de la casse ni des accents, nombres contenus comparés comme des nombres (« Porteur 8,5 m » avant « Porteur 12 m ») ; dimensions comparées longueur, puis largeur, puis hauteur. Le tri est stable : sans tri choisi ou entre deux lignes égales, l'ordre reçu est gardé.
 - **Tri par défaut** : choisi par la page. Le catalogue garde l'ordre des familles ; les modèles de camions sont triés par nom.
