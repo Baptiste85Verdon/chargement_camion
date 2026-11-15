@@ -17,7 +17,15 @@ import type {
   PlanChargement,
   Tournee,
 } from '@/domaine/modele'
-import type { AEnregistrer, CommandeAvecLignes, Depot, Depots, PlanAvecPlacements } from './depots'
+import { estActif } from '@/domaine/modele'
+import type {
+  AEnregistrer,
+  CommandeAvecLignes,
+  Depot,
+  DepotArchivable,
+  Depots,
+  PlanAvecPlacements,
+} from './depots'
 import { ErreurDonnees } from './erreurs'
 
 /** Le contenu initial, par exemple les données de démarrage. */
@@ -84,6 +92,31 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
     }
   }
 
+  /**
+   * Ajoute l'archivage à un référentiel simple. `avantArchivage` rejette si
+   * l'élément ne peut pas être archivé.
+   */
+  function archivable<T extends { id: string; archiveLe?: string }>(
+    table: Map<string, T>,
+    depot: Depot<T>,
+    avantArchivage?: (id: string) => void,
+  ): DepotArchivable<T> {
+    return {
+      ...depot,
+      async lister(options = {}) {
+        const tous = await depot.lister()
+        return options.avecArchives ? tous : tous.filter(estActif)
+      },
+      async archiver(id) {
+        const element = table.get(id)
+        if (!element) throw new ErreurDonnees('introuvable')
+        if (!estActif(element)) return
+        avantArchivage?.(id)
+        table.set(id, { ...element, archiveLe: new Date().toISOString() })
+      },
+    }
+  }
+
   // --- Suppressions en cascade, comme ON DELETE CASCADE dans la base ---------
 
   function supprimerPlan(planId: string) {
@@ -115,32 +148,51 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
     (a.commande.rangLivraison ?? 0) - (b.commande.rangLivraison ?? 0)
 
   return {
-    articles: depotSimple(articles, {
-      trier: parNom,
-      verifier(article) {
-        // UNIQUE (reference) ; plusieurs articles peuvent ne pas en avoir.
-        const pris = [...articles.values()].some(
-          (a) => a.id !== article.id && article.reference && a.reference === article.reference,
-        )
-        if (pris) throw new ErreurDonnees('doublon', 'reference')
-      },
-      avantSuppression(id) {
-        // ON DELETE RESTRICT depuis ligne_commande.
-        if ([...lignes.values()].some((l) => l.articleId === id)) {
-          throw new ErreurDonnees('utilise')
-        }
-      },
-    }),
+    articles: archivable(
+      articles,
+      depotSimple(articles, {
+        trier: parNom,
+        verifier(article) {
+          // Index unique sur la référence, parmi les articles actifs seulement ;
+          // plusieurs articles peuvent ne pas en avoir.
+          const pris = [...articles.values()].some(
+            (a) =>
+              a.id !== article.id &&
+              estActif(a) &&
+              estActif(article) &&
+              article.reference &&
+              a.reference === article.reference,
+          )
+          if (pris) throw new ErreurDonnees('doublon', 'reference')
+        },
+        avantSuppression(id) {
+          // ON DELETE RESTRICT depuis ligne_commande.
+          if ([...lignes.values()].some((l) => l.articleId === id)) {
+            throw new ErreurDonnees('utilise')
+          }
+        },
+      }),
+    ),
 
-    camions: depotSimple(camions, {
-      trier: parNom,
-      avantSuppression(id) {
-        // ON DELETE RESTRICT depuis tournee.
-        if ([...tournees.values()].some((t) => t.modeleCamionId === id)) {
-          throw new ErreurDonnees('utilise')
-        }
+    camions: archivable(
+      camions,
+      depotSimple(camions, {
+        trier: parNom,
+        avantSuppression(id) {
+          // ON DELETE RESTRICT depuis tournee.
+          if ([...tournees.values()].some((t) => t.modeleCamionId === id)) {
+            throw new ErreurDonnees('utilise')
+          }
+        },
+      }),
+      (id) => {
+        // Déclencheur modele_camion_archivage (RG-21).
+        const enCours = [...tournees.values()].some(
+          (t) => t.modeleCamionId === id && t.statut !== 'chargee',
+        )
+        if (enCours) throw new ErreurDonnees('utilise', 'camion')
       },
-    }),
+    ),
 
     tournees: depotSimple(tournees, {
       // Les plus récentes d'abord ; une tournée sans date (à fixer) en tête.

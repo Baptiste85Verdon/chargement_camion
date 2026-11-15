@@ -44,7 +44,7 @@ export interface ErreurPostgrest {
  * déclarés sur une colonne).
  */
 const CHAMP_DE_CONTRAINTE: Record<string, string> = {
-  article_reference_key: 'reference',
+  article_reference_actif_key: 'reference',
   tournee_reference_key: 'reference',
   commande_numero_unique_dans_tournee: 'numero',
   article_taille_nue_complete: 'dimsNues',
@@ -67,6 +67,10 @@ function contrainteCitee(erreur: ErreurPostgrest): string | undefined {
 export function traduireErreur(erreur: ErreurPostgrest): ErreurDonnees {
   const contrainte = contrainteCitee(erreur)
   const champ = contrainte ? CHAMP_DE_CONTRAINTE[contrainte] : undefined
+  // Déclencheur modele_camion_archivage : camion d'une tournée en cours (RG-21).
+  if (erreur.code === 'P0001' && erreur.message.includes('modele_camion_en_cours')) {
+    return new ErreurDonnees('utilise', 'camion', erreur)
+  }
   switch (erreur.code) {
     case '23505':
       return new ErreurDonnees('doublon', champ, erreur)

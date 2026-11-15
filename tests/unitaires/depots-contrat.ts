@@ -396,6 +396,82 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
       })
     })
 
+    describe('archivage (RG-21)', () => {
+      it('RG-21 : un article archivé quitte la liste mais reste lisible par ses commandes', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { commande } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'SCI Martin', rangLivraison: 1 },
+          [ligne(article.id)],
+        )
+        await depots.articles.archiver(article.id)
+
+        expect(await depots.articles.lister()).toEqual([])
+        const tous = await depots.articles.lister({ avecArchives: true })
+        expect(tous.map((a) => a.id)).toEqual([article.id])
+        expect(tous[0]?.archiveLe).toEqual(expect.any(String))
+        expect((await depots.articles.obtenir(article.id))?.archiveLe).toEqual(expect.any(String))
+        expect((await depots.commandes.obtenir(commande.id))?.lignes[0]?.articleId).toBe(article.id)
+      })
+
+      it('RG-21 : un article utilisé ne se supprime pas, même archivé', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+          [ligne(article.id)],
+        )
+        await depots.articles.archiver(article.id)
+        await expect(depots.articles.supprimer(article.id)).rejects.toMatchObject({
+          code: 'utilise',
+        })
+      })
+
+      it('RG-21 : la référence d’un article archivé peut être reprise par un article actif', async () => {
+        const ancien = await depots.articles.enregistrer(ba13)
+        await depots.articles.archiver(ancien.id)
+        const nouveau = await depots.articles.enregistrer({ ...ba13, nom: 'BA13 nouvelle gamme' })
+        expect(nouveau.reference).toBe('PLQ-BA13')
+        // Mais pas par un second article actif.
+        await expect(
+          depots.articles.enregistrer({ ...ba13, nom: 'Encore une' }),
+        ).rejects.toMatchObject({ code: 'doublon', champ: 'reference' })
+      })
+
+      it('archiver deux fois garde la première date', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        await depots.articles.archiver(article.id)
+        const date = (await depots.articles.obtenir(article.id))?.archiveLe
+        await depots.articles.archiver(article.id)
+        expect((await depots.articles.obtenir(article.id))?.archiveLe).toBe(date)
+      })
+
+      it('archiver un élément inconnu est refusé', async () => {
+        await expect(
+          depots.articles.archiver('00000000-0000-4000-8000-000000000000'),
+        ).rejects.toMatchObject({ code: 'introuvable' })
+      })
+
+      it('RG-21 : un camion utilisé par une tournée en cours ne s’archive pas', async () => {
+        const t = await tournee()
+        await expect(depots.camions.archiver(t.modeleCamionId ?? '')).rejects.toMatchObject({
+          code: 'utilise',
+          champ: 'camion',
+        })
+        expect(await depots.camions.lister()).toHaveLength(1)
+      })
+
+      it('RG-21 : un camion utilisé seulement par une tournée chargée s’archive, sans se supprimer', async () => {
+        const t = await tournee()
+        await depots.tournees.enregistrer({ ...t, statut: 'chargee' })
+        const camionId = t.modeleCamionId ?? ''
+        await expect(depots.camions.supprimer(camionId)).rejects.toMatchObject({ code: 'utilise' })
+        await depots.camions.archiver(camionId)
+        expect(await depots.camions.lister()).toEqual([])
+        expect(await depots.camions.lister({ avecArchives: true })).toHaveLength(1)
+      })
+    })
+
     describe('liste d’attente', () => {
       it('ajoute, liste puis supprime un élément en attente (RG-11)', async () => {
         const article = await depots.articles.enregistrer(ba13)

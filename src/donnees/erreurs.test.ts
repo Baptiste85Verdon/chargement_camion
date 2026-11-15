@@ -18,9 +18,16 @@ describe('traduireErreur', () => {
   it('RG-21 : une référence d’article en double devient une erreur du champ « reference »', () => {
     const erreur = traduireErreur({
       code: '23505',
-      message: 'duplicate key value violates unique constraint "article_reference_key"',
+      message: 'duplicate key value violates unique constraint "article_reference_actif_key"',
     })
     expect(erreur).toMatchObject({ code: 'doublon', champ: 'reference' })
+  })
+
+  it('RG-21 : archiver un camion d’une tournée en cours devient « utilise » sur le champ « camion »', () => {
+    expect(traduireErreur({ code: 'P0001', message: 'modele_camion_en_cours' })).toMatchObject({
+      code: 'utilise',
+      champ: 'camion',
+    })
   })
 
   it('RG-21 : une contrainte CHECK nommée renvoie vers son champ', () => {

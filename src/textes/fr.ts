@@ -23,6 +23,8 @@ export const textes = {
     },
     article: {
       nom: "Indiquez le nom de l'article.",
+      referenceDejaPrise: (autre: string) =>
+        `Cette référence est déjà celle de l'article ${autre}. Indiquez une autre référence.`,
       famille: "Choisissez la famille de l'article.",
       poids: 'Indiquez le poids en kilogrammes, par exemple 22,5.',
       dimsEmballeesIncompletes:
@@ -45,7 +47,7 @@ export const textes = {
       largeur: 'Indiquez la largeur utile en millimètres, par exemple 2 400.',
       hauteur: 'Indiquez la hauteur utile en millimètres, par exemple 2 500.',
       utilise: (tournees: string) =>
-        `Ce modèle est utilisé par les tournées ${tournees}. Changez leur camion, ou attendez qu'elles soient chargées, avant de le supprimer.`,
+        `Ce modèle est utilisé par les tournées ${tournees}. Changez leur camion, ou attendez qu'elles soient chargées, avant de le supprimer ou de l'archiver.`,
     },
     commande: {
       numero: 'Indiquez le numéro de la commande.',

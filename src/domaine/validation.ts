@@ -11,6 +11,7 @@ import { textes } from '@/textes/fr'
 import { encombrement } from './encombrement'
 import {
   FAMILLES,
+  estActif,
   type ActionSignalement,
   type Commande,
   type FicheArticle,
@@ -64,6 +65,8 @@ export interface SaisieDimensions {
 export interface SaisieArticle {
   /** Absent pour un nouvel article. */
   id?: string
+  /** Référence commerciale, facultative. */
+  reference?: string
   nom: string
   /** Vide tant qu'aucune famille n'est choisie. */
   famille: string
@@ -222,12 +225,25 @@ const codeCommande = (commande: Commande) =>
 
 export function validerArticle(
   saisie: SaisieArticle,
-  contexte: { catalogue: FicheArticle[]; camions: Camion[] },
+  contexte: { catalogue: FicheArticle[]; camions: (Camion & { archiveLe?: string })[] },
 ): ResultatValidation {
   const m = textes.validation
   const erreurs: Probleme[] = []
   const avertissements: Probleme[] = []
 
+  // Les articles archivés ne comptent plus : ni pour les doublons de
+  // référence, ni pour les homonymes.
+  const actifs = contexte.catalogue.filter((a) => a.id !== saisie.id && estActif(a))
+
+  const reference = saisie.reference?.trim() ?? ''
+  const memeReference = actifs.find((a) => reference !== '' && a.reference === reference)
+  if (memeReference) {
+    erreurs.push({
+      champ: 'reference',
+      code: 'doublon',
+      message: m.article.referenceDejaPrise(memeReference.nom),
+    })
+  }
   if (estVide(saisie.nom)) {
     erreurs.push({ champ: 'nom', code: 'obligatoire', message: m.article.nom })
   }
@@ -281,9 +297,8 @@ export function validerArticle(
   }
 
   // Avertissements : ils n'empêchent pas d'enregistrer.
-  const homonyme = contexte.catalogue.find(
-    (a) => a.id !== saisie.id && !estVide(saisie.nom) && memeNom(a.nom, saisie.nom),
-  )
+  const camionsActifs = contexte.camions.filter(estActif)
+  const homonyme = actifs.find((a) => !estVide(saisie.nom) && memeNom(a.nom, saisie.nom))
   if (homonyme) {
     avertissements.push({
       champ: 'nom',
@@ -294,8 +309,8 @@ export function validerArticle(
 
   if (
     emballees.etat === 'ok' &&
-    contexte.camions.length > 0 &&
-    !contexte.camions.some((camion) => rentreDans(emballees.dims, saisie.orientations, camion))
+    camionsActifs.length > 0 &&
+    !camionsActifs.some((camion) => rentreDans(emballees.dims, saisie.orientations, camion))
   ) {
     avertissements.push({
       champ: 'dimsEmballees',
@@ -344,9 +359,10 @@ export function validerCamion(saisie: SaisieCamion): ResultatValidation {
 const STATUTS_EN_COURS: Tournee['statut'][] = ['enPreparation', 'prete', 'enChargement']
 
 /**
- * Suppression d'un modèle de camion : refusée s'il est utilisé par une
- * tournée en préparation, prête ou en chargement, avec la liste de ces
- * tournées.
+ * Suppression ou archivage d'un modèle de camion : refusés s'il est utilisé
+ * par une tournée en préparation, prête ou en chargement, avec la liste de
+ * ces tournées (RG-21). Utilisé par une tournée chargée seulement, il peut
+ * être archivé ; le dépôt refuse de le supprimer et propose l'archivage.
  */
 export function validerSuppressionCamion(
   camion: { id: string },

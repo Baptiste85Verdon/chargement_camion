@@ -100,6 +100,7 @@ export interface LigneArticle {
   orientations: string[]
   forme: string
   dessus_porteur: boolean
+  archive_le: string | null
 }
 
 export function articleDepuisLigne(ligne: LigneArticle): FicheArticle {
@@ -119,6 +120,7 @@ export function articleDepuisLigne(ligne: LigneArticle): FicheArticle {
     orientations: ligne.orientations.map(orientation.versDomaine),
     forme: ligne.forme as FicheArticle['forme'],
     porteur: ligne.dessus_porteur,
+    archiveLe: facultatif(ligne.archive_le),
   }
 }
 
@@ -140,6 +142,7 @@ export function articleVersLigne(article: AEnregistrer<FicheArticle>) {
     orientations: article.orientations.map(orientation.versBase),
     forme: article.forme,
     dessus_porteur: article.porteur,
+    archive_le: article.archiveLe ?? null,
   }
 }
 
@@ -151,6 +154,7 @@ export interface LigneCamion {
   longueur: number
   largeur: number
   hauteur: number
+  archive_le: string | null
 }
 
 export function camionDepuisLigne(ligne: LigneCamion): ModeleCamion {
@@ -160,6 +164,7 @@ export function camionDepuisLigne(ligne: LigneCamion): ModeleCamion {
     longueur: ligne.longueur,
     largeur: ligne.largeur,
     hauteur: ligne.hauteur,
+    archiveLe: facultatif(ligne.archive_le),
   }
 }
 
@@ -170,6 +175,7 @@ export function camionVersLigne(camion: AEnregistrer<ModeleCamion>) {
     longueur: camion.longueur,
     largeur: camion.largeur,
     hauteur: camion.hauteur,
+    archive_le: camion.archiveLe ?? null,
   }
 }
 

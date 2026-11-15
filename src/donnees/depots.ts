@@ -36,11 +36,32 @@ export interface Depot<T extends { id: string }> {
   supprimer(id: string): Promise<void>
 }
 
-/** Catalogue, trié par nom. Un article utilisé par une commande ne se supprime pas. */
-export type ArticleRepository = Depot<FicheArticle>
+export interface OptionsListe {
+  /** Inclure aussi les éléments archivés (par défaut : les actifs seulement). */
+  avecArchives?: boolean
+}
 
-/** Modèles de camions, triés par nom. Un camion utilisé par une tournée ne se supprime pas. */
-export type ModeleCamionRepository = Depot<ModeleCamion>
+/**
+ * Un référentiel dont les éléments s'archivent (RG-21) : un élément déjà
+ * utilisé ne se supprime pas (`supprimer` rejette `utilise`), il s'archive.
+ * `lister` ne rend que les actifs, sauf demande contraire ; `obtenir` rend
+ * aussi un élément archivé, pour les commandes et les plans qui le citent.
+ */
+export interface DepotArchivable<T extends { id: string; archiveLe?: string }> extends Depot<T> {
+  lister(options?: OptionsListe): Promise<T[]>
+  /** Archive maintenant ; sans effet sur un élément déjà archivé. */
+  archiver(id: string): Promise<void>
+}
+
+/** Catalogue, trié par nom. Référence unique parmi les articles actifs. */
+export type ArticleRepository = DepotArchivable<FicheArticle>
+
+/**
+ * Modèles de camions, triés par nom. Un camion utilisé par une tournée en
+ * préparation, prête ou en chargement ne s'archive pas : `archiver` rejette
+ * `utilise`, sur le champ `camion`.
+ */
+export type ModeleCamionRepository = DepotArchivable<ModeleCamion>
 
 /**
  * Tournées, les plus récentes d'abord. Supprimer une tournée supprime ses

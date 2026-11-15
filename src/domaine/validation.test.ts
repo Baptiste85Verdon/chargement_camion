@@ -298,6 +298,55 @@ describe('validerArticle (RG-21, fiche article)', () => {
   })
 })
 
+describe('validerArticle et archivage (RG-21)', () => {
+  const archive: FicheArticle = {
+    ...poutre,
+    id: 'art-ancien',
+    reference: 'POU-ANC',
+    nom: 'Poutre ancienne',
+    archiveLe: '2026-11-01T08:00:00Z',
+  }
+  const contexte = { catalogue: [fenetre1V, poutre, archive], camions: [porteur72] }
+
+  it('RG-21 : refuse une référence déjà prise par un autre article actif', () => {
+    const { erreurs } = validerArticle(saisieArticle({ reference: ' POU-LC-2040 ' }), contexte)
+    expect(erreurs).toEqual([
+      {
+        champ: 'reference',
+        code: 'doublon',
+        message:
+          "Cette référence est déjà celle de l'article Poutre lamellé-collé 200 × 400. Indiquez une autre référence.",
+      },
+    ])
+  })
+
+  it('RG-21 : accepte la référence d’un article archivé', () => {
+    expect(validerArticle(saisieArticle({ reference: 'POU-ANC' }), contexte).erreurs).toEqual([])
+  })
+
+  it('RG-21 : un article modifié garde sa propre référence', () => {
+    const resultat = validerArticle(
+      saisieArticle({ id: poutre.id, reference: 'POU-LC-2040', nom: poutre.nom }),
+      contexte,
+    )
+    expect(resultat.erreurs).toEqual([])
+  })
+
+  it('RG-21 : n’avertit pas d’un nom déjà pris par un article archivé', () => {
+    const resultat = validerArticle(saisieArticle({ nom: 'Poutre ancienne' }), contexte)
+    expect(resultat.avertissements).toEqual([])
+  })
+
+  it('RG-21 : un camion archivé ne compte pas pour « ne rentre dans aucun camion »', () => {
+    const grand = { ...porteur72, id: 'cam-12', longueur: 12000, archiveLe: '2026-11-01T08:00:00Z' }
+    const resultat = validerArticle(
+      saisieArticle({ dimsEmballees: { l: '9 000', w: '300', h: '200' } }),
+      { catalogue: [], camions: [porteur72, grand] },
+    )
+    expect(codes(resultat.avertissements)).toEqual(['horsCamions'])
+  })
+})
+
 // --- Fiche camion -----------------------------------------------------------
 
 describe('validerCamion (RG-21, fiche camion)', () => {
@@ -335,7 +384,7 @@ describe('validerCamion (RG-21, fiche camion)', () => {
     ])
   })
 
-  it('RG-21 : refuse la suppression d’un camion utilisé, en citant les tournées', () => {
+  it('RG-21 : refuse de supprimer ou d’archiver un camion utilisé, en citant les tournées', () => {
     const tournees: Tournee[] = [
       {
         id: 't1',
@@ -372,7 +421,7 @@ describe('validerCamion (RG-21, fiche camion)', () => {
         champ: 'camion',
         code: 'camionUtilise',
         message:
-          "Ce modèle est utilisé par les tournées T-2026-118, T-2026-120. Changez leur camion, ou attendez qu'elles soient chargées, avant de le supprimer.",
+          "Ce modèle est utilisé par les tournées T-2026-118, T-2026-120. Changez leur camion, ou attendez qu'elles soient chargées, avant de le supprimer ou de l'archiver.",
       },
     ])
   })

@@ -10,6 +10,7 @@ import type {
   CommandeAvecLignes,
   CommandeRepository,
   Depot,
+  DepotArchivable,
   Depots,
   ElementAttenteRepository,
   PlanRepository,
@@ -105,6 +106,42 @@ function depotTable<T extends { id: string }, L>(
 
     async supprimer(id) {
       verifier(await client.from(table).delete().eq('id', id))
+    },
+  }
+}
+
+/**
+ * Ajoute l'archivage (RG-21) à un référentiel : `lister` ne rend que les
+ * lignes dont `archive_le` est vide, sauf `avecArchives`.
+ */
+function archivable<T extends { id: string; archiveLe?: string }, L>(
+  client: SupabaseClient,
+  table: string,
+  depot: Depot<T>,
+  depuis: (ligne: L) => T,
+  tris: Tri[],
+): DepotArchivable<T> {
+  return {
+    ...depot,
+    async lister(options = {}) {
+      if (options.avecArchives) return depot.lister()
+      let requete = client.from(table).select('*').is('archive_le', null)
+      for (const tri of tris) {
+        requete = requete.order(tri.colonne, {
+          ascending: tri.ascendant,
+          nullsFirst: tri.videsEnPremier ?? false,
+        })
+      }
+      return resultat<L[]>(await requete).map(depuis)
+    },
+    async archiver(id) {
+      const element = await depot.obtenir(id)
+      if (!element) throw new ErreurDonnees('introuvable')
+      if (element.archiveLe !== undefined) return
+      // Pour un camion, le déclencheur modele_camion_archivage peut refuser.
+      verifier(
+        await client.from(table).update({ archive_le: new Date().toISOString() }).eq('id', id),
+      )
     },
   }
 }
@@ -311,14 +348,24 @@ function depotAttente(client: SupabaseClient): ElementAttenteRepository {
  * Les dépôts de l'application, branchés sur un client Supabase. Les types
  * des objets se déduisent des fonctions de conversion passées à `depotTable`.
  */
+const PAR_NOM: Tri[] = [{ colonne: 'nom', ascendant: true }]
+
 export function creerDepotsSupabase(client: SupabaseClient): Depots {
   return {
-    articles: depotTable(client, 'article', articleDepuisLigne, articleVersLigne, [
-      { colonne: 'nom', ascendant: true },
-    ]),
-    camions: depotTable(client, 'modele_camion', camionDepuisLigne, camionVersLigne, [
-      { colonne: 'nom', ascendant: true },
-    ]),
+    articles: archivable(
+      client,
+      'article',
+      depotTable(client, 'article', articleDepuisLigne, articleVersLigne, PAR_NOM),
+      articleDepuisLigne,
+      PAR_NOM,
+    ),
+    camions: archivable(
+      client,
+      'modele_camion',
+      depotTable(client, 'modele_camion', camionDepuisLigne, camionVersLigne, PAR_NOM),
+      camionDepuisLigne,
+      PAR_NOM,
+    ),
     tournees: depotTable(client, 'tournee', tourneeDepuisLigne, tourneeVersLigne, [
       // Les plus récentes d'abord ; une tournée sans date (à fixer) en tête.
       { colonne: 'date_livraison', ascendant: false, videsEnPremier: true },

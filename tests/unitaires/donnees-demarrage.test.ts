@@ -132,6 +132,7 @@ describe('données de démarrage (RG-01)', () => {
       const { erreurs, avertissements } = validerArticle(
         {
           id: article.id,
+          reference: article.reference,
           nom: article.nom,
           famille: article.famille,
           dimsEmballees: texte(article.dimsEmballees),

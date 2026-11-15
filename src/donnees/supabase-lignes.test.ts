@@ -47,6 +47,7 @@ describe('conversions Supabase', () => {
       orientations: ['debout', 'contre_paroi'],
       forme: 'irreguliere',
       dessus_porteur: false,
+      archive_le: null,
     })
   })
 
@@ -69,6 +70,13 @@ describe('conversions Supabase', () => {
       reference: undefined,
       dimsNues: undefined,
     })
+  })
+
+  it('RG-21 : garde la date d’archivage dans les deux sens', () => {
+    const archive = { ...fenetre, archiveLe: '2026-11-15T10:00:00.000Z' }
+    const ligne = articleVersLigne(archive)
+    expect(ligne.archive_le).toBe('2026-11-15T10:00:00.000Z')
+    expect(articleDepuisLigne({ ...ligne, id: 'a1' })).toEqual(archive)
   })
 
   it('n’envoie pas d’identifiant pour une création : la base le choisit', () => {

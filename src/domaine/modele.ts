@@ -40,13 +40,24 @@ export interface FicheArticle {
   forme: Forme
   /** Le dessus peut-il porter un autre article ? (RG-18) */
   porteur: boolean
+  /**
+   * Date d'archivage, au format ISO. Un article déjà utilisé ne se supprime
+   * pas, il s'archive : il quitte le catalogue et la saisie express, mais
+   * reste dans les commandes et les plans qui l'utilisent (RG-21).
+   */
+  archiveLe?: string
 }
 
 /** Un modèle de camion : nom et dimensions utiles de la caisse. */
 export interface ModeleCamion extends Camion {
   id: string
   nom: string
+  /** Date d'archivage, au format ISO : voir `FicheArticle.archiveLe`. */
+  archiveLe?: string
 }
+
+/** Vrai pour un article ou un camion qui n'est pas archivé. */
+export const estActif = (element: { archiveLe?: string }) => element.archiveLe === undefined
 
 /** Statuts d'une tournée (section 3). */
 export type StatutTournee = 'enPreparation' | 'prete' | 'enChargement' | 'chargee'
