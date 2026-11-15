@@ -254,6 +254,7 @@ export const textes = {
 
   /** Tableaux triables. */
   tableau: {
+    retablir: 'Rétablir l’ordre de départ',
     trieePar: (colonne: string, sens: 'croissant' | 'decroissant') =>
       `, triée par ${colonne}, ordre ${sens === 'croissant' ? 'croissant' : 'décroissant'}`,
   },

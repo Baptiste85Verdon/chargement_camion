@@ -42,18 +42,28 @@ describe('tri des tableaux', () => {
   })
 
   it('un clic sur une autre colonne trie en croissant ; sur la même colonne, inverse le sens', () => {
-    expect(sensSuivant(null, 'poids')).toEqual({ cle: 'poids', sens: 'croissant' })
-    expect(sensSuivant({ cle: 'nom', sens: 'decroissant' }, 'poids')).toEqual({
+    expect(sensSuivant(null, 'poids', null)).toEqual({ cle: 'poids', sens: 'croissant' })
+    expect(sensSuivant({ cle: 'nom', sens: 'decroissant' }, 'poids', null)).toEqual({
       cle: 'poids',
       sens: 'croissant',
     })
-    expect(sensSuivant({ cle: 'poids', sens: 'croissant' }, 'poids')).toEqual({
+    expect(sensSuivant({ cle: 'poids', sens: 'croissant' }, 'poids', null)).toEqual({
       cle: 'poids',
       sens: 'decroissant',
     })
-    expect(sensSuivant({ cle: 'poids', sens: 'decroissant' }, 'poids')).toEqual({
-      cle: 'poids',
-      sens: 'croissant',
-    })
+  })
+
+  it('un troisième clic sur la même colonne revient au tri de départ', () => {
+    // Catalogue : pas de tri de départ, l'ordre par famille revient.
+    expect(sensSuivant({ cle: 'poids', sens: 'decroissant' }, 'poids', null)).toBeNull()
+    // Camions : le tri par nom revient.
+    const parNom = { cle: 'nom', sens: 'croissant' } as const
+    expect(sensSuivant({ cle: 'poids', sens: 'decroissant' }, 'poids', parNom)).toEqual(parNom)
+  })
+
+  it('sur la colonne du tri de départ, le cycle est croissant, décroissant, puis départ', () => {
+    const parNom = { cle: 'nom', sens: 'croissant' } as const
+    expect(sensSuivant(parNom, 'nom', parNom)).toEqual({ cle: 'nom', sens: 'decroissant' })
+    expect(sensSuivant({ cle: 'nom', sens: 'decroissant' }, 'nom', parNom)).toEqual(parNom)
   })
 })

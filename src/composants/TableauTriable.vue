@@ -9,6 +9,9 @@
  * - Une flèche montre le sens ; la couleur n'est jamais seule.
  * - Le tri est stable : sans tri choisi, ou entre deux lignes égales, l'ordre
  *   reçu est gardé (le catalogue arrive rangé par famille).
+ * - Clics successifs sur un en-tête : croissant, décroissant, puis retour au
+ *   tri de départ (`triDepart`). Dès que le tri s'en écarte, un bouton
+ *   « Rétablir l'ordre de départ » apparaît au-dessus du tableau.
  *
  * Le contenu de chaque cellule vient d'un emplacement nommé
  * `#<cle>="{ ligne }"` ; sans emplacement, la valeur de tri est affichée.
@@ -16,7 +19,8 @@
 import { computed } from 'vue'
 import { textes } from '@/textes/fr'
 import Icone from './Icone.vue'
-import { sensSuivant, trierLignes, type EtatTri, type ValeurTri } from './tri'
+import Bouton from './Bouton.vue'
+import { estTriDepart, sensSuivant, trierLignes, type EtatTri, type ValeurTri } from './tri'
 
 export interface ColonneTableau<L> {
   cle: string
@@ -40,12 +44,20 @@ const props = withDefaults(
     legende: string
     /** Colonne dont les cellules sont des en-têtes de ligne (`<th scope="row">`). */
     enteteLigne?: string
+    /** Tri de départ, rétabli au troisième clic ou par le bouton ; `null` : l'ordre reçu. */
+    triDepart?: EtatTri | null
   }>(),
-  { enteteLigne: undefined },
+  { enteteLigne: undefined, triDepart: null },
 )
 
 /** Tri choisi ; `null` pour l'ordre reçu. La page peut fixer un tri par défaut. */
 const tri = defineModel<EtatTri | null>('tri', { default: null })
+
+const triModifie = computed(() => !estTriDepart(tri.value, props.triDepart))
+
+function retablir() {
+  tri.value = props.triDepart
+}
 
 const lignesTriees = computed(() => {
   const etat = tri.value
@@ -55,7 +67,7 @@ const lignesTriees = computed(() => {
 })
 
 function trier(cle: string) {
-  tri.value = sensSuivant(tri.value, cle)
+  tri.value = sensSuivant(tri.value, cle, props.triDepart)
 }
 
 const ariaSort = (cle: string) =>
@@ -70,6 +82,11 @@ const icone = (cle: string) =>
 </script>
 
 <template>
+  <div v-if="triModifie" class="tableau-tri__barre">
+    <Bouton variante="texte" taille="petite" @click="retablir">
+      {{ textes.tableau.retablir }}
+    </Bouton>
+  </div>
   <table class="tableau">
     <caption class="visuellement-cache">
       {{
@@ -129,6 +146,12 @@ const icone = (cle: string) =>
 </template>
 
 <style scoped>
+.tableau-tri__barre {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--espace-1) var(--espace-3) 0;
+}
+
 /* Le bouton de tri garde l'apparence de l'en-tête : il ne s'en distingue que par la flèche. */
 .tableau__tri {
   display: inline-flex;

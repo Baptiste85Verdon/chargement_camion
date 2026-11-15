@@ -70,7 +70,8 @@ const dimensions = (c: ModeleCamion) =>
   [c.longueur, c.largeur, c.hauteur].map(formaterMillimetres).join(' × ')
 
 /** Modèles triés par nom par défaut ; un clic sur un en-tête change le tri. */
-const tri = ref<EtatTri | null>({ cle: 'nom', sens: 'croissant' })
+const TRI_DEPART: EtatTri = { cle: 'nom', sens: 'croissant' }
+const tri = ref<EtatTri | null>(TRI_DEPART)
 
 const colonnes: ColonneTableau<ModeleCamion>[] = [
   { cle: 'nom', libelle: t.colonnes.modele, valeur: (c) => c.nom, classe: 'camions__nom' },
@@ -128,6 +129,7 @@ async function reactiver(camion: ModeleCamion) {
     <div class="cadre">
       <TableauTriable
         v-model:tri="tri"
+        :tri-depart="TRI_DEPART"
         :colonnes="colonnes"
         :lignes="actifs"
         :cle-ligne="(c) => c.id"

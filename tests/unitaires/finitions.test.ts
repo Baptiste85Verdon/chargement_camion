@@ -54,6 +54,30 @@ describe('TableauTriable', () => {
     expect(tableau.get('th[aria-sort]').attributes('aria-sort')).toBe('descending')
   })
 
+  it('un troisième clic sur le même en-tête rétablit l’ordre de départ', async () => {
+    const tableau = monterTableau()
+    const poids = () => tableau.findAll('thead button').find((b) => b.text() === 'Poids')
+    await poids()?.trigger('click')
+    await poids()?.trigger('click')
+    await poids()?.trigger('click')
+    expect(noms(tableau)).toEqual(['Palette1225', 'Carton30', 'Botte800'])
+    expect(tableau.findAll('th[aria-sort]')).toHaveLength(0)
+  })
+
+  it('le bouton « Rétablir l’ordre de départ » n’apparaît qu’après un tri, et le rétablit', async () => {
+    const tableau = monterTableau()
+    const retablir = () =>
+      tableau.findAll('button').find((b) => b.text() === textes.tableau.retablir)
+    expect(retablir()).toBeUndefined()
+    await tableau
+      .findAll('thead button')
+      .find((b) => b.text() === 'Poids')
+      ?.trigger('click')
+    await retablir()?.trigger('click')
+    expect(noms(tableau)).toEqual(['Palette1225', 'Carton30', 'Botte800'])
+    expect(retablir()).toBeUndefined()
+  })
+
   it('l’en-tête triable est un vrai bouton, utilisable au clavier', () => {
     const tableau = monterTableau()
     const boutons = tableau.findAll('thead button')
@@ -144,6 +168,27 @@ describe('fiches : indication de modification et aperçu', () => {
     expect(cotes()).toEqual(['180 mm', '1 350 mm'])
     // La taille nue, en pointillés, suit la face choisie.
     expect(page.get('.apercu__nu').attributes('width')).toBe('1300')
+  })
+
+  it('modèles de camions : le tri par nom revient au troisième clic ou avec le bouton', async () => {
+    const { page } = await monterPage('/camions')
+    const modeles = () => page.findAll('tbody th').map((th) => th.text())
+    const parNom = ['Fourgon 20 m³', 'Porteur 6,2 m', 'Porteur 7,2 m', 'Porteur 8,5 m']
+    const volume = () =>
+      page.findAll('thead button').find((b) => b.text() === textes.camions.colonnes.volume)
+    await volume()?.trigger('click')
+    await volume()?.trigger('click')
+    expect(modeles()).toEqual(['Porteur 8,5 m', 'Porteur 7,2 m', 'Porteur 6,2 m', 'Fourgon 20 m³'])
+    await volume()?.trigger('click')
+    expect(modeles()).toEqual(parNom)
+
+    await volume()?.trigger('click')
+    await page
+      .findAll('button')
+      .find((b) => b.text() === textes.tableau.retablir)
+      ?.trigger('click')
+    expect(modeles()).toEqual(parNom)
+    expect(page.findAll('button').some((b) => b.text() === textes.tableau.retablir)).toBe(false)
   })
 
   it('les modèles de camions sont triés par nom par défaut', async () => {

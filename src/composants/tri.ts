@@ -46,8 +46,20 @@ export function trierLignes<T>(
   return [...lignes].sort((a, b) => signe * comparerValeurs(valeur(a), valeur(b)))
 }
 
-/** Clic sur l'en-tête `cle` : croissant d'abord, puis le sens inverse à chaque clic. */
-export function sensSuivant(actuel: EtatTri | null, cle: string): EtatTri {
+/**
+ * Clic sur l'en-tête `cle` : croissant, puis décroissant, puis retour au
+ * tri de départ (`depart`, `null` pour l'ordre reçu), et ainsi de suite.
+ */
+export function sensSuivant(
+  actuel: EtatTri | null,
+  cle: string,
+  depart: EtatTri | null,
+): EtatTri | null {
   if (actuel?.cle !== cle) return { cle, sens: 'croissant' }
-  return { cle, sens: actuel.sens === 'croissant' ? 'decroissant' : 'croissant' }
+  if (actuel.sens === 'croissant') return { cle, sens: 'decroissant' }
+  return depart
 }
+
+/** Vrai si le tri affiché est celui de départ. */
+export const estTriDepart = (actuel: EtatTri | null, depart: EtatTri | null) =>
+  actuel?.cle === depart?.cle && actuel?.sens === depart?.sens
