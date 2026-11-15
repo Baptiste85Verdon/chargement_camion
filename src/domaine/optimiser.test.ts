@@ -8,6 +8,7 @@ import {
   type Evaluation,
   optimiser,
   permuterPoidsProches,
+  type Variante,
   variantes,
 } from './optimiser'
 import type { Camion, Placement, Unite } from './types'
@@ -36,12 +37,20 @@ const uniteEn = (plan: Placement[], y: number, z = 0) =>
   plan.find((p) => p.y === y && p.z === z)?.uniteId
 
 describe('optimiser : variantes du placeur', () => {
-  it('RG-20 : propose huit variantes : quatre sens de parcours et deux ordres', () => {
+  it('RG-20 : propose seize variantes : quatre sens, deux ordres, avec et sans le point contre la paroi opposée', () => {
     const liste = variantes()
-    expect(liste).toHaveLength(8)
+    expect(liste).toHaveLength(16)
+    const cle = (v: Variante) =>
+      [
+        [1, 2, 3].map((rang) => v.sensDe(rang)).join(','),
+        v.permuterPoidsProches,
+        v.pointParoiOpposee,
+      ].join('|')
+    expect(new Set(liste.map(cle)).size).toBe(16)
     const sens = liste.map((v) => [1, 2, 3].map((rang) => v.sensDe(rang)).join(','))
     expect(new Set(sens).size).toBe(4)
-    expect(liste.filter((v) => v.permuterPoidsProches)).toHaveLength(4)
+    expect(liste.filter((v) => v.permuterPoidsProches)).toHaveLength(8)
+    expect(liste.filter((v) => v.pointParoiOpposee)).toHaveLength(8)
   })
 
   it('inverse l’ordre des unités de même rang et de poids proche', () => {
@@ -167,23 +176,14 @@ describe('optimiser : jeu d’essai « couloirs »', () => {
     expect(diagnostiquerCalage(resultat.placements, jeu.unites, jeu.camion)).toEqual([])
   })
 
-  // ÉCART CONNU (cahier technique, section 8) : ce test échoue aujourd'hui,
-  // `it.fails` le signale sans bloquer la suite. Le placeur du cahier (4.3)
-  // part du seul coin gauche et ne crée de points qu'au bord des unités
-  // posées : il n'atteint pas la paroi droite, et les trois palettes de C4
-  // s'empilent d'un côté. Après la livraison de C3, la charge est à 66 / 34
-  // (référence : 59 / 41 au pire moment). Les échanges n'y peuvent rien : les
-  // palettes à échanger ont le même poids. Proposer aussi le coin droit
-  // équilibre la charge, mais les poutres de C1, placées en dernier, ne
-  // trouvent plus de couloir de 6 m. Correction prévue dans une étape dédiée,
-  // « 4b · Équilibre du placeur ». Quand ce test passera, Vitest le signalera :
-  // il suffira alors de remplacer `it.fails` par `it`.
-  it.fails('RG-20 : est au moins aussi équilibré au pire moment que le plan de référence', () => {
+  // Étape 4b : sans le point contre la paroi opposée, le placeur n'atteignait
+  // pas la paroi droite et la charge montait à 66 / 34 après C3.
+  it('RG-20 : est au moins aussi équilibré au pire moment que le plan de référence', () => {
     expect(obtenu.pireEcart).toBeLessThanOrEqual(reference.pireEcart)
   })
 
-  it('RG-20 : mesure l’écart connu : 66 / 34 au pire moment, contre 59 / 41', () => {
-    expect(Math.round((0.5 + obtenu.pireEcart) * 100)).toBe(66)
+  it('RG-20 : obtient 58 / 42 au pire moment, contre 59 / 41 pour la référence', () => {
+    expect(Math.round((0.5 + obtenu.pireEcart) * 100)).toBe(58)
     expect(Math.round((0.5 + reference.pireEcart) * 100)).toBe(59)
   })
 

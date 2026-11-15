@@ -17,12 +17,15 @@ export interface Variante {
   sensDe: (rang: number) => Sens
   /** Inverser l'ordre des unités de même rang et de poids proche. */
   permuterPoidsProches: boolean
+  /** Ajouter, après chaque unité, le point contre la paroi opposée (4.3, étape 5). */
+  pointParoiOpposee: boolean
 }
 
 /**
- * Les huit variantes : quatre sens de parcours (tout depuis la gauche, tout
+ * Les seize variantes : quatre sens de parcours (tout depuis la gauche, tout
  * depuis la droite, puis en alternant commande par commande dans un sens et
- * dans l'autre), chacun avec l'ordre normal et l'ordre permuté.
+ * dans l'autre), chacun avec l'ordre normal et l'ordre permuté, chacun sans
+ * puis avec le point contre la paroi opposée.
  */
 export function variantes(): Variante[] {
   const sens: ((rang: number) => Sens)[] = [
@@ -31,8 +34,14 @@ export function variantes(): Variante[] {
     (rang) => (rang % 2 === 0 ? 'gaucheDroite' : 'droiteGauche'),
     (rang) => (rang % 2 === 0 ? 'droiteGauche' : 'gaucheDroite'),
   ]
-  return sens.flatMap((sensDe) =>
-    [false, true].map((permuter) => ({ sensDe, permuterPoidsProches: permuter })),
+  return [false, true].flatMap((pointParoiOpposee) =>
+    sens.flatMap((sensDe) =>
+      [false, true].map((permuter) => ({
+        sensDe,
+        permuterPoidsProches: permuter,
+        pointParoiOpposee,
+      })),
+    ),
   )
 }
 
@@ -244,7 +253,7 @@ export function ameliorerParEchanges(
 }
 
 /**
- * Calcule le meilleur plan (cahier technique, 4.4 et 4.7) : huit variantes du
+ * Calcule le meilleur plan (cahier technique, 4.4 et 4.7) : seize variantes du
  * placeur, la meilleure selon `estMeilleur`, puis l'amélioration par échanges.
  * Les placements `fixes` gardent leur place.
  */
@@ -257,7 +266,9 @@ export function optimiser<U extends Unite>(
   let meilleur: { resultat: ResultatPlaceur<U>; evaluation: Evaluation } | undefined
   for (const v of variantes()) {
     const ordre = v.permuterPoidsProches ? permuterPoidsProches(triees) : triees
-    const resultat = placerVariante(ordre, camion, fixes, v.sensDe)
+    const resultat = placerVariante(ordre, camion, fixes, v.sensDe, {
+      pointParoiOpposee: v.pointParoiOpposee,
+    })
     const evaluation = evaluer(resultat, unites, camion)
     if (!meilleur || estMeilleur(evaluation, meilleur.evaluation))
       meilleur = { resultat, evaluation }

@@ -79,7 +79,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 4b · Équilibre du placeur
 
-- [ ] Fait — branche `feat/p1-equilibre-placeur`
+- [x] Fait — branche `feat/p1-equilibre-placeur`
 - Cahier technique : sections 4.3, 4.4 et 4.5 ; demande de fusion de l'étape 4, « Écart connu : équilibre d'`optimiser` sur « couloirs » ».
 - Constat de départ : sur « couloirs », `optimiser` donne un plan complet et valide, mais à 66 / 34 au pire moment (après C3), contre 59 / 41 pour la référence. Le placeur ne crée de points qu'au bord des unités posées depuis le coin gauche et n'atteint pas la paroi droite.
 - **Piste retenue : points projetés contre la paroi opposée.** Après chaque unité posée, le placeur ajoute un quatrième point candidat, celui « à côté », poussé jusqu'à la paroi d'en face. Les 8 variantes sont lancées avec et sans ce point, soit 16, et la comparaison de 4.4 garde la meilleure.
@@ -87,6 +87,19 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 - Proposer les modifications du cahier qui en découlent (4.3 étape 5, 4.4 étapes 1 et 3, seuils provisoires de la section 10) avant de les faire.
 - **Critère de réussite** : sur « couloirs », `optimiser` obtient 59 / 41 ou mieux au pire moment, sans article en trop ni article mal calé. Le test marqué `it.fails` dans `optimiser.test.ts` passe pour de vrai, en `it`.
 - Mesurer le temps de calcul de `placer` et d'`optimiser` sur « couloirs » avant et après, et noter les deux dans la demande de fusion.
+
+## Étape 4c · Règles de stabilité
+
+- [ ] Fait — branche `feat/p1-regles-stabilite`
+- Cahier fonctionnel : RG-04, RG-07. Cahier technique : sections 4.2 (règles 7, 9 et 10), 8 et 10 ; demande de fusion de l'étape 4b, « Constats métier » et « Proposition : étape 4c ».
+- Constat de départ : sur « couloirs », le plan d'`optimiser` respecte toutes les règles, mais il empile deux paquets de BA13 sur chant, pose une palette de 1 225 kg sur une autre, et met les fenêtres de C2 en hauteur, au fond, derrière des bottes de C3 plus basses.
+- Validateur, en TDD, un test par règle :
+  - **règle 9** : un article debout ou contre une paroi est posé au plancher et rien n'est posé dessus, contrôlé dans les deux sens (RG-04) ;
+  - **règle 10** : un article de plus de `POIDS_LOURD` (500 kg) n'a pas sa base à plus de `HAUTEUR_MAX_LOURD` (1 000 mm) du plancher (RG-04) ;
+  - **règle 7 élargie** : est gênant tout article situé entre A et les portes qui chevauche A en largeur et occupe une hauteur entre le plancher et le dessus de A, c'est-à-dire dont le bas est plus bas que le dessus de A (RG-07).
+- Appliquer aux cahiers les textes validés dans la demande de fusion de l'étape 4b. Pour RG-07, l'exemple devient « une plaque à plat posée sur le dessus du chargement, côté portes, quand rien de ce qui est livré plus tard ne se trouve entre elle et les portes ». Ajouter aux points ouverts de la section 10 `POIDS_LOURD` (500 kg) et `HAUTEUR_MAX_LOURD` (1 000 mm), provisoires.
+- Mesure préalable, faite avec un prototype non conservé : le jeu « couloirs » reste accepté ; `optimiser` donne 58 / 42 au pire moment (après C3), sans article en trop ni mal calé, sans aucune des trois dispositions du constat.
+- **Critère de réussite** : le jeu « couloirs » reste accepté par le validateur. Sur « couloirs », `optimiser` ne laisse aucun article en trop ni mal calé, et obtient 59 / 41 ou mieux au pire moment. Minimum : jamais au-delà de 60 % d'un côté. Si le minimum n'est pas tenu, s'arrêter et l'expliquer avant de chercher une correction.
 
 ## Étape 6 · Données et validations de saisie
 

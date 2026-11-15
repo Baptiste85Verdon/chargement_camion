@@ -143,6 +143,48 @@ describe('placerVariante : sens de parcours en largeur', () => {
   })
 })
 
+describe('placerVariante : point contre la paroi opposée', () => {
+  // Deux palettes de 1 000 mm de large dans une caisse de 2 400 mm. Sans le
+  // point, la seconde se colle à la première ; avec, elle peut aussi aller
+  // contre la paroi d'en face : même compacité, même surface de contact
+  // (la paroi au lieu de la palette), mais un centre de gravité sur l'axe.
+  const unites = [boite('P1', 1200, 1000, 1000), boite('P2', 1200, 1000, 1000)]
+
+  it('RG-20 : pousse la seconde palette contre la paroi droite, en partant de la gauche', () => {
+    const { placements } = placerVariante(unites, camion, [], () => 'gaucheDroite', {
+      pointParoiOpposee: true,
+    })
+    expect(position(placements, 'P1')).toEqual({ x: 0, y: 0, z: 0 })
+    expect(position(placements, 'P2')).toEqual({ x: 0, y: 1400, z: 0 })
+  })
+
+  it('RG-20 : pousse la seconde palette contre la paroi gauche, en partant de la droite', () => {
+    const { placements } = placerVariante(unites, camion, [], () => 'droiteGauche', {
+      pointParoiOpposee: true,
+    })
+    expect(position(placements, 'P1')).toEqual({ x: 0, y: 1400, z: 0 })
+    expect(position(placements, 'P2')).toEqual({ x: 0, y: 0, z: 0 })
+  })
+
+  it('n’ajoute pas ce point par défaut', () => {
+    const { placements } = placerVariante(unites, camion, [], () => 'gaucheDroite')
+    expect(position(placements, 'P2')).toEqual({ x: 0, y: 1000, z: 0 })
+  })
+
+  it('ajoute aussi ce point autour des placements fixes', () => {
+    const { placements } = placerVariante(
+      unites,
+      camion,
+      [fixe('P1', 0, 0)],
+      () => 'gaucheDroite',
+      {
+        pointParoiOpposee: true,
+      },
+    )
+    expect(position(placements, 'P2')).toEqual({ x: 0, y: 1400, z: 0 })
+  })
+})
+
 describe('placer : jeu d’essai « couloirs »', () => {
   const jeu = chargerJeuEssai('couloirs')
   const { placements, enTrop } = placer(jeu.unites, jeu.camion)
