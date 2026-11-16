@@ -15,4 +15,6 @@ export interface InfoArticle {
   fragile: boolean
   /** Rang de chargement : l'étape où l'article est chargé. */
   etape: number
+  /** Signalé par `diagnostiquerCalage` (RG-19, 5.16) : triangle sur le bloc. */
+  malCale: boolean
 }

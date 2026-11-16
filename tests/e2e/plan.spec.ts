@@ -170,3 +170,89 @@ test.describe('zoom au pincement sur tablette (5.11)', () => {
     expect(await page.evaluate(() => window.visualViewport?.scale)).toBe(1)
   })
 })
+
+// --- Étape 10b : équilibre, calage et dépassement ---------------------------------------
+
+/**
+ * Ajoute à T-2026-118 une commande de 8 palettes de tuiles, puis lance le
+ * calcul : tout ne rentre plus dans le Porteur 7,2 m (RG-10).
+ */
+async function ouvrirPlanEnDepassement(page: Page) {
+  await page.goto(T118)
+  await page.getByRole('link', { name: 'Saisir une commande' }).click()
+  await page.getByLabel('Client ou destination').fill('Chantier Les Pins')
+  const recherche = page.getByLabel('Rechercher un article')
+  await recherche.fill('tuiles')
+  await recherche.press('Enter')
+  await page.getByRole('textbox', { name: 'Quantité de Palette de tuiles mécaniques' }).fill('8')
+  await page.getByRole('button', { name: 'Enregistrer la commande' }).click()
+  await expect(page).toHaveURL(new RegExp(`${T118}$`))
+  await page.getByRole('button', { name: 'Lancer le calcul' }).click()
+  await expect(page).toHaveURL(new RegExp(`${T118}/plan$`))
+  await expect(page.locator('.bandeau-depassement')).toBeVisible()
+}
+
+test.describe('équilibre, calage et dépassement (étape 10b)', () => {
+  test('carte d’équilibre et centre de gravité (RG-20, capture 04)', async ({ page }) => {
+    await ouvrirPlan(page)
+    const carte = page.locator('section.carte', {
+      has: page.getByRole('heading', { name: 'Équilibre de la charge' }),
+    })
+    await expect(carte.getByRole('img', { name: /Répartition au départ/ })).toBeVisible()
+    await carte.getByText('Au fil de la tournée').click()
+    await expect(carte.getByRole('rowheader', { name: 'Départ' })).toBeVisible()
+    await expect(cadre(page, 'Vue de dessus').locator('.calque__cg')).toContainText('du fond')
+    await sansErreurAxe(page)
+  })
+
+  test('dépassement : signaler, puis reporter les articles en trop (RG-10, RG-11)', async ({
+    page,
+  }) => {
+    await ouvrirPlanEnDepassement(page)
+    await expect(page.getByRole('heading', { name: 'Articles à placer' })).toBeVisible()
+    await sansErreurAxe(page)
+
+    await page
+      .getByRole('button', { name: /^Reporter (les \d+ articles|l'article) en trop$/ })
+      .click()
+    await expect(page.locator('.bandeau-depassement')).toHaveCount(0)
+    await expect(
+      page.getByText('Aucun article : tout le chargement a sa place dans le camion.'),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: /Liste d'attente/ })).toContainText('2')
+  })
+
+  test('dépassement : reporter toute la commande, après confirmation (RG-11, RG-22)', async ({
+    page,
+  }) => {
+    await ouvrirPlanEnDepassement(page)
+    const bouton = page.getByRole('button', { name: /^Reporter toute la commande C\d/ }).first()
+    const code = /C\d/.exec((await bouton.textContent()) ?? '')?.[0] ?? ''
+    await bouton.click()
+    const fenetre = page.getByRole('dialog', { name: `Reporter toute la commande ${code} ?` })
+    await expect(fenetre).toBeVisible()
+    await expect(fenetre.getByRole('button', { name: 'Annuler' })).toBeFocused()
+    await sansErreurAxe(page)
+
+    await fenetre.getByRole('button', { name: 'Reporter la commande' }).click()
+    await expect(
+      page
+        .getByRole('status')
+        .filter({ hasText: `La commande ${code} est dans la liste d'attente` }),
+    ).toBeAttached()
+    await expect(page.getByText(/version 2 du/)).toBeVisible()
+  })
+
+  test('articles mal calés : « Voir » les sélectionne, Échap en sort (RG-19)', async ({ page }) => {
+    await ouvrirPlanEnDepassement(page)
+    const calage = page.locator('.bandeau-calage')
+    test.skip((await calage.count()) === 0, 'Le plan calculé n’a aucun article mal calé.')
+    await calage.getByRole('button', { name: 'Voir' }).click()
+    const liste = page.locator('section.selection')
+    await expect(liste).toBeFocused()
+    await expect(liste.getByRole('heading', { name: /articles sélectionnés/ })).toBeVisible()
+    await sansErreurAxe(page)
+    await page.keyboard.press('Escape')
+    await expect(liste.getByRole('heading', { name: 'Article sélectionné' })).toBeVisible()
+  })
+})

@@ -164,7 +164,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 10b · Plan de chargement : équilibre, calage et dépassement
 
-- [ ] Fait — branche `feat/p1-plan-chargement`
+- [x] Fait — branche `feat/p1-plan-chargement`
 - Captures 04, 04a, 04b. Cahier technique : sections 5.7, 5.16 et 5.17. RG-10, RG-11, RG-19, RG-20.
 - Ce qui est à construire :
   - carte d'équilibre avec le centre de gravité, bandeau de calage ;

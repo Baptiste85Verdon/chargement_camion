@@ -143,7 +143,9 @@ export const textes = {
     version: (version: number, date: string) => `version ${version} du ${date}`,
     aRecalculer: 'Plan à recalculer',
     aRecalculerAide:
-      'Le camion a changé depuis le calcul : ce plan est dessiné dans la nouvelle caisse. Relancez le calcul depuis la préparation.',
+      'La tournée a changé depuis le calcul (camion ou commandes) : ce plan ne lui correspond plus. Relancez le calcul.',
+    relancer: 'Relancer le calcul',
+    calculEnCours: 'Calcul en cours…',
     affichage: "Mode d'affichage",
     modes: { complet: 'Plan complet', etape: 'Par étape' },
     commandes: 'Commandes',
@@ -261,8 +263,90 @@ export const textes = {
     sur: (reperes: string) => `sur ${reperes}`,
     pasEncoreCharge: 'pas encore chargé',
     enCours: 'étape en cours',
+    // Équilibre de la charge (RG-20, 5.17)
+    equilibre: {
+      titre: 'Équilibre de la charge',
+      regle: 'RG-20',
+      statuts: {
+        equilibre: 'Équilibré',
+        aSurveiller: 'À surveiller',
+        desequilibre: 'Déséquilibré',
+      },
+      /** « pire moment 59 / 41, après C1 et C2 » ; « au départ » si c'est le départ. */
+      pireMoment: (gauche: number, droite: number, moments: string) =>
+        `pire moment ${gauche} / ${droite}, ${moments}`,
+      auDepart: 'au départ',
+      apresCodes: (codes: string) => `après ${codes}`,
+      depart: 'Départ',
+      apres: (code: string) => `Après ${code}`,
+      gauche: 'Gauche',
+      droite: 'Droite',
+      part: (pourcentage: number, tonnes: string) => `${pourcentage} % · ${tonnes} t`,
+      jauge: (gauche: number, droite: number) =>
+        `Répartition au départ : ${gauche} % à gauche, ${droite} % à droite`,
+      centre: (metres: string, decalage: string) =>
+        `Au départ, centre de gravité à ${metres} m du fond et ${decalage}. La distance au fond est indiquée sans être jugée.`,
+      aGauche: (cm: number) => `à ${cm} cm à gauche de l'axe`,
+      aDroite: (cm: number) => `à ${cm} cm à droite de l'axe`,
+      dansAxe: "dans l'axe",
+      auFil: 'Au fil de la tournée',
+      colonnes: { moment: 'Moment', gauche: 'Gauche', droite: 'Droite', statut: 'Statut' },
+      vide: 'Aucun article',
+      videAide: "Le plan ne contient aucun article : il n'y a pas d'équilibre à mesurer.",
+      annonce: (statut: string) => `Équilibre de la charge : ${statut}.`,
+      cg: 'CG',
+      cgDistance: (metres: string) => `CG à ${metres} m du fond`,
+    },
+    // Articles mal calés (RG-19, 5.16)
+    calage: {
+      regle: 'RG-19',
+      titre: (n: number, liste: string) =>
+        `${n} ${n > 1 ? 'articles mal calés' : 'article mal calé'} : ${liste}`,
+      debout: (reperes: string, n: number) =>
+        `${reperes} : ${n > 1 ? 'articles debout' : 'article debout'} sans appui contre une paroi, ni contre des articles couvrant la moitié d'une grande face.`,
+      autres: (reperes: string, n: number) =>
+        `${reperes} : ${n > 1 ? 'ne touchent' : 'ne touche'} rien côté fond ou en largeur.`,
+      conseil: 'Calez-les avant le départ.',
+      voir: 'Voir',
+      mention: 'mal calé',
+      selectionnes: (n: number) =>
+        `${n} ${n > 1 ? 'articles mal calés sélectionnés' : 'article mal calé sélectionné'}. Échap pour quitter la sélection multiple.`,
+    },
+    // Dépassement et report (RG-10, RG-11, 5.7)
+    depassement: {
+      regles: 'RG-10 · RG-11',
+      titre: (n: number, codes: string) =>
+        `${n} ${n > 1 ? `articles de ${codes} n'ont` : `article de ${codes} n'a`} pas de place dans le camion`,
+      aide: "Choisissez ce que vous reportez dans la liste d'attente, ou relancez le calcul.",
+      reporterEnTrop: (n: number) =>
+        n > 1 ? `Reporter les ${n} articles en trop` : "Reporter l'article en trop",
+      reporterCommande: (code: string, n: number) =>
+        `Reporter toute la commande ${code} (${n} ${n > 1 ? 'articles' : 'article'})`,
+      articlesReportes: (n: number) =>
+        n > 1
+          ? `${n} articles sont dans la liste d'attente.`
+          : "1 article est dans la liste d'attente.",
+      commandeReportee: (code: string) =>
+        `La commande ${code} est dans la liste d'attente. Le plan est recalculé sans elle.`,
+      confirmation: {
+        titre: (code: string) => `Reporter toute la commande ${code} ?`,
+        consequence: (code: string) =>
+          `${code} quitte la tournée et rejoint la liste d'attente. Les commandes livrées après elle avancent d'un rang, et le plan est recalculé sans elle.`,
+        action: 'Reporter la commande',
+      },
+    },
+    // Zone « Articles à placer » (5.7)
+    aPlacer: {
+      titre: 'Articles à placer',
+      vide: 'Aucun article : tout le chargement a sa place dans le camion.',
+      enTrop: 'en trop (RG-10)',
+      note: "Les articles en trop peuvent être reportés en liste d'attente (RG-11).",
+    },
     // Article sélectionné
     selection: 'Article sélectionné',
+    selectionMultiple: (n: number) => `${n} articles sélectionnés`,
+    selectionMultipleAide:
+      'Choisissez un article pour afficher son détail et ses cotes. Échap, ou un clic ailleurs, quitte la sélection multiple.',
     selectionVide:
       "Sélectionnez un article dans une vue, dans le tableau ou dans l'ordre de chargement pour afficher son détail.",
     deselectionner: 'Désélectionner',

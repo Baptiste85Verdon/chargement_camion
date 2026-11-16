@@ -37,6 +37,13 @@ describe('mesurerEquilibre : jeu d’essai « couloirs » (RG-20)', () => {
     expect(mesure.etapes.map((e) => e.apres)).toEqual([null, 1, 2, 3])
   })
 
+  it('RG-20 : donne le poids restant dans le camion à chaque étape', () => {
+    const total = jeu.unites.reduce((s, u) => s + u.poids, 0)
+    expect(mesure.etapes[0]?.poids).toBe(total)
+    const poids = mesure.etapes.map((e) => e.poids)
+    expect(poids).toEqual([...poids].sort((a, b) => b - a))
+  })
+
   it('RG-20 : donne 55 / 45 au départ, 59 / 41 après C1 et C2, 58 / 42 après C3', () => {
     expect(parts).toEqual([
       [55, 45],
@@ -64,7 +71,13 @@ describe('mesurerEquilibre : calcul et statut (RG-20)', () => {
     const unites = [colis('A', 1, 300), colis('B', 1, 100)]
     const mesure = mesurerEquilibre([poser('A', 0, 0), poser('B', 400, 800)], unites, etroit)
     // Centres : A (50 ; 50), B (450 ; 850). cgX = (300×50 + 100×450) / 400 = 150.
-    expect(mesure.etapes[0]).toEqual({ apres: null, partGauche: 0.75, cgX: 150, cgY: 250 })
+    expect(mesure.etapes[0]).toEqual({
+      apres: null,
+      poids: 400,
+      partGauche: 0.75,
+      cgX: 150,
+      cgY: 250,
+    })
   })
 
   it('RG-20 : retire les commandes livrées et saute les rangs absents', () => {

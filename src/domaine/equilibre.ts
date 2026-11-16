@@ -11,6 +11,8 @@ export type StatutEquilibre = 'equilibre' | 'aSurveiller' | 'desequilibre'
 export interface EtapeEquilibre {
   /** Rang de la dernière commande livrée ; `null` au départ. */
   apres: number | null
+  /** Poids encore dans le camion, en kg. */
+  poids: number
   /** Part du poids portée par le côté gauche, entre 0 et 1. */
   partGauche: number
   /** Centre de gravité : distance au fond (x) et à la paroi gauche (y), en mm. */
@@ -56,7 +58,7 @@ function etape(apres: number | null, masses: Masse[], camion: Camion): EtapeEqui
   const cgX = masses.reduce((s, m) => s + m.poids * m.centreX, 0) / total
   const cgY = masses.reduce((s, m) => s + m.poids * m.centreY, 0) / total
   // y part de la paroi gauche : plus le centre est près de 0, plus la gauche porte.
-  return { apres, partGauche: (camion.largeur - cgY) / camion.largeur, cgX, cgY }
+  return { apres, poids: total, partGauche: (camion.largeur - cgY) / camion.largeur, cgX, cgY }
 }
 
 /**

@@ -5,8 +5,17 @@
 // - `calculerPlan` : « Lancer le calcul », de la tournée enregistrée au plan à
 //   enregistrer, en passant par `optimiser` (cahier technique, 4.4) ;
 // - `lirePlan` : le chemin inverse, du plan enregistré aux unités et aux
-//   placements que dessinent les vues (cahier technique, 5).
-import type { Commande, FicheArticle, LigneDeCommande, PlacementEnregistre } from './modele'
+//   placements que dessinent les vues (cahier technique, 5) ;
+// - `lignesReportees` et `regrouperParLigne` : le report en liste d'attente
+//   (RG-11). Une ligne reportée reste dans sa commande d'origine jusqu'à son
+//   affectation à une autre tournée : le calcul et la relecture l'ignorent.
+import type {
+  Commande,
+  ElementAttente,
+  FicheArticle,
+  LigneDeCommande,
+  PlacementEnregistre,
+} from './modele'
 import { optimiser } from './optimiser'
 import type { Camion, Placement, UnitePreparee } from './types'
 import { preparerUnites } from './unites'
@@ -38,16 +47,64 @@ export function deplacer<T>(liste: readonly T[], depuis: number, decalage: numbe
 /** Les commandes d'une tournée, avec leurs lignes, telles que les rend le dépôt. */
 type CommandesTournee = { commande: Commande; lignes: LigneDeCommande[] }[]
 
-/** Éclate les commandes de la tournée en unités (RG-02, RG-03). */
-function unitesDeTournee(commandes: CommandesTournee, catalogue: FicheArticle[]): UnitePreparee[] {
+/** Identifiants des lignes de commande en attente, reportées seules (RG-11). */
+export type LignesReportees = ReadonlySet<string>
+
+const AUCUNE: LignesReportees = new Set()
+
+/**
+ * Éclate les commandes de la tournée en unités (RG-02, RG-03), sans les
+ * lignes reportées en liste d'attente (RG-11).
+ */
+function unitesDeTournee(
+  commandes: CommandesTournee,
+  catalogue: FicheArticle[],
+  reportees: LignesReportees,
+): UnitePreparee[] {
   return preparerUnites(
     commandes.map(({ commande, lignes }) => ({
       id: commande.id,
       rangLivraison: commande.rangLivraison ?? 0,
-      lignes,
+      lignes: lignes.filter((l) => !reportees.has(l.id)),
     })),
     catalogue,
   )
+}
+
+/**
+ * Les lignes reportées seules : celles que cite un élément en attente. Un
+ * élément sans ligne est une commande entière, déjà sortie de la tournée.
+ */
+export function lignesReportees(elements: ElementAttente[]): Set<string> {
+  return new Set(elements.flatMap((e) => (e.ligneCommandeId ? [e.ligneCommandeId] : [])))
+}
+
+/** Ce qu'il faut reporter d'une ligne : un nombre d'unités. */
+export interface ReportLigne {
+  ligneCommandeId: string
+  commandeId: string
+  quantite: number
+}
+
+/**
+ * « Reporter les articles en trop » (RG-11) : compte les unités de chaque
+ * ligne, dans l'ordre où les lignes apparaissent. Les unités d'une ligne sont
+ * identiques : seul leur nombre compte. Si une ligne est reportée en partie,
+ * la base la scinde en deux (fonction SQL `reporter_articles`).
+ */
+export function regrouperParLigne(unites: UnitePreparee[]): ReportLigne[] {
+  const parLigne = new Map<string, ReportLigne>()
+  for (const u of unites) {
+    const report = parLigne.get(u.ligneCommandeId)
+    if (report) report.quantite += 1
+    else
+      parLigne.set(u.ligneCommandeId, {
+        ligneCommandeId: u.ligneCommandeId,
+        commandeId: u.commandeId,
+        quantite: 1,
+      })
+  }
+  return [...parLigne.values()]
 }
 
 /** Un placement prêt à être enregistré avec une nouvelle version du plan. */
@@ -58,14 +115,16 @@ export type PlacementCalcule = Omit<PlacementEnregistre, 'id' | 'planId'>
  * cherche le meilleur plan (`optimiser`), puis traduit chaque placement en
  * placement enregistrable : ligne de commande, numéro d'unité, position,
  * orientation et rang de chargement, à faire. Les unités sans place sont
- * rendues à part (RG-10).
+ * rendues à part (RG-10). Les lignes reportées en liste d'attente sont
+ * ignorées (RG-11).
  */
 export function calculerPlan(
   commandes: CommandesTournee,
   catalogue: FicheArticle[],
   camion: Camion,
+  reportees: LignesReportees = AUCUNE,
 ): { placements: PlacementCalcule[]; enTrop: UnitePreparee[] } {
-  const unites = unitesDeTournee(commandes, catalogue)
+  const unites = unitesDeTournee(commandes, catalogue, reportees)
   const parId = new Map(unites.map((u) => [u.id, u]))
   const { placements, enTrop } = optimiser(unites, camion)
   return {
@@ -97,14 +156,15 @@ export function calculerPlan(
  * - `aPlacer` : les unités sans position, en trop ou dont la ligne a changé
  *   depuis le calcul (RG-10, zone « Articles à placer », 5.7) ;
  * - un placement qui ne correspond plus à aucune unité (ligne supprimée,
- *   quantité réduite) est ignoré.
+ *   quantité réduite, ligne reportée en liste d'attente) est ignoré.
  */
 export function lirePlan(
   commandes: CommandesTournee,
   catalogue: FicheArticle[],
   enregistres: PlacementEnregistre[],
+  reportees: LignesReportees = AUCUNE,
 ): { unites: UnitePreparee[]; placements: Placement[]; aPlacer: UnitePreparee[] } {
-  const unites = unitesDeTournee(commandes, catalogue)
+  const unites = unitesDeTournee(commandes, catalogue, reportees)
   const ids = new Set(unites.map((u) => u.id))
   const placements = enregistres
     .map((p) => ({

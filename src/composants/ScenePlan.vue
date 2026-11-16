@@ -48,12 +48,18 @@ const props = defineProps<{
   plan: Placement[]
   unites: Unite[]
   infos: Map<string, InfoArticle>
-  selection: string | null
+  /** Articles sélectionnés : un seul, ou plusieurs (« Voir » du bandeau de calage, 5.16). */
+  selection: readonly string[]
   /** Numéro de la commande mise en évidence (5.12), ou rien. */
   enEvidence: number | null
   filtreActif: boolean
   /** Titre du cadre, pour les noms accessibles. */
   titre: string
+  /**
+   * Centre de gravité de la charge au départ, en mm (x depuis le fond, y depuis
+   * la paroi gauche). Dessiné sur la vue de dessus seulement (5.17).
+   */
+  centreGravite?: { x: number; y: number } | null
 }>()
 
 const cadrage = defineModel<Cadrage>('cadrage', { required: true })
@@ -61,6 +67,10 @@ const emit = defineEmits<{ selectionner: [uniteId: string] }>()
 
 const t = textes.plan
 const id = useId()
+const metres = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
 
 const taille = computed(() => dimensionsVue(props.camion, props.vue))
 const zoom = computed(() => zoomDe(cadrage.value, taille.value))
@@ -204,6 +214,7 @@ function nomBloc(b: BlocVue): string {
       etape: i.etape,
     }),
   ]
+  if (i.malCale) morceaux.push(t.calage.mention)
   if (b.etat === 'enCours') morceaux.push(t.enCours)
   if (b.etat === 'silhouette') morceaux.push(t.pasEncoreCharge)
   return morceaux.join(', ')
@@ -256,8 +267,28 @@ const libelles = computed(() => {
     })
 })
 
-const selectionne = computed(() => visibles.value.find((b) => b.uniteId === props.selection))
+const selectionnes = computed(() =>
+  visibles.value.filter((b) => props.selection.includes(b.uniteId)),
+)
+/** L'article sélectionné seul : lui seul reçoit ses cotes. */
+const selectionne = computed(() =>
+  props.selection.length === 1 ? selectionnes.value[0] : undefined,
+)
 const enCours = computed(() => props.contenu.blocs.find((b) => b.etat === 'enCours'))
+
+/**
+ * Centre de gravité dans la vue de dessus : x à l'horizontale, paroi droite en
+ * haut (comme `projeterBoite`). Distance au fond en mètres, deux décimales.
+ */
+const cg = computed(() => {
+  const c = props.centreGravite
+  if (!c || props.vue !== 'dessus') return null
+  return {
+    x: c.x,
+    y: props.camion.largeur - c.y,
+    distance: metres.format(c.x / 1000),
+  }
+})
 
 // --- Étape en cours : flèche depuis les portes (5.9) ----------------------------
 
@@ -295,7 +326,7 @@ const cotesCaisse = computed(() => coterCaisse(props.camion, props.vue))
 const mm = (v: number) => `${formaterMillimetres(v)} mm`
 
 const cotesArticle = computed(() => {
-  const p = props.plan.find((x) => x.uniteId === props.selection)
+  const p = props.plan.find((x) => x.uniteId === selectionne.value?.uniteId)
   if (!p || !selectionne.value) return []
   return coter(p, trouverUnite(p.uniteId, props.unites), props.camion, props.vue)
 })
@@ -527,6 +558,14 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
               :fill="`url(#${id}-hachure-${teinteCommande(info(b)?.code ?? 1).teinte})`"
             />
           </g>
+          <line
+            v-if="cg"
+            class="scene__axe"
+            x1="0"
+            :y1="taille.hauteur / 2"
+            :x2="taille.largeur"
+            :y2="taille.hauteur / 2"
+          />
           <template v-if="flecheEtape">
             <line class="scene__fleche-etape" v-bind="flecheEtape.trait" />
             <polygon class="scene__pointe-etape" :points="flecheEtape.pointe" />
@@ -570,6 +609,12 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
               <span class="calque__commande">C{{ info(l.bloc)?.code }}</span>
               <span v-if="l.avecRepere" class="calque__repere">{{ info(l.bloc)?.repere }}</span>
               <Icone
+                v-if="info(l.bloc)?.malCale"
+                class="calque__mal-cale"
+                nom="alerte"
+                :taille="14"
+              />
+              <Icone
                 v-if="l.avecForme"
                 class="calque__forme"
                 :nom="info(l.bloc)?.forme === 'cylindrique' ? 'cylindre' : 'forme-libre'"
@@ -602,15 +647,32 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
 
           <!-- Anneau de sélection : 3 px encre, collé au bloc (5.14). -->
           <div
-            v-if="selectionne"
+            v-for="b in selectionnes"
+            :key="`selection-${b.uniteId}`"
             class="calque__selection"
             :style="{
-              left: pctX(selectionne.rect.x),
-              top: pctY(selectionne.rect.y),
-              width: pctL(selectionne.rect.largeur),
-              height: pctH(selectionne.rect.hauteur),
+              left: pctX(b.rect.x),
+              top: pctY(b.rect.y),
+              width: pctL(b.rect.largeur),
+              height: pctH(b.rect.hauteur),
             }"
           />
+
+          <!-- Centre de gravité (5.17) : décoratif, détaillé dans la carte d'équilibre. -->
+          <div
+            v-if="cg"
+            class="calque__cg"
+            :style="{ left: pctX(cg.x), top: pctY(cg.y) }"
+            aria-hidden="true"
+          >
+            <svg class="scene__cg" width="22" height="22" viewBox="0 0 22 22">
+              <circle cx="11" cy="11" r="10" />
+              <line x1="11" y1="4" x2="11" y2="18" />
+              <line x1="4" y1="11" x2="18" y2="11" />
+            </svg>
+            <span class="calque__cg-nom">{{ t.equilibre.cg }}</span>
+            <span class="calque__cg-distance">{{ t.equilibre.cgDistance(cg.distance) }}</span>
+          </div>
 
           <span
             v-if="enCours"
@@ -667,7 +729,7 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
             type="button"
             class="calque__bouton"
             :aria-label="nomBloc(b)"
-            :aria-pressed="b.uniteId === props.selection"
+            :aria-pressed="props.selection.includes(b.uniteId)"
             :style="{
               left: pctX(b.rect.x),
               top: pctY(b.rect.y),
@@ -1006,6 +1068,58 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
 .calque__trait {
   width: 1px;
   background: var(--cote);
+}
+
+.calque__mal-cale {
+  position: absolute;
+  top: var(--espace-1);
+  left: var(--espace-1);
+  color: var(--alerte-icone);
+}
+
+/* Axe longitudinal de la caisse, en pointillés `cote` (5.17). */
+.scene__axe {
+  stroke: var(--cote);
+  stroke-width: 1px;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Centre de gravité : croix dans un cercle `action` de 22 px, libellé « CG ». */
+.calque__cg {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.scene__cg {
+  position: absolute;
+  top: -11px;
+  left: -11px;
+  overflow: visible;
+  fill: var(--surface);
+  stroke: var(--action);
+  stroke-width: 2px;
+}
+
+.calque__cg-nom {
+  position: absolute;
+  top: -8px;
+  left: 14px;
+  font: var(--typo-badge);
+  color: var(--action-fonce);
+}
+
+.calque__cg-distance {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  padding: 0 var(--espace-1);
+  font: var(--typo-repere);
+  color: var(--texte-fort);
+  white-space: nowrap;
+  background: var(--surface);
+  transform: translateX(-50%);
 }
 
 .calque__selection {
