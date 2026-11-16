@@ -208,3 +208,24 @@ describe('optimiser : jeu d’essai « couloirs »', () => {
     expect(validerPlan(placements, jeu.unites, jeu.camion)).toEqual([])
   })
 })
+
+describe('optimiser : « couloirs » après le report de toute la commande C4', () => {
+  const jeu = chargerJeuEssai('couloirs')
+  // Report de la commande entière (RG-11) : C4 quitte la tournée. Elle était
+  // livrée en dernier (rang 4) : les rangs de C1, C2 et C3 ne changent pas.
+  const unites = jeu.unites.filter((u) => jeu.commandeDe[u.id] !== 'C4')
+  const resultat = optimiser(unites, jeu.camion)
+
+  // Défaut connu, à corriger à l'étape 10c. Sans les palettes de C4, C3 est
+  // posé au fond sur toute la largeur et ses paquets de BA13 recouvrent le
+  // seul couloir libre au plancher. Les poutres de 6 m (C1), placées en
+  // dernier, ne peuvent aller ni dessous (RG-04 : 500 kg sur 220 kg ; RG-07 :
+  // C3 posé sur C1), ni dessus (appui de 2 500 mm sur 6 000, sous les 60 %).
+  // Le test passera pour de vrai, en `it`, quand le placeur sera corrigé.
+  it.fails('RG-10 : place encore les deux poutres de 6 m de C1', () => {
+    expect(resultat.enTrop.map((u) => u.id)).toEqual([])
+    expect(resultat.placements).toHaveLength(9)
+    expect(validerPlan(resultat.placements, unites, jeu.camion)).toEqual([])
+    expect(diagnostiquerCalage(resultat.placements, unites, jeu.camion)).toEqual([])
+  })
+})
