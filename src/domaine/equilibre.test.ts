@@ -28,6 +28,20 @@ function statutPourCentre(centreY: number) {
   return mesurerEquilibre([poser('A', 0, centreY - 50)], [colis('A')], etroit).statut
 }
 
+describe('mesurerEquilibre : jeu d’essai « couloirs sans C4 » (RG-20)', () => {
+  const jeu = chargerJeuEssai('couloirs-sans-c4')
+  const mesure = mesurerEquilibre(jeu.placements, jeu.unites, jeu.camion)
+
+  it('RG-20 : donne 56 / 44 au départ, 60 / 40 après C1 et après C2, « À surveiller »', () => {
+    expect(mesure.etapes.map((e) => pourcentagesAffiches(e.partGauche))).toEqual([
+      [56, 44],
+      [60, 40],
+      [60, 40],
+    ])
+    expect(mesure.statut).toBe('aSurveiller')
+  })
+})
+
 describe('mesurerEquilibre : jeu d’essai « couloirs » (RG-20)', () => {
   const jeu = chargerJeuEssai('couloirs')
   const mesure = mesurerEquilibre(jeu.placements, jeu.unites, jeu.camion)

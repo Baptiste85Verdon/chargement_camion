@@ -1,0 +1,276 @@
+{
+  "nom": "couloirs-sans-c4",
+  "tournee": "T-2026-118",
+  "source": "Étape 10c : plan obtenu par optimiser avec le critère d’appui complet (cahier technique, 4.3)",
+  "description": "Jeu « couloirs » après le report de toute la commande C4 (RG-11) : les poutres de 6 m de C1 trouvent leur place sur une botte de C3 (RG-10), les paquets de BA13 sont empilés en appui complet au lieu d’enjamber un vide.",
+  "repere": "x du fond vers les portes, y depuis la paroi gauche, z depuis le plancher ; position = coin de l'unité le plus proche de l'origine ; millimètres entiers et kilogrammes",
+  "camion": {
+    "nom": "Porteur 7,2 m",
+    "longueur": 7200,
+    "largeur": 2400,
+    "hauteur": 2500
+  },
+  "commandes": [
+    {
+      "code": "C1",
+      "client": "Menuiserie Dubois",
+      "rangLivraison": 1
+    },
+    {
+      "code": "C2",
+      "client": "Chantier Les Ormeaux",
+      "rangLivraison": 2
+    },
+    {
+      "code": "C3",
+      "client": "SCI Martin",
+      "rangLivraison": 3
+    }
+  ],
+  "unites": [
+    {
+      "id": "A06",
+      "article": "Botte de planches de pin",
+      "commande": "C3",
+      "dims": {
+        "l": 4000,
+        "w": 1000,
+        "h": 400
+      },
+      "poids": 800,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rangChargement": 1
+    },
+    {
+      "id": "A07",
+      "article": "Botte de planches de pin",
+      "commande": "C3",
+      "dims": {
+        "l": 4000,
+        "w": 1000,
+        "h": 400
+      },
+      "poids": 800,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 1400,
+        "z": 0
+      },
+      "rangChargement": 2
+    },
+    {
+      "id": "A04",
+      "article": "Paquet de plaques BA13",
+      "commande": "C3",
+      "dims": {
+        "l": 2500,
+        "w": 1200,
+        "h": 250
+      },
+      "poids": 500,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat",
+        "contreParoi"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 400
+      },
+      "rangChargement": 3
+    },
+    {
+      "id": "A05",
+      "article": "Paquet de plaques BA13",
+      "commande": "C3",
+      "dims": {
+        "l": 2500,
+        "w": 1200,
+        "h": 250
+      },
+      "poids": 500,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat",
+        "contreParoi"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 650
+      },
+      "rangChargement": 4
+    },
+    {
+      "id": "A10",
+      "article": "Fenêtre PVC 2 vantaux, emballée",
+      "commande": "C2",
+      "dims": {
+        "l": 1500,
+        "w": 180,
+        "h": 1350
+      },
+      "poids": 45,
+      "fragile": true,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "debout"
+      ],
+      "orientation": "debout",
+      "position": {
+        "x": 4000,
+        "y": 0,
+        "z": 0
+      },
+      "rangChargement": 5
+    },
+    {
+      "id": "A11",
+      "article": "Fenêtre PVC 2 vantaux, emballée",
+      "commande": "C2",
+      "dims": {
+        "l": 1500,
+        "w": 180,
+        "h": 1350
+      },
+      "poids": 45,
+      "fragile": true,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "debout"
+      ],
+      "orientation": "debout",
+      "position": {
+        "x": 5500,
+        "y": 0,
+        "z": 0
+      },
+      "rangChargement": 6
+    },
+    {
+      "id": "A12",
+      "article": "Carton de quincaillerie",
+      "commande": "C2",
+      "dims": {
+        "l": 600,
+        "w": 600,
+        "h": 600
+      },
+      "poids": 30,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 1800,
+        "z": 400
+      },
+      "rangChargement": 7
+    },
+    {
+      "id": "A08",
+      "article": "Poutre lamellé-collé",
+      "commande": "C1",
+      "dims": {
+        "l": 6000,
+        "w": 200,
+        "h": 400
+      },
+      "poids": 219.8,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 1600,
+        "z": 400
+      },
+      "rangChargement": 8
+    },
+    {
+      "id": "A09",
+      "article": "Poutre lamellé-collé",
+      "commande": "C1",
+      "dims": {
+        "l": 6000,
+        "w": 200,
+        "h": 400
+      },
+      "poids": 219.8,
+      "fragile": false,
+      "forme": "rectangulaire",
+      "porteur": true,
+      "orientationsAutorisees": [
+        "aPlat"
+      ],
+      "orientation": "aPlat",
+      "position": {
+        "x": 0,
+        "y": 1600,
+        "z": 800
+      },
+      "rangChargement": 9
+    }
+  ],
+  "attendu": {
+    "reglesEnfreintes": [],
+    "malCales": [],
+    "enTrop": [],
+    "equilibre": {
+      "partsGaucheDroite": {
+        "depart": [
+          56,
+          44
+        ],
+        "apresC1": [
+          60,
+          40
+        ],
+        "apresC2": [
+          60,
+          40
+        ]
+      },
+      "centreDeGraviteDepart": {
+        "distanceAuFondMm": 1985,
+        "ecartAxeMm": -143
+      },
+      "statut": "aSurveiller"
+    }
+  }
+}

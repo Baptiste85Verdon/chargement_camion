@@ -514,7 +514,7 @@ describe('valider : lourds en hauteur (règle 10, RG-04)', () => {
 
 describe("valider : jeux d'essai de référence", () => {
   /** Valide chaque placement du jeu contre tout le plan et regroupe les refus. */
-  function refusDuJeu(nom: 'couloirs' | 'fenetres-isolees') {
+  function refusDuJeu(nom: 'couloirs' | 'couloirs-sans-c4' | 'fenetres-isolees') {
     const jeu = chargerJeuEssai(nom)
     const refus = jeu.placements.flatMap((p) => valider(p, jeu.placements, jeu.unites, jeu.camion))
     return { jeu, refus }
@@ -522,6 +522,12 @@ describe("valider : jeux d'essai de référence", () => {
 
   it('RG-04, RG-06, RG-07, RG-18 et RG-19 : le jeu « couloirs » n’enfreint aucune règle', () => {
     const { jeu, refus } = refusDuJeu('couloirs')
+    expect(jeu.attendu.reglesEnfreintes).toEqual([])
+    expect(refus).toEqual([])
+  })
+
+  it('RG-04, RG-06, RG-07, RG-18 et RG-19 : le jeu « couloirs sans C4 » n’enfreint aucune règle', () => {
+    const { jeu, refus } = refusDuJeu('couloirs-sans-c4')
     expect(jeu.attendu.reglesEnfreintes).toEqual([])
     expect(refus).toEqual([])
   })

@@ -4,7 +4,15 @@
 // jamais sur une unité déjà placée.
 import { ECART_COMPACITE, TOLERANCE_CONTACT } from './constantes'
 import { encombrement } from './encombrement'
-import { type Boite, boiteDe, surfaceCommuneXZ, surfaceCommuneYZ, trouverUnite } from './geometrie'
+import {
+  type Boite,
+  boiteDe,
+  estPoseSur,
+  surfaceCommuneXY,
+  surfaceCommuneXZ,
+  surfaceCommuneYZ,
+  trouverUnite,
+} from './geometrie'
 import type { Camion, Placement, Unite } from './types'
 import { valider } from './validateur'
 
@@ -31,12 +39,14 @@ interface PointCandidat {
   ancrage: 'gauche' | 'droite'
 }
 
-/** Un essai accepté par le validateur, avec les trois critères de son score. */
+/** Un essai accepté par le validateur, avec les quatre critères de son score. */
 interface Essai {
   placement: Placement
   boite: Boite
   /** Compacité : bord avant de toute la charge, côté portes. Plus petit, mieux c'est. */
   front: number
+  /** Appui complet : au plancher, ou posée sur d'autres articles par toute sa base. */
+  appuiComplet: boolean
   /** Calage : surface de contact latérale avec les parois et les articles. */
   contact: number
   /** Équilibre : écart du centre de gravité à l'axe du camion. */
@@ -137,19 +147,41 @@ function surfaceDeContact(b: Boite, autres: Boite[], camion: Camion): number {
 }
 
 /**
+ * L'unité posée en `b` repose-t-elle par toute sa base, au plancher ou sur
+ * les articles qu'elle touche par-dessous ? Ceux-ci ne se chevauchent pas :
+ * leurs surfaces communes s'additionnent sans double compte.
+ */
+function estEnAppuiComplet(b: Boite, autres: Boite[]): boolean {
+  if (b.z0 <= 0) return true
+  const base = (b.x1 - b.x0) * (b.y1 - b.y0)
+  const appui = autres
+    .filter((a) => estPoseSur(b, a))
+    .reduce((somme, a) => somme + surfaceCommuneXY(b, a), 0)
+  return appui >= base
+}
+
+/** `e` passe-t-il avant `retenu`, à compacité proche ? Appui complet, puis calage, puis équilibre. */
+function estMieuxQue(e: Essai, retenu: Essai): boolean {
+  if (e.appuiComplet !== retenu.appuiComplet) return e.appuiComplet
+  if (e.contact !== retenu.contact) return e.contact > retenu.contact
+  return e.ecartAxe < retenu.ecartAxe
+}
+
+/**
  * Choisit le meilleur essai (4.3, étape 4) : on garde ceux dont la compacité
- * est à moins de `ECART_COMPACITE` de la meilleure, puis le mieux calé, puis
- * le mieux équilibré. À égalité complète, le premier dans l'ordre de parcours.
+ * est à moins de `ECART_COMPACITE` de la meilleure, puis celui en appui
+ * complet, puis le mieux calé, puis le mieux équilibré. À égalité complète,
+ * le premier dans l'ordre de parcours.
+ *
+ * L'appui complet passe avant le calage : une unité qui enjambe un vide
+ * (permis dès `SEUIL_APPUI`) le ferme par-dessus, et un article long qui
+ * viendrait plus tard ne pourrait plus s'y glisser au plancher.
  */
 function meilleurEssai(essais: Essai[]): Essai {
   const meilleurFront = Math.min(...essais.map((e) => e.front))
   return essais
     .filter((e) => e.front - meilleurFront < ECART_COMPACITE)
-    .reduce((retenu, e) =>
-      e.contact > retenu.contact || (e.contact === retenu.contact && e.ecartAxe < retenu.ecartAxe)
-        ? e
-        : retenu,
-    )
+    .reduce((retenu, e) => (estMieuxQue(e, retenu) ? e : retenu))
 }
 
 /**
@@ -229,6 +261,7 @@ export function placerVariante<U extends Unite>(
           placement,
           boite,
           front: Math.max(front, boite.x1),
+          appuiComplet: estEnAppuiComplet(boite, boites),
           contact: surfaceDeContact(boite, boites, camion),
           ecartAxe: Math.abs(cgY - camion.largeur / 2),
         })

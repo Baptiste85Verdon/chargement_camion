@@ -2,6 +2,7 @@
 import { encombrement } from '@/domaine/encombrement'
 import type { Camion, Dimensions, Orientation, Placement, Unite } from '@/domaine/types'
 import couloirs from './couloirs.json'
+import couloirsSansC4 from './couloirs-sans-c4.json'
 import fenetresIsolees from './fenetres-isolees.json'
 
 /** Résultats attendus d'un jeu d'essai (cahier technique, section 8). */
@@ -47,6 +48,7 @@ export interface JeuEssai {
 
 const jeux = {
   couloirs: couloirs as JeuEssaiJson,
+  'couloirs-sans-c4': couloirsSansC4 as JeuEssaiJson,
   'fenetres-isolees': fenetresIsolees as JeuEssaiJson,
 }
 
