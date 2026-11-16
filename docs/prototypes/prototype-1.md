@@ -80,7 +80,7 @@ Le prototype 1 est accepté quand :
 - [x] Deux fenêtres debout face à face, seules au milieu de la caisse, sont refusées.
 - [ ] À partir des commandes du jeu « couloirs », `optimiser` trouve un plan sans article en trop, sans règle enfreinte, et au moins aussi équilibré au pire moment de la tournée.
 - [ ] Pour une tournée d'essai de plusieurs commandes saisies dans l'application, le plan ne présente aucun chevauchement et respecte les règles de placement et l'ordre de livraison.
-- [ ] Un dépassement est signalé, et le report de la commande entière ou des seuls articles en trop vers la liste d'attente fonctionne.
+- [x] Un dépassement est signalé, et le report de la commande entière ou des seuls articles en trop vers la liste d'attente fonctionne.
 - [x] Les cinq vues et la vue par étape montrent le plan, avec le fond et les portes toujours indiqués.
 - [ ] Chaque formulaire applique RG-21, et chaque suppression passe par une confirmation (RG-22).
 - [ ] axe-core ne trouve aucune erreur sur les pages du prototype, et un parcours complet est possible au clavier seul.
