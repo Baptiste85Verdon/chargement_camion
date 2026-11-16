@@ -175,7 +175,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 10c · Placeur après report
 
-- [ ] Fait — branche `fix/p1-placeur-apres-report`
+- [x] Fait — branche `fix/p1-placeur-apres-report`
 - Cahier technique : sections 4.2 (règles 4, 5 et 7), 4.3 et 4.4 ; demande de fusion de l'analyse (branche `test/p1-placeur-apres-report`).
 - Constat de départ : sur « couloirs », quand on reporte toute la commande C4, le recalcul laisse les deux poutres de 6 m de C1 (A08, A09) sans place, alors qu'il y a plus de place qu'avant. Le test `it.fails` « RG-10 : place encore les deux poutres de 6 m de C1 » de `optimiser.test.ts` le reproduit.
 - Cause : le placeur est glouton et pose C1 en dernier. Sans les palettes de C4, C3 est posé au fond sur toute la largeur ; ses paquets de BA13 enjambent le seul couloir libre au plancher (appui de 83 %, permis). Une poutre de 6 m doit commencer à moins de 1 200 mm du fond : sous les BA13, elle est refusée (règle 5 : 500 kg sur 220 kg ; règle 7 : C3 posé sur C1) ; sur les BA13, elle n'a que 2 500 mm d'appui sur 6 000, sous les 60 % (règle 4). Les seize variantes ne changent ni l'ordre des commandes ni ce choix : toutes échouent. Avec C4, les palettes repoussaient C3 à 1 200 mm et le couloir entre elles restait ouvert, par chance.
