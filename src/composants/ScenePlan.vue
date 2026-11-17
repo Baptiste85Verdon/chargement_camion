@@ -28,7 +28,8 @@ import {
   situer,
   zoneVisible,
 } from '@/domaine/contenu-vue'
-import { coter, coterCaisse } from '@/domaine/cotes'
+import { type Cote, coter, coterCaisse } from '@/domaine/cotes'
+import { libellesTraverses, ordonneeLibre } from '@/composants/evitement'
 import { trouverUnite } from '@/domaine/geometrie'
 import { type Vue, dimensionsVue } from '@/domaine/projection'
 import type { Camion, Placement, Unite } from '@/domaine/types'
@@ -325,11 +326,70 @@ const flecheEtape = computed(() => {
 const cotesCaisse = computed(() => coterCaisse(props.camion, props.vue))
 const mm = (v: number) => `${formaterMillimetres(v)} mm`
 
-const cotesArticle = computed(() => {
+/*
+ * Taille à l'écran d'un code dans son bloc (« C4 », et « A02 » dessous s'il a
+ * la place), et demi-épaisseur d'une cote avec sa valeur : en pixels, puis
+ * convertis en mm pour `ordonneeLibre`.
+ */
+const DEMI_LARGEUR_CODE_PX = 24
+const DEMI_HAUTEUR_CODE_PX = { seul: 9, avecRepere: 18 }
+const DEMI_EPAISSEUR_COTE_PX = 10
+
+/** Libellés dessinés dans les autres blocs, en mm de vue : ce que les cotes évitent. */
+const boitesLibelles = computed(() =>
+  libelles.value
+    .filter((l) => l.interieur && l.bloc.uniteId !== selectionne.value?.uniteId)
+    .map((l) => {
+      const demiL = enMm(DEMI_LARGEUR_CODE_PX)
+      const demiH = enMm(l.avecRepere ? DEMI_HAUTEUR_CODE_PX.avecRepere : DEMI_HAUTEUR_CODE_PX.seul)
+      const cy = l.zone.y + l.zone.hauteur / 2
+      return {
+        id: l.bloc.uniteId,
+        boite: { x: l.cx - demiL, y: cy - demiH, largeur: 2 * demiL, hauteur: 2 * demiH },
+      }
+    }),
+)
+
+/**
+ * Cotes de l'article sélectionné. La distance au fond traverse les articles
+ * posés entre le fond et lui : elle est tracée à la hauteur la plus proche
+ * du milieu qui ne passe sur aucun de leurs libellés (`ordonneeLibre`). S'il
+ * n'y en a pas, elle reste au milieu et les libellés traversés sont masqués.
+ */
+const placementCotes = computed(() => {
   const p = props.plan.find((x) => x.uniteId === selectionne.value?.uniteId)
-  if (!p || !selectionne.value) return []
-  return coter(p, trouverUnite(p.uniteId, props.unites), props.camion, props.vue)
+  const sel = selectionne.value
+  if (!p || !sel) return { cotes: [] as Cote[], masques: new Set<string>() }
+  const cotes = coter(p, trouverUnite(p.uniteId, props.unites), props.camion, props.vue)
+  const masques = new Set<string>()
+  const demiEpaisseur = enMm(DEMI_EPAISSEUR_COTE_PX)
+  const boites = boitesLibelles.value
+  return {
+    cotes: cotes.map((c) => {
+      if (c.mesure !== 'distanceFond' || !c.segment) return c
+      const { debut, fin } = c.segment
+      const y = ordonneeLibre(
+        { x0: debut.x, x1: fin.x, haut: sel.rect.y, bas: sel.rect.y + sel.rect.hauteur },
+        boites.map((b) => b.boite),
+        demiEpaisseur,
+      )
+      if (y === null) {
+        const traverses = libellesTraverses(
+          { x0: debut.x, x1: fin.x, y: debut.y },
+          boites,
+          demiEpaisseur,
+        )
+        traverses.forEach((id) => masques.add(id))
+        return c
+      }
+      return { ...c, segment: { debut: { ...debut, y }, fin: { ...fin, y } } }
+    }),
+    masques,
+  }
 })
+const cotesArticle = computed(() => placementCotes.value.cotes)
+/** Libellés masqués parce qu'une cote ne peut que passer dessus. */
+const masquesParCote = computed(() => placementCotes.value.masques)
 
 // --- Quadrillage de 1 m ---------------------------------------------------------
 
@@ -596,7 +656,8 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
               class="calque__code"
               :class="{
                 'calque__code--doux': l.bloc.etat === 'silhouette' || attenue(l.bloc),
-                'calque__code--transparent': transparents.has(l.bloc.uniteId),
+                'calque__code--transparent':
+                  transparents.has(l.bloc.uniteId) || masquesParCote.has(l.bloc.uniteId),
               }"
               :style="{
                 left: pctX(l.zone.x),

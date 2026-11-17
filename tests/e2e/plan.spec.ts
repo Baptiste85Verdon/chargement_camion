@@ -256,3 +256,40 @@ test.describe('équilibre, calage et dépassement (étape 10b)', () => {
     await expect(liste.getByRole('heading', { name: 'Article sélectionné' })).toBeVisible()
   })
 })
+
+test.describe('cotes de l’article sélectionné (5.13)', () => {
+  test('la distance au fond ne passe sur aucun libellé d’un autre article', async ({ page }) => {
+    await ouvrirPlan(page)
+    const chevauchements: string[] = []
+    for (let i = 1; i <= 12; i++) {
+      const repere = `A${String(i).padStart(2, '0')}`
+      await page.getByRole('button', { name: new RegExp(`^${repere} `) }).click()
+      for (const titre of ['Vue de dessus', 'Côté gauche']) {
+        const vue = cadre(page, titre)
+        const cote = vue.locator('.calque__cote--milieu')
+        if ((await cote.count()) === 0) continue
+        const b = await cote.boundingBox()
+        // Les textes des codes visibles des autres blocs (C4, A02).
+        const textes = vue.locator(
+          '.calque__code:not(.calque__code--transparent) .calque__commande, .calque__code:not(.calque__code--transparent) .calque__repere',
+        )
+        for (const boite of await textes.evaluateAll((els) =>
+          els.map((e) => {
+            const r = e.getBoundingClientRect()
+            return { x: r.x, y: r.y, width: r.width, height: r.height, texte: e.textContent }
+          }),
+        )) {
+          if (
+            b &&
+            b.x < boite.x + boite.width &&
+            b.x + b.width > boite.x &&
+            b.y < boite.y + boite.height &&
+            b.y + b.height > boite.y
+          )
+            chevauchements.push(`${repere}, ${titre} : sur ${boite.texte}`)
+        }
+      }
+    }
+    expect(chevauchements).toEqual([])
+  })
+})
