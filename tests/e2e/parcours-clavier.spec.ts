@@ -52,8 +52,6 @@ async function saisirCommande(
 
   for (const { texte, article } of recherches) {
     await tabulerJusqua(page, page.getByLabel('Rechercher un article'))
-    // La recherche garde le texte précédent : on le remplace.
-    await page.keyboard.press('Control+A')
     await page.keyboard.type(texte)
     await page.keyboard.press('Enter')
     await expect(page.getByRole('rowheader', { name: article })).toBeVisible()

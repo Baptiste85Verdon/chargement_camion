@@ -208,9 +208,15 @@ function ajouter(article: FicheArticle) {
   annonce.value = t.ligneAjoutee(article.nom)
 }
 
+/**
+ * Entrée dans la recherche : ajoute le premier résultat, puis vide la
+ * recherche. Le focus y reste : on enchaîne avec l'article suivant.
+ */
 function ajouterPremier() {
   const premier = resultats.value[0]
-  if (premier) ajouter(premier)
+  if (!premier) return
+  ajouter(premier)
+  recherche.value = ''
 }
 
 // --- Lignes -----------------------------------------------------------------------

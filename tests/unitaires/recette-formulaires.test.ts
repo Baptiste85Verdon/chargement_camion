@@ -83,6 +83,28 @@ describe('recette : saisie express', () => {
   })
 })
 
+describe('recette : recherche de la saisie express', () => {
+  it('après Entrée, la recherche se vide et garde le focus, prête pour l’article suivant', async () => {
+    const { page } = await monterPage(`${T118}/commandes/nouvelle`)
+    const recherche = page.get('#catalogue-recherche')
+    ;(recherche.element as HTMLInputElement).focus()
+    await recherche.setValue('carton de quinc')
+    await recherche.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+
+    expect(page.findAll('tbody .ligne__nom').map((n) => n.text())).toEqual([
+      'Carton de quincaillerie',
+    ])
+    expect((recherche.element as HTMLInputElement).value).toBe('')
+    expect(document.activeElement).toBe(recherche.element)
+
+    await recherche.setValue('parpaings')
+    await recherche.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(page.findAll('tbody .ligne__nom')).toHaveLength(2)
+  })
+})
+
 describe('recette : fiche camion', () => {
   it('RG-22 : quitter une fiche camion modifiée demande confirmation', async () => {
     const { page, routeur, depots } = await monterPage(FOURGON)
