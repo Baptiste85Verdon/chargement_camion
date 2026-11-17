@@ -79,6 +79,21 @@ describe('placer', () => {
     expect(position(placements, 'U')).toEqual({ x: 0, y: 1000, z: 0 })
   })
 
+  it('préfère, à compacité proche, une place en appui complet à une place qui enjambe un vide', () => {
+    // Un vide de 400 mm entre A et B. Sur B, la plaque P enjamberait le vide
+    // (appui de 67 %, permis) et équilibrerait mieux la charge ; sur A, elle
+    // repose sur toute sa base. L'appui complet passe avant le calage et
+    // l'équilibre : le vide reste libre au plancher pour un article long.
+    const unites = [
+      boite('A', 4000, 1200, 400, { poids: 1000 }),
+      boite('B', 4000, 800, 400, { poids: 600 }),
+      boite('P', 2500, 1200, 250, { poids: 500 }),
+    ]
+    const fixes = [fixe('A', 0, 0), fixe('B', 0, 1600)]
+    const { placements } = placer(unites, camion, fixes)
+    expect(position(placements, 'P')).toEqual({ x: 0, y: 0, z: 400 })
+  })
+
   it('RG-04 : met le plus lourd en bas quand il faut empiler', () => {
     const colonne: Camion = { longueur: 1200, largeur: 1000, hauteur: 2500 }
     const unites = [

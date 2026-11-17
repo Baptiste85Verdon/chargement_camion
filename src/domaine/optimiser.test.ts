@@ -210,22 +210,33 @@ describe('optimiser : jeu d’essai « couloirs »', () => {
 })
 
 describe('optimiser : « couloirs » après le report de toute la commande C4', () => {
-  const jeu = chargerJeuEssai('couloirs')
   // Report de la commande entière (RG-11) : C4 quitte la tournée. Elle était
   // livrée en dernier (rang 4) : les rangs de C1, C2 et C3 ne changent pas.
-  const unites = jeu.unites.filter((u) => jeu.commandeDe[u.id] !== 'C4')
-  const resultat = optimiser(unites, jeu.camion)
+  const jeu = chargerJeuEssai('couloirs-sans-c4')
+  const resultat = optimiser(jeu.unites, jeu.camion)
 
-  // Défaut connu, à corriger à l'étape 10c. Sans les palettes de C4, C3 est
-  // posé au fond sur toute la largeur et ses paquets de BA13 recouvrent le
-  // seul couloir libre au plancher. Les poutres de 6 m (C1), placées en
-  // dernier, ne peuvent aller ni dessous (RG-04 : 500 kg sur 220 kg ; RG-07 :
-  // C3 posé sur C1), ni dessus (appui de 2 500 mm sur 6 000, sous les 60 %).
-  // Le test passera pour de vrai, en `it`, quand le placeur sera corrigé.
-  it.fails('RG-10 : place encore les deux poutres de 6 m de C1', () => {
+  // Étape 10c : sans le critère d'appui complet, les paquets de BA13 de C3
+  // enjambaient le seul couloir libre au plancher. Les poutres de 6 m (C1),
+  // placées en dernier, ne pouvaient aller ni dessous (RG-04 : 500 kg sur
+  // 220 kg ; RG-07 : C3 posé sur C1), ni dessus (appui de 2 500 mm sur 6 000,
+  // sous les 60 %), et restaient en trop.
+  it('RG-10 : place encore les deux poutres de 6 m de C1', () => {
     expect(resultat.enTrop.map((u) => u.id)).toEqual([])
     expect(resultat.placements).toHaveLength(9)
-    expect(validerPlan(resultat.placements, unites, jeu.camion)).toEqual([])
-    expect(diagnostiquerCalage(resultat.placements, unites, jeu.camion)).toEqual([])
+  })
+
+  it('RG-04, RG-06, RG-07, RG-18, RG-19 : produit un plan accepté, sans article mal calé', () => {
+    expect(validerPlan(resultat.placements, jeu.unites, jeu.camion)).toEqual([])
+    expect(diagnostiquerCalage(resultat.placements, jeu.unites, jeu.camion)).toEqual([])
+  })
+
+  // La limite est tenue tout juste : 60 / 40 après C1 et après C2.
+  it('RG-20 : ne dépasse jamais 60 % d’un côté au pire moment', () => {
+    const { pireEcart } = evaluer(resultat, jeu.unites, jeu.camion)
+    expect(Math.round((0.5 + pireEcart) * 100)).toBeLessThanOrEqual(60)
+  })
+
+  it('retrouve le plan de référence du jeu d’essai', () => {
+    expect(resultat.placements).toEqual(jeu.placements)
   })
 })

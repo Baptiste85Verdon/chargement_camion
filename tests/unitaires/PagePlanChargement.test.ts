@@ -11,12 +11,17 @@ import type { Depots, PlacementAEnregistrer } from '@/donnees/depots'
 import { textes } from '@/textes/fr'
 import { chargerJeuEssai, type NomJeuEssai } from '../jeux-essai/charger'
 import couloirs from '../jeux-essai/couloirs.json'
+import couloirsSansC4 from '../jeux-essai/couloirs-sans-c4.json'
 import fenetresIsolees from '../jeux-essai/fenetres-isolees.json'
 import { depotsDemarrage, monterPage } from './monter-page'
 
 const T118 = 'b0000000-0000-4000-8000-000000000118'
 const t = textes.plan
-const JSON_JEUX = { couloirs, 'fenetres-isolees': fenetresIsolees }
+const JSON_JEUX = {
+  couloirs,
+  'couloirs-sans-c4': couloirsSansC4,
+  'fenetres-isolees': fenetresIsolees,
+}
 
 /**
  * Traduit le plan d'un jeu d'essai en placements de la base d'exemple : chaque

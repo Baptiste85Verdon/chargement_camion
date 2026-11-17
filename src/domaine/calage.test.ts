@@ -83,7 +83,7 @@ describe('diagnostiquerCalage : articles debout (RG-19)', () => {
 })
 
 describe("diagnostiquerCalage : jeux d'essai de référence", () => {
-  it.each(['couloirs', 'fenetres-isolees'] as const)(
+  it.each(['couloirs', 'couloirs-sans-c4', 'fenetres-isolees'] as const)(
     'RG-19 : signale les articles mal calés attendus pour le jeu « %s »',
     (nom) => {
       const jeu = chargerJeuEssai(nom)
