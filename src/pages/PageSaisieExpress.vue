@@ -824,7 +824,13 @@ async function annuler() {
   color: var(--texte-doux);
 }
 
+/*
+ * `position: relative` : la liste devient le bloc conteneur des textes
+ * visuellement cachés (en position absolue) de ses résultats. Sans lui, ils
+ * échappaient au défilement de la liste et allongeaient la page.
+ */
 .catalogue__liste {
+  position: relative;
   padding: 0;
   margin: 0;
   overflow-y: auto;
