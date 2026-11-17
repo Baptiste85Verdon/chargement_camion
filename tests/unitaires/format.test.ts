@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formaterDate,
   formaterDimensions,
   formaterJour,
   formaterMetresCubes,
@@ -34,6 +35,11 @@ describe('mise en forme des nombres', () => {
 
   it('écrit une date de livraison en toutes lettres, avec une majuscule', () => {
     expect(formaterJour('2026-11-05')).toBe('Jeudi 5 novembre 2026')
+  })
+
+  it('écrit une date de report, d’archivage ou de calcul en toutes lettres, sans le jour', () => {
+    expect(formaterDate('2026-11-02T08:00:00+00:00')).toBe('2 novembre 2026')
+    expect(formaterDate('2026-11-17T10:30:00Z')).toBe('17 novembre 2026')
   })
 
   it('écrit un volume chargé et une part', () => {
