@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { sectionDe } from '@/router'
 import { useAttente } from '@/stores/attente'
 import { utiliserDepots } from '@/stores/depots'
 import { textes } from '@/textes/fr'
@@ -9,14 +10,23 @@ import Badge from '@/composants/Badge.vue'
 /**
  * Entrées de la navigation principale (captures 01, 07, 09). La liste
  * d'attente porte le nombre de ses éléments (badge).
- * `exact` : « Tournées » n'est active que sur l'accueil, pas sur toutes les pages.
  */
 const entrees = [
-  { libelle: textes.navigation.tournees, vers: '/', exact: true },
-  { libelle: textes.navigation.catalogue, vers: '/catalogue', exact: false },
-  { libelle: textes.navigation.camions, vers: '/camions', exact: false },
-  { libelle: textes.navigation.attente, vers: '/attente', exact: false, badge: true },
+  { libelle: textes.navigation.tournees, vers: '/' },
+  { libelle: textes.navigation.catalogue, vers: '/catalogue' },
+  { libelle: textes.navigation.camions, vers: '/camions' },
+  { libelle: textes.navigation.attente, vers: '/attente', badge: true },
 ]
+
+/**
+ * L'onglet de la section reste actif sur ses sous-pages. aria-current vaut
+ * « page » sur la page de l'onglet elle-même, « true » sur une sous-page :
+ * le lien mène à la section où l'on se trouve, pas à la page affichée.
+ */
+const routeCourante = useRoute()
+const section = computed(() => sectionDe(routeCourante.path))
+const ariaCurrent = (vers: string) =>
+  routeCourante.path === vers ? 'page' : section.value === vers ? 'true' : undefined
 
 const depots = utiliserDepots()
 const attente = useAttente()
@@ -32,8 +42,10 @@ onMounted(() => attente.actualiser(depots))
           <RouterLink
             :to="entree.vers"
             class="navigation__lien"
-            :active-class="entree.exact ? '' : 'navigation__lien--active'"
-            :exact-active-class="'navigation__lien--active'"
+            :class="{ 'navigation__lien--active': section === entree.vers }"
+            active-class=""
+            exact-active-class=""
+            :aria-current="ariaCurrent(entree.vers)"
           >
             {{ entree.libelle }}
             <Badge v-if="entree.badge && attente.nombre">
