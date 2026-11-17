@@ -791,6 +791,17 @@ async function annuler() {
   border-color: var(--action);
 }
 
+/*
+ * Le champ n'a pas de bordure : c'est le cadre, icône comprise, qui porte le
+ * double anneau de focus de base.css. Sur le champ lui-même, l'anneau blanc
+ * masquait la bordure du cadre en haut et en bas.
+ */
+.catalogue__recherche:has(.catalogue__saisie:focus-visible) {
+  outline: var(--focus) solid var(--action);
+  outline-offset: var(--focus);
+  box-shadow: 0 0 0 var(--focus) var(--surface);
+}
+
 .catalogue__saisie {
   flex: 1;
   min-width: 0;
@@ -800,6 +811,10 @@ async function annuler() {
   background: transparent;
   border: 0;
   outline: none;
+}
+
+.catalogue__saisie:focus-visible {
+  box-shadow: none;
 }
 
 .catalogue__aide {

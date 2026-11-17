@@ -123,3 +123,17 @@ test('recette : parcours complet au clavier seul, de la tournée au plan', async
   await page.keyboard.press('Enter')
   await expect(page.getByRole('link', { name: /Vendredi 20 novembre 2026/ })).toBeVisible()
 })
+
+test('recette : la recherche de la saisie express montre le double anneau de focus', async ({
+  page,
+}) => {
+  await page.goto('/tournees/b0000000-0000-4000-8000-000000000118/commandes/nouvelle')
+  const recherche = page.getByLabel('Rechercher un article')
+  await tabulerJusqua(page, recherche)
+  // L'anneau entoure tout le cadre (icône comprise) ; le champ, lui, ne
+  // dessine rien qui masquerait la bordure du cadre.
+  const cadre = page.locator('.catalogue__recherche')
+  await expect(cadre).toHaveCSS('outline-style', 'solid')
+  await expect(cadre).toHaveCSS('outline-width', '2px')
+  await expect(recherche).toHaveCSS('box-shadow', 'none')
+})
