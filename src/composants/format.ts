@@ -21,9 +21,13 @@ export const formaterDimensions = (d: Dimensions) =>
 /** « 22,5 kg » */
 export const formaterPoids = (kg: number) => `${decimal.format(kg)} kg`
 
-const jour = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' })
+const jour = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' })
 
-/** « 15/11/2026 », depuis une date ISO (date d'archivage). */
+/**
+ * « 2 novembre 2026 », depuis une date et heure ISO : report en liste
+ * d'attente, archivage, calcul d'un plan. En toutes lettres, comme les dates
+ * de livraison (`formaterJour`), mais sans le jour de la semaine.
+ */
 export const formaterDate = (iso: string) => jour.format(new Date(iso))
 
 /** Volume utile d'une caisse : « 43,2 m³ ». 1 m³ = 10⁹ mm³. */

@@ -78,13 +78,13 @@ Le prototype 1 est accepté quand :
 - [x] Pour le jeu d'essai « couloirs », le validateur n'enfreint aucune règle et ne signale aucun article mal calé. L'équilibre vaut 55 / 45 au départ et 59 / 41 après C1, statut « À surveiller ».
 - [x] Pour la variante « fenêtres isolées », A10 et A11 sont refusés (RG-19) et le bandeau signale A10, A11 et A12.
 - [x] Deux fenêtres debout face à face, seules au milieu de la caisse, sont refusées.
-- [ ] À partir des commandes du jeu « couloirs », `optimiser` trouve un plan sans article en trop, sans règle enfreinte, et au moins aussi équilibré au pire moment de la tournée.
-- [ ] Pour une tournée d'essai de plusieurs commandes saisies dans l'application, le plan ne présente aucun chevauchement et respecte les règles de placement et l'ordre de livraison.
+- [x] À partir des commandes du jeu « couloirs », `optimiser` trouve un plan sans article en trop, sans règle enfreinte, et au moins aussi équilibré au pire moment de la tournée.
+- [x] Pour une tournée d'essai de plusieurs commandes saisies dans l'application, le plan ne présente aucun chevauchement et respecte les règles de placement et l'ordre de livraison.
 - [x] Un dépassement est signalé, et le report de la commande entière ou des seuls articles en trop vers la liste d'attente fonctionne.
 - [x] Les cinq vues et la vue par étape montrent le plan, avec le fond et les portes toujours indiqués.
-- [ ] Chaque formulaire applique RG-21, et chaque suppression passe par une confirmation (RG-22).
-- [ ] axe-core ne trouve aucune erreur sur les pages du prototype, et un parcours complet est possible au clavier seul.
-- [ ] Chaque RG du tableau ci-dessus a au moins un test qui porte son numéro.
+- [x] Chaque formulaire applique RG-21, et chaque suppression passe par une confirmation (RG-22).
+- [x] axe-core ne trouve aucune erreur sur les pages du prototype, et un parcours complet est possible au clavier seul.
+- [x] Chaque RG du tableau ci-dessus a au moins un test qui porte son numéro.
 - [ ] Le porteur sait expliquer le validateur, le placeur et `optimiser`.
 
 ## Avancement

@@ -208,9 +208,15 @@ function ajouter(article: FicheArticle) {
   annonce.value = t.ligneAjoutee(article.nom)
 }
 
+/**
+ * Entrée dans la recherche : ajoute le premier résultat, puis vide la
+ * recherche. Le focus y reste : on enchaîne avec l'article suivant.
+ */
 function ajouterPremier() {
   const premier = resultats.value[0]
-  if (premier) ajouter(premier)
+  if (!premier) return
+  ajouter(premier)
+  recherche.value = ''
 }
 
 // --- Lignes -----------------------------------------------------------------------
@@ -791,6 +797,17 @@ async function annuler() {
   border-color: var(--action);
 }
 
+/*
+ * Le champ n'a pas de bordure : c'est le cadre, icône comprise, qui porte le
+ * double anneau de focus de base.css. Sur le champ lui-même, l'anneau blanc
+ * masquait la bordure du cadre en haut et en bas.
+ */
+.catalogue__recherche:has(.catalogue__saisie:focus-visible) {
+  outline: var(--focus) solid var(--action);
+  outline-offset: var(--focus);
+  box-shadow: 0 0 0 var(--focus) var(--surface);
+}
+
 .catalogue__saisie {
   flex: 1;
   min-width: 0;
@@ -802,6 +819,10 @@ async function annuler() {
   outline: none;
 }
 
+.catalogue__saisie:focus-visible {
+  box-shadow: none;
+}
+
 .catalogue__aide {
   margin-top: var(--espace-2);
   margin-bottom: var(--espace-3);
@@ -809,7 +830,13 @@ async function annuler() {
   color: var(--texte-doux);
 }
 
+/*
+ * `position: relative` : la liste devient le bloc conteneur des textes
+ * visuellement cachés (en position absolue) de ses résultats. Sans lui, ils
+ * échappaient au défilement de la liste et allongeaient la page.
+ */
 .catalogue__liste {
+  position: relative;
   padding: 0;
   margin: 0;
   overflow-y: auto;

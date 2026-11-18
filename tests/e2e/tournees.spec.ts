@@ -92,3 +92,19 @@ test.describe('parcours de préparation', () => {
     await expect(page.getByRole('link', { name: 'Couverture Bernard' })).toBeVisible()
   })
 })
+
+test.describe('mise en page de la saisie express', () => {
+  test('la page ne défile pas au-delà de son contenu, même avec tout le catalogue', async ({
+    page,
+  }) => {
+    await page.goto(`${T118}/commandes/d0000000-0000-4000-8000-000000000001`)
+    await expect(page.getByRole('button', { name: /Ajouter .*Rouleau de laine/ })).toBeAttached()
+    // Les textes cachés de la liste défilante restaient hors de la liste et
+    // allongeaient la page d'environ 700 px, sous le pied du formulaire.
+    const hauteurs = await page.evaluate(() => ({
+      page: document.documentElement.scrollHeight,
+      contenu: document.body.scrollHeight,
+    }))
+    expect(hauteurs.page).toBe(hauteurs.contenu)
+  })
+})

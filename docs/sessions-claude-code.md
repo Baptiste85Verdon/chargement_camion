@@ -190,7 +190,7 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 
 ## Étape 11 · Recette du prototype 1
 
-- [ ] Fait — branche `test/p1-recette`
+- [x] Fait — branche `test/p1-recette`
 - Vérifier chaque critère d'acceptation de `docs/prototypes/prototype-1.md`, compléter les tests manquants, vérifier que chaque RG du prototype a un test portant son numéro.
 - Parcours clavier complet et passage axe-core ; captures des écrans comparées aux maquettes, avec la liste des écarts.
 - Après la fusion : étiquette `v0.1.0`.

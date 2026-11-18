@@ -391,3 +391,10 @@ describe('Liste d’attente (capture 10)', () => {
     expect(page.text()).toContain(a.videFiltre)
   })
 })
+
+describe('liste d’attente : dates', () => {
+  it('la date du report s’écrit en toutes lettres, comme le reste de l’application', async () => {
+    const { page } = await monterPage('/attente')
+    expect(page.text()).toContain('Reporté le 2 novembre 2026')
+  })
+})

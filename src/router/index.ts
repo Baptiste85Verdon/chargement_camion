@@ -68,6 +68,22 @@ export const routes: RouteRecordRaw[] = [
   { path: '/vitrine', name: 'vitrine', component: () => import('@/pages/PageVitrine.vue') },
 ]
 
+/**
+ * Section de la navigation principale d'un chemin : l'entrée à marquer
+ * active. Les routes sont à plat (`/catalogue/:id` n'est pas une route
+ * enfant de `/catalogue`) : Vue Router ne sait donc pas qu'une fiche
+ * appartient au catalogue, on le déduit du chemin. Les tournées, leur
+ * préparation, leurs commandes et leur plan relèvent de l'accueil (« / »).
+ * `null` : page hors navigation (vitrine).
+ */
+export function sectionDe(chemin: string): string | null {
+  if (chemin === '/' || chemin.startsWith('/tournees/')) return '/'
+  const section = ['/catalogue', '/camions', '/attente'].find(
+    (s) => chemin === s || chemin.startsWith(`${s}/`),
+  )
+  return section ?? null
+}
+
 export const routeur = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
