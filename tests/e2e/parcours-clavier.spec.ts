@@ -11,9 +11,32 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 
 const NORMES = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
-// Le champ date de Chromium suit la langue du navigateur, pas `locale` : en
-// français, il attend jour, mois, année, comme un utilisateur de l'application.
-test.use({ launchOptions: { args: ['--lang=fr-FR'] } })
+/**
+ * Ordre des parties du champ date de Chromium. Il suit la langue du système
+ * (jour, mois, année en français ; mois, jour, année ailleurs), pas l'option
+ * `locale` de Playwright, et `--lang` n'agit que sous Windows : l'intégration
+ * continue, sous Linux, attend donc mois, jour, année. On le sonde sur un
+ * champ témoin, dans un onglet vierge à part : l'application n'est pas
+ * touchée et la vraie date se tape ensuite au clavier, dans le bon ordre.
+ */
+async function ordreDuChampDate(page: Page): Promise<'jma' | 'mja'> {
+  const sonde = await page.context().newPage()
+  try {
+    await sonde.setContent('<input type="date" aria-label="témoin">')
+    await sonde.getByLabel('témoin').focus()
+    await sonde.keyboard.type('20112026')
+    return (await sonde.getByLabel('témoin').inputValue()) === '2026-11-20' ? 'jma' : 'mja'
+  } finally {
+    await sonde.close()
+  }
+}
+
+/** Tape une date AAAA-MM-JJ dans le champ date qui a le focus, chiffre par chiffre. */
+async function taperDate(page: Page, iso: string) {
+  const [annee, mois, jour] = iso.split('-')
+  const ordre = await ordreDuChampDate(page)
+  await page.keyboard.type(ordre === 'jma' ? `${jour}${mois}${annee}` : `${mois}${jour}${annee}`)
+}
 
 /** axe-core, sans la taille de cible des blocs du plan (voir plan.spec.ts). */
 async function sansErreurAxe(page: Page) {
@@ -71,8 +94,11 @@ test('recette : parcours complet au clavier seul, de la tournée au plan', async
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Préparation de la tournée')
 
   // 2. Date et camion : la date se tape chiffre par chiffre, le camion se choisit aux flèches.
-  await tabulerJusqua(page, page.getByLabel(/Date de livraison/))
-  await page.keyboard.type('20112026')
+  const date = page.getByLabel(/Date de livraison/)
+  await tabulerJusqua(page, date)
+  await taperDate(page, '2026-11-20')
+  // La sonde a ouvert puis fermé un onglet : on vérifie que le focus est resté.
+  await expect(date).toBeFocused()
   await expect(page.getByLabel(/Date de livraison/)).toHaveValue('2026-11-20')
   await page.keyboard.press('Tab')
   const radios = page.getByRole('radiogroup').getByRole('radio')
