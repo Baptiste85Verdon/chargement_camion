@@ -51,7 +51,7 @@ export type ResultatAjustement = Accepte | Refus
 export type ResultatRetrait = Accepte | RefusRetrait
 
 /** Ordre dans lequel « Changer d'orientation » parcourt les poses (5.5). */
-const ORDRE_ORIENTATIONS: Orientation[] = ['aPlat', 'debout', 'contreParoi']
+export const ORDRE_ORIENTATIONS: Orientation[] = ['aPlat', 'debout', 'contreParoi']
 
 /**
  * Les règles à citer dans le message de refus (capture 04f) : la règle de

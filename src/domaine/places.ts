@@ -11,7 +11,13 @@
 // Chaque place passe par `deplacer` ou `remettre` : une place proposée ou
 // choisie automatiquement est exactement une place que l'opérateur aurait pu
 // obtenir à la main.
-import { deplacer, type Pose, remettre, type ResultatAjustement } from './ajustement'
+import {
+  deplacer,
+  ORDRE_ORIENTATIONS,
+  type Pose,
+  remettre,
+  type ResultatAjustement,
+} from './ajustement'
 import { MAX_PLACES_PROPOSEES, SANS_RANG } from './constantes'
 import { boiteDe, trouverUnite } from './geometrie'
 import {
@@ -116,6 +122,22 @@ export interface ResultatPlacementZone {
   places: string[]
   /** Les articles qui n'ont pas trouvé de place : ils restent dans la zone (RG-10). */
   restants: string[]
+  /**
+   * Les articles placés dans une autre orientation que la leur, faute de
+   * place dans celle-ci : le message le dit (« A05 placé contre une paroi :
+   * aucune place à plat »).
+   */
+  orientationsChangees: { uniteId: string; orientation: Orientation; demandee: Orientation }[]
+}
+
+/**
+ * Les orientations à essayer pour « Placer » : celle de l'article d'abord,
+ * puis les autres orientations autorisées, dans l'ordre à plat, debout,
+ * contre une paroi (5.5).
+ */
+function orientationsAEssayer(unite: Unite, demandee: Orientation): Orientation[] {
+  const autres = ORDRE_ORIENTATIONS.filter((o) => o !== demandee && unite.orientations.includes(o))
+  return [demandee, ...autres]
 }
 
 /**
@@ -124,9 +146,13 @@ export interface ResultatPlacementZone {
  * Chacun est posé sur la première place que propose `proposerPlaces`, dans
  * son orientation : celle de `orientations` (l'orientation qu'il avait avant
  * son retrait, ou celle choisie dans la zone), sinon la première autorisée.
+ * S'il n'a aucune place dans cette orientation, on essaie les autres
+ * orientations autorisées, dans l'ordre à plat, debout, contre une paroi, et
+ * on prend la première place proposée trouvée ; le changement est rendu dans
+ * `orientationsChangees` pour le message.
  * La pose passe par `remettre`, comme une remise à la main : l'ordre de
  * chargement est recalculé (4.8) et aucun autre article ne bouge.
- * Un article sans place proposée reste dans la zone (RG-10).
+ * Un article qui n'a de place dans aucune orientation reste dans la zone (RG-10).
  */
 export function placerDepuisZone(
   plan: Placement[],
@@ -138,18 +164,27 @@ export function placerDepuisZone(
   let courant = plan
   const places: string[] = []
   const restants: string[] = []
+  const orientationsChangees: ResultatPlacementZone['orientationsChangees'] = []
   for (const unite of trierUnites(uniteIds.map((id) => trouverUnite(id, unites)))) {
-    const [premiere] = proposerPlaces(courant, unite.id, unites, camion, {
-      orientation: orientations[unite.id],
-      max: 1,
-    })
-    const resultat = premiere && remettre(courant, unite.id, premiere, unites, camion)
+    const demandee = orientations[unite.id] ?? premiereOrientation(unite)
+    let resultat: ResultatAjustement | undefined
+    let obtenue = demandee
+    for (const orientation of orientationsAEssayer(unite, demandee)) {
+      const [premiere] = proposerPlaces(courant, unite.id, unites, camion, { orientation, max: 1 })
+      if (!premiere) continue
+      resultat = remettre(courant, unite.id, premiere, unites, camion)
+      obtenue = orientation
+      break
+    }
     if (resultat?.accepte) {
       courant = resultat.plan
       places.push(unite.id)
+      if (obtenue !== demandee) {
+        orientationsChangees.push({ uniteId: unite.id, orientation: obtenue, demandee })
+      }
     } else {
       restants.push(unite.id)
     }
   }
-  return { plan: courant, places, restants }
+  return { plan: courant, places, restants, orientationsChangees }
 }

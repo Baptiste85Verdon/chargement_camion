@@ -167,6 +167,33 @@ describe('« Placer » et « Tout placer » (cahier technique 5.7)', () => {
     expect(debout.plan.find((p) => p.uniteId === 'F')?.orientation).toBe('debout')
   })
 
+  it('RG-10 : sans place dans son orientation, essaie les autres orientations autorisées et le dit', () => {
+    // P1 occupe toute la caisse sauf une bande de 300 mm contre la paroi droite :
+    // le paquet de BA13 n'y tient pas à plat (1 200 mm de large), mais contre la paroi.
+    const ba13: Unite = {
+      ...colis('A05', { l: 2500, w: 1200, h: 250 }),
+      orientations: ['aPlat', 'contreParoi'],
+    }
+    const unites = [colis('P1', { l: 7200, w: 2100, h: 2500 }), ba13]
+    const plan = [poser('P1', 0, 0, 0, 1)]
+    expect(proposerPlaces(plan, 'A05', unites, camion, { orientation: 'aPlat' })).toEqual([])
+    const resultat = placerDepuisZone(plan, ['A05'], unites, camion, { A05: 'aPlat' })
+    expect(resultat.restants).toEqual([])
+    expect(resultat.plan.find((p) => p.uniteId === 'A05')).toMatchObject({
+      orientation: 'contreParoi',
+      y: 2150,
+    })
+    expect(resultat.orientationsChangees).toEqual([
+      { uniteId: 'A05', orientation: 'contreParoi', demandee: 'aPlat' },
+    ])
+  })
+
+  it('n’annonce aucun changement d’orientation quand l’article a sa place dans la sienne', () => {
+    const unites = [colis('P1'), colis('Q')]
+    const resultat = placerDepuisZone([poser('P1', 0, 0, 0, 1)], ['Q'], unites, camion)
+    expect(resultat.orientationsChangees).toEqual([])
+  })
+
   it('« Tout placer » place tous les articles de la zone, rangs renumérotés', () => {
     const unites = [colis('P1'), colis('Q1'), colis('Q2'), colis('Q3')]
     const plan = [poser('P1', 0, 0, 0, 1)]
