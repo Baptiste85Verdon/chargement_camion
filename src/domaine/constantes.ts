@@ -53,6 +53,14 @@ export const ECART_ENCOMBREMENT_ECHANGE = 20
 export const MAX_ESSAIS_ECHANGES = 500
 
 /**
+ * Rang de chargement d'un article remis depuis la zone « Articles à placer » :
+ * il n'a pas encore d'ancien rang (cahier technique, 4.8). Les vrais rangs
+ * commencent à 1 ; `ordonnerChargement` ne rend jamais `SANS_RANG`, qui ne
+ * doit être ni enregistré ni affiché. Tester avec `aUnRang`.
+ */
+export const SANS_RANG = 0
+
+/**
  * Part maximale d'un côté, en pourcentage arrondi, pour chaque statut
  * d'équilibre (RG-20, cahier technique 4.5) : « Équilibré » jusqu'à 55 %,
  * « À surveiller » jusqu'à 60 %, « Déséquilibré » au-delà.
