@@ -321,16 +321,59 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
           .map(copie)
       },
       async obtenirDernier(tourneeId) {
-        const versions = await this.listerVersions(tourneeId)
-        const plan = versions.at(-1)
+        const plan = (await this.listerVersions(tourneeId)).at(-1)
+        return plan ? this.obtenirVersion(plan.id) : null
+      },
+      async obtenirVersion(planId) {
+        const plan = plans.get(planId)
         if (!plan) return null
         return {
-          plan,
+          plan: copie(plan),
           placements: [...placements.values()]
-            .filter((p) => p.planId === plan.id)
+            .filter((p) => p.planId === planId)
             .sort((a, b) => a.rang - b.rang)
             .map(copie),
         }
+      },
+      async ajuster(planId, disposition) {
+        // Tous les contrôles d'abord, pour ne rien changer en cas de refus,
+        // comme la transaction de la fonction SQL `ajuster_plan`.
+        const plan = plans.get(planId)
+        if (!plan) throw new ErreurDonnees('introuvable')
+        const derniere = Math.max(
+          ...[...plans.values()]
+            .filter((p) => p.tourneeId === plan.tourneeId)
+            .map((p) => p.version),
+        )
+        if (plan.version !== derniere) throw new ErreurDonnees('contrainte')
+
+        // La disposition finale : un placement gardé reste la même unité,
+        // avec son statut ; seuls sa position, son orientation et son rang changent.
+        const finale: PlacementEnregistre[] = disposition.map((p) => {
+          if (p.id === undefined) {
+            const ligne = lignes.get(p.ligneCommandeId)
+            const commande = ligne && commandes.get(ligne.commandeId)
+            if (commande?.tourneeId !== plan.tourneeId) throw new ErreurDonnees('introuvable')
+            return { ...copie(p), id: nouvelId(), planId }
+          }
+          const avant = placements.get(p.id)
+          if (avant?.planId !== planId) throw new ErreurDonnees('introuvable')
+          return { ...avant, x: p.x, y: p.y, z: p.z, orientation: p.orientation, rang: p.rang }
+        })
+        const unique = (cles: string[]) => new Set(cles).size === cles.length
+        if (
+          !unique(finale.map((p) => String(p.rang))) ||
+          !unique(finale.map((p) => `${p.ligneCommandeId}/${p.numeroUnite}`))
+        ) {
+          throw new ErreurDonnees('doublon')
+        }
+
+        for (const p of placements.values()) if (p.planId === planId) placements.delete(p.id)
+        for (const p of finale) placements.set(p.id, p)
+        plans.set(planId, { ...plan, ajusteALaMain: true })
+        const ajuste = await this.obtenirVersion(planId)
+        if (!ajuste) throw new ErreurDonnees('introuvable')
+        return ajuste
       },
       async enregistrerVersion(tourneeId, nouveaux): Promise<PlanAvecPlacements> {
         if (!tournees.has(tourneeId)) throw new ErreurDonnees('introuvable')
@@ -340,6 +383,7 @@ export function creerDepotsEnMemoire(initial: ContenuInitial = {}): Depots {
           version: Math.max(0, ...versions.map((p) => p.version)) + 1,
           calculeLe: new Date().toISOString(),
           aRecalculer: false,
+          ajusteALaMain: false,
         })
         const enregistres = nouveaux
           .map((p) => ecrire(placements, { ...p, planId: plan.id }))

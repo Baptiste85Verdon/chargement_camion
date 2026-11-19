@@ -19,7 +19,12 @@ import type {
   Tournee,
 } from '@/domaine/modele'
 import type { Dimensions, Orientation } from '@/domaine/types'
-import type { AEnregistrer, LigneAEnregistrer, PlacementAEnregistrer } from './depots'
+import type {
+  AEnregistrer,
+  LigneAEnregistrer,
+  PlacementAAjuster,
+  PlacementAEnregistrer,
+} from './depots'
 
 // --- Listes de valeurs : domaine ↔ base ------------------------------------------
 
@@ -324,6 +329,7 @@ export interface LignePlan {
   version: number
   calcule_le: string
   a_recalculer: boolean
+  ajuste_a_la_main: boolean
 }
 
 export function planDepuisLigne(ligne: LignePlan): PlanChargement {
@@ -333,6 +339,7 @@ export function planDepuisLigne(ligne: LignePlan): PlanChargement {
     version: ligne.version,
     calculeLe: ligne.calcule_le,
     aRecalculer: ligne.a_recalculer,
+    ajusteALaMain: ligne.ajuste_a_la_main,
   }
 }
 
@@ -365,8 +372,12 @@ export function placementDepuisLigne(ligne: LignePlacement): PlacementEnregistre
 }
 
 export function placementVersLigne(placement: PlacementAEnregistrer, planId: string) {
+  return { plan_id: planId, ...colonnesPlacement(placement) }
+}
+
+/** Les colonnes d'un placement, sans son plan ni son identifiant. */
+function colonnesPlacement(placement: PlacementAEnregistrer) {
   return {
-    plan_id: planId,
     ligne_commande_id: placement.ligneCommandeId,
     numero_unite: placement.numeroUnite,
     x: placement.x,
@@ -376,6 +387,14 @@ export function placementVersLigne(placement: PlacementAEnregistrer, planId: str
     rang: placement.rang,
     statut: statutPlacement.versBase(placement.statut),
   }
+}
+
+/**
+ * Un placement pour la fonction SQL `ajuster_plan` : avec son `id` s'il est
+ * déjà enregistré dans la version, sans `id` s'il est ajouté.
+ */
+export function placementPourAjustement(placement: PlacementAAjuster) {
+  return { ...avecId(placement.id), ...colonnesPlacement(placement) }
 }
 
 // --- element_attente ------------------------------------------------------------------
