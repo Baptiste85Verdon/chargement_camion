@@ -43,6 +43,7 @@ export type CodeProbleme =
   | 'commandeRequise'
   | 'plusGrandSansDepassement'
   | 'toucheDejaPrise'
+  | 'toucheReservee'
 
 export interface Probleme {
   /** Champ du formulaire : `nom`, `dimsEmballees`, `lignes.0.quantite`… */
@@ -576,7 +577,6 @@ export function validerSignalement(saisie: SaisieSignalement, prevu: Unite): Res
 export const ACTIONS_RACCOURCIS = [
   'changerOrientation',
   'retirer',
-  'deselectionner',
   'aimantation',
   'modeAffichage',
   'etapeSuivante',
@@ -598,7 +598,6 @@ export type Raccourcis = Record<ActionRaccourci, string | null>
 export const RACCOURCIS_PAR_DEFAUT: Readonly<Raccourcis> = {
   changerOrientation: 'r',
   retirer: 'Delete',
-  deselectionner: 'Escape',
   aimantation: 'a',
   modeAffichage: 'e',
   etapeSuivante: 'PageDown',
@@ -612,6 +611,14 @@ export const RACCOURCIS_PAR_DEFAUT: Readonly<Raccourcis> = {
  * elle n'entre jamais en conflit avec un raccourci d'une seule touche.
  */
 const TOUCHES_FIXES: readonly string[] = ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown']
+
+/**
+ * Touches de la navigation au clavier, qu'aucun raccourci ne peut prendre :
+ * Tab (et Maj + Tab, la même touche) passe d'un élément à l'autre, Entrée et
+ * Espace activent un bouton, Échap ferme un panneau ou désélectionne
+ * l'article (raccourci fixe « Désélectionner »).
+ */
+const TOUCHES_NAVIGATION: readonly string[] = ['Tab', 'Enter', ' ', 'Escape']
 
 /** Deux touches identiques ? Une lettre vaut sa majuscule : « r » et « R » sont la même touche. */
 function memeTouche(a: string, b: string): boolean {
@@ -627,7 +634,8 @@ export function nomTouche(touche: string): string {
 }
 
 /**
- * Une touche ne sert qu'à une action (RG-21, capture 04i).
+ * Une touche ne sert qu'à une action (RG-21, capture 04i), et les touches de
+ * la navigation au clavier ne servent jamais de raccourci.
  *
  * Avec `modifie`, seul ce raccourci est contrôlé : c'est lui qui reçoit le
  * message, qui nomme l'action qui avait déjà la touche. Sans `modifie`,
@@ -648,6 +656,10 @@ export function validerRaccourcis(
     const touche = raccourcis[action]
     if (touche === null) continue
 
+    if (TOUCHES_NAVIGATION.some((navigation) => memeTouche(navigation, touche))) {
+      erreurs.push({ champ: action, code: 'toucheReservee', message: m.toucheNavigation })
+      continue
+    }
     if (TOUCHES_FIXES.some((fixe) => memeTouche(fixe, touche))) {
       erreurs.push({
         champ: action,

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import type { Commande, FicheArticle, ModeleCamion, Tournee } from './modele'
 import type { Unite } from './types'
 import {
+  ACTIONS_RACCOURCIS,
   RACCOURCIS_PAR_DEFAUT,
   lireKilogrammes,
   lireMillimetres,
@@ -773,6 +774,33 @@ describe('validerRaccourcis', () => {
       raccourcis({ aimantation: 'r', modeAffichage: 'r', etapeSuivante: 'ArrowDown' }),
     )
     expect(champs(resultat.erreurs)).toEqual(['aimantation', 'modeAffichage', 'etapeSuivante'])
+  })
+
+  it.each([
+    ['Tab', 'Tab (et Maj + Tab)'],
+    ['Enter', 'Entrée'],
+    [' ', 'Espace'],
+    ['Escape', 'Échap'],
+  ])('RG-21 : refuse %s, réservée à la navigation au clavier (%s)', (touche) => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: touche }), 'aimantation')
+    expect(resultat.erreurs).toEqual([
+      {
+        champ: 'aimantation',
+        code: 'toucheReservee',
+        message: 'Cette touche sert à naviguer au clavier, elle ne peut pas être attribuée.',
+      },
+    ])
+  })
+
+  it('RG-21 : refuse une touche de navigation aussi à la relecture de toute la liste', () => {
+    const resultat = validerRaccourcis(raccourcis({ retirer: 'Enter', etapeSuivante: 'Tab' }))
+    expect(champs(resultat.erreurs)).toEqual(['retirer', 'etapeSuivante'])
+    expect(codes(resultat.erreurs)).toEqual(['toucheReservee', 'toucheReservee'])
+  })
+
+  it('RG-21 : « Désélectionner » est un raccourci fixe sur Échap, hors des raccourcis modifiables', () => {
+    expect(ACTIONS_RACCOURCIS).not.toContain('deselectionner')
+    expect(Object.values(RACCOURCIS_PAR_DEFAUT)).not.toContain('Escape')
   })
 
   it('nomme les touches comme sur le clavier', () => {

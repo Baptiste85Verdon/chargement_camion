@@ -977,6 +977,7 @@ export const textes = {
       annuler: 'Annuler le dernier déplacement',
       changerOrientation: "Changer d'orientation",
       retirer: 'Retirer vers « Articles à placer »',
+      /** Raccourci fixe : Échap. */
       deselectionner: 'Désélectionner',
       aimantation: "Activer ou désactiver l'aimantation",
       modeAffichage: 'Plan complet ou par étape',
@@ -1059,6 +1060,7 @@ export const textes = {
     raccourcis: {
       toucheDejaPrise: (touche: string, action: string) =>
         `La touche ${touche} sert déjà à « ${action} ». Choisissez une autre touche, ou modifiez d'abord ce raccourci.`,
+      toucheNavigation: 'Cette touche sert à naviguer au clavier, elle ne peut pas être attribuée.',
       toucheFixe: (touche: string, action: string) =>
         `La touche ${touche} sert déjà à « ${action} », un raccourci fixe. Choisissez une autre touche.`,
     },

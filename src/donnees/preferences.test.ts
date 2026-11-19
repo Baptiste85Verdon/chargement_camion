@@ -90,6 +90,11 @@ describe('raccourcis', () => {
     expect(lireRaccourcis(s)).toEqual(RACCOURCIS_PAR_DEFAUT)
   })
 
+  it('RG-21 : reviennent aux raccourcis par défaut si une touche relue sert à naviguer', () => {
+    const s = stockage({ [CLE_RACCOURCIS]: JSON.stringify({ retirer: 'Escape' }) })
+    expect(lireRaccourcis(s)).toEqual(RACCOURCIS_PAR_DEFAUT)
+  })
+
   it('sont ceux par défaut si le stockage est indisponible, sans lever d’erreur', () => {
     expect(lireRaccourcis(indisponible)).toEqual(RACCOURCIS_PAR_DEFAUT)
     expect(() => enregistrerRaccourcis(RACCOURCIS_PAR_DEFAUT, indisponible)).not.toThrow()
