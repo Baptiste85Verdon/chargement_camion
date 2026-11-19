@@ -21,7 +21,10 @@ Lis-les avant de coder ; en cas de doute, ils l'emportent sur ta mémoire et sur
 | `docs/conventions-git.md` | Branches, commits, demandes de fusion |
 | `tests/jeux-essai/` | Jeux d'essai « couloirs » et « fenêtres isolées », avec résultats attendus |
 
-Si un document et la maquette se contredisent, **le cahier l'emporte** : signale l'écart, ne tranche pas seul. Ne modifie jamais un document de `docs/` sans accord explicite ; propose la modification. Seule exception : cocher la case de l'étape terminée dans `docs/sessions-claude-code.md` et dans la fiche du prototype.
+Si un document et la maquette se contredisent, **le cahier l'emporte** : signale l'écart, ne tranche pas seul. Ne modifie jamais un document de `docs/` sans accord explicite ; propose la modification. Deux exceptions :
+
+- cocher la case de l'étape terminée dans `docs/sessions-claude-code.md` et dans la fiche du prototype ;
+- quand un cahier change de version (avec accord), mettre aussi à jour sa section « État du projet » pour citer la nouvelle version, dans le même commit `docs`, sans demander.
 
 **Défauts connus de la maquette** : la section « Écarts connus à corriger dans le code » de `docs/maquettes/README.md` liste des défauts déjà repérés. Avant de coder un écran, relis-la : applique la correction décrite, ne reproduis jamais le défaut de la capture. Si tu en trouves un nouveau, signale-le et propose de l'ajouter à cette liste.
 

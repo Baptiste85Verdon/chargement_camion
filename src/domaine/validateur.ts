@@ -3,7 +3,7 @@
 // vide si le placement est permis.
 import { estDebout, estDeboutCale, type Occupation, occupationDe } from './calage'
 import { HAUTEUR_MAX_LOURD, POIDS_LOURD, SEUIL_APPUI, TOLERANCE_CONTACT } from './constantes'
-import { type Boite, estPoseSur, recouvrement, seChevauchent, surfaceCommuneXY } from './geometrie'
+import { type Boite, estPoseSur, gene, seChevauchent, surfaceCommuneXY } from './geometrie'
 import type { Camion, MotifRegle, NumeroRegle, Placement, RegleEnfreinte, Unite } from './types'
 
 /** Règle 1 : l'unité ne dépasse d'aucune paroi, ni du plancher, ni du plafond. */
@@ -83,17 +83,6 @@ const MOTIFS_PILE: Record<
  */
 function estLourdEnHauteur(unite: Unite, b: Boite): boolean {
   return unite.poids > POIDS_LOURD && b.z0 > HAUTEUR_MAX_LOURD
-}
-
-/**
- * Règle 7 (RG-07) : `b` gêne la sortie de `a` par les portes. C'est le cas
- * s'il est posé sur `a`, ou s'il est entre `a` et les portes dans la même
- * bande en largeur et que son bas est plus bas que le dessus de `a` : pour
- * sortir `a`, il faudrait le faire passer par-dessus `b`.
- */
-function gene(b: Boite, a: Boite): boolean {
-  const devant = b.x0 >= a.x1 && recouvrement(a.y0, a.y1, b.y0, b.y1) > 0 && b.z0 < a.z1
-  return devant || estPoseSur(b, a)
 }
 
 /**
