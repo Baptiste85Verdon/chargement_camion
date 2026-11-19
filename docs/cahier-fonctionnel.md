@@ -2,7 +2,7 @@
 
 Nov 1, 2026 · @Baptiste Verdon
 
-**Version V5.10, 16 novembre 2026 : date et camion d'une tournée enregistrés à chaque changement, changement de camion avec un plan déjà calculé (RG-22). Version V5.9, 15 novembre 2026 : tableaux triables par colonne, indication des modifications non enregistrées (RG-21, RG-22), aperçu de l'article sous trois faces. Version V5.8, 4 novembre 2026 : fiche article (case « Peut être livré nu », taille nue, orientations par défaut), camion utilisé non supprimable, rouge étendu aux pertes de données. Version V5.7, 4 novembre 2026 : vérification des saisies (RG-21) et fenêtres de confirmation (RG-22). Version V5.6, 4 novembre 2026 : équilibre de la charge (RG-20), zone « Articles à placer » près des vues. Version V5.5, 4 novembre 2026 : calage des articles (RG-19). Version V5.4, 4 novembre 2026 : formes non rectangulaires (boîte englobante, dessus porteur, RG-18), poids propre à une commande, dimensions mesurées au signalement. Version V5.3, 3 novembre 2026 : charte graphique et principes d'interface (section 7), accessibilité complétée, lignes de cote. Version V5.2, validée le 2 novembre 2026 (RG-07 fondée sur l'accès ; précisions sur les silhouettes et le filtre de profondeur) : vues multiples, vue par étape, zoom, articles cachés et mise en évidence d'une commande ajoutés après la première maquette ; versions précédentes : rotation : rotation, aimantation désactivable, raccourcis personnalisables et zone « Articles à placer » ajoutés.** Ce document s'appuie sur le brief V4 et sur la note de cadrage V5.3, et sur la charte graphique V2.4. Il décrit ce que fait l'application, page par page et règle par règle. Le *comment*, c'est-à-dire les choix techniques, relève du cahier des charges technique.
+**Version V5.11, 19 novembre 2026 : ajustement manuel précisé pour le prototype 2 (enregistrement immédiat dans une version « ajustée à la main », annulation du dernier déplacement, ordre de chargement recalculé, pas au clavier, rotation, pose au plus bas, places proposées, plans ajustables, anciennes versions ; RG-08, RG-22 ; quart de tour à plat en point ouvert). Version V5.10, 16 novembre 2026 : date et camion d'une tournée enregistrés à chaque changement, changement de camion avec un plan déjà calculé (RG-22). Version V5.9, 15 novembre 2026 : tableaux triables par colonne, indication des modifications non enregistrées (RG-21, RG-22), aperçu de l'article sous trois faces. Version V5.8, 4 novembre 2026 : fiche article (case « Peut être livré nu », taille nue, orientations par défaut), camion utilisé non supprimable, rouge étendu aux pertes de données. Version V5.7, 4 novembre 2026 : vérification des saisies (RG-21) et fenêtres de confirmation (RG-22). Version V5.6, 4 novembre 2026 : équilibre de la charge (RG-20), zone « Articles à placer » près des vues. Version V5.5, 4 novembre 2026 : calage des articles (RG-19). Version V5.4, 4 novembre 2026 : formes non rectangulaires (boîte englobante, dessus porteur, RG-18), poids propre à une commande, dimensions mesurées au signalement. Version V5.3, 3 novembre 2026 : charte graphique et principes d'interface (section 7), accessibilité complétée, lignes de cote. Version V5.2, validée le 2 novembre 2026 (RG-07 fondée sur l'accès ; précisions sur les silhouettes et le filtre de profondeur) : vues multiples, vue par étape, zoom, articles cachés et mise en évidence d'une commande ajoutés après la première maquette ; versions précédentes : rotation : rotation, aimantation désactivable, raccourcis personnalisables et zone « Articles à placer » ajoutés.** Ce document s'appuie sur le brief V4 et sur la note de cadrage V5.3, et sur la charte graphique V2.4. Il décrit ce que fait l'application, page par page et règle par règle. Le *comment*, c'est-à-dire les choix techniques, relève du cahier des charges technique.
 
 ## 1. Objet et périmètre
 
@@ -63,7 +63,7 @@ Ce sont les informations que l'application manipule, vues du côté de l'usage. 
 | Tournée | Date, camion choisi, commandes, ordre de livraison, statut (en préparation, prête, en chargement, chargée) | — |
 | Commande | Numéro, client ou destination, rang dans la tournée, lignes d'articles | — |
 | Ligne de commande | Article, quantité, nu ou emballé, dimensions propres à la commande si elles diffèrent du catalogue, poids propre à la commande | Modifier ces dimensions ou ce poids n'a aucun effet sur le catalogue. Un poids proposé au prorata est signalé comme estimé (RG-03) |
-| Plan de chargement | Position et orientation de chaque article dans la caisse, ordre de chargement | Recalculé à chaque nouvelle simulation |
+| Plan de chargement | Position et orientation de chaque article dans la caisse, ordre de chargement | Chaque calcul crée une nouvelle version ; les anciennes restent consultables. L'ajustement manuel modifie la version actuelle, marquée alors « ajustée à la main » |
 | Étape de chargement | Article à charger, emplacement, statut (à faire, chargé, en problème) | — |
 | Signalement | Étape concernée, type de problème, commentaire libre facultatif, dimensions mesurées facultatives, action choisie, résultat de la revérification | Les dimensions mesurées servent à la revérification (RG-12, RG-14) |
 | Élément en attente | Commande entière ou articles reportés, tournée d'origine, motif (dépassement, signalement) | Réaffectable à une prochaine tournée |
@@ -103,6 +103,15 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
 - Un article de forme non rectangulaire porte un pictogramme de forme. Son détail précise que la place réservée est celle de sa boîte englobante (RG-18).
 - Ordre de chargement sous forme de liste d'étapes et de vue par étape. On avance étape par étape : le camion montre ce qui est déjà chargé, l'article à placer à cette étape et son emplacement. Cette vue sert à relire et valider le plan avant le chargement. Les étapes suivantes peuvent être montrées en silhouette, avec un contour en pointillés sur fond blanc. On voit ainsi la place qui leur est réservée, sans les confondre avec les articles déjà chargés.
 - Ajustement manuel par déplacement et rotation des articles, avec une aimantation activée par défaut que l'utilisateur peut désactiver (RG-08, RG-09). Un article peut être retiré vers une zone « Articles à placer », puis replacé à tout moment. Cette zone se trouve juste à côté des vues du camion, visible sans faire défiler la page. On y dépose un article et on l'en sort par glisser-déposer ; les boutons « Placer » et « Tout placer » restent une alternative.
+  - **Enregistrement** : chaque déplacement accepté s'enregistre aussitôt dans la version actuelle du plan, sans bouton d'enregistrement. La version est alors marquée « ajustée à la main ».
+  - **Annulation** : « Annuler le dernier déplacement », par un bouton et par Ctrl + Z, remet le plan dans l'état d'avant ce déplacement, et l'enregistre. On peut annuler plusieurs fois de suite pendant la visite de la page ; l'historique est oublié au rechargement et à chaque nouvelle version. Il couvre déplacement, rotation, retrait, remise et placement automatique. Il n'y a pas de « Rétablir ».
+  - **Plans ajustables** : seule la version actuelle d'une tournée en préparation s'ajuste, et pas quand le plan est « à recalculer ». Sinon les commandes d'ajustement sont absentes, et un texte dit pourquoi.
+  - **Rotation** : « Changer d'orientation », par un bouton et la touche R, passe à l'orientation autorisée suivante (à plat, debout, contre une paroi). Un quart de tour à plat, qui poserait une palette en travers, n'est pas possible en V1 (point ouvert).
+  - **Hauteur** : un article déplacé en vue de dessus se pose au plus bas, sur ce qui se trouve sous lui. Dans les autres vues, la coordonnée qui n'est pas montrée ne change pas.
+  - **Sans glisser** : « Choisir une place » propose au plus les cinq meilleures places, d'après le calcul automatique ; un clic ou un toucher y pose l'article. « Placer » et « Tout placer » placent les articles de la zone sans déplacer les autres ; un article qui ne trouve pas de place reste dans la zone, avec un message.
+  - **Ordre de chargement** : il est recalculé après chaque déplacement. Ce qui porte un article est chargé avant lui, et chaque article peut être amené depuis les portes jusqu'à sa place sans être gêné par un article déjà chargé (RG-07). Si aucun ordre n'est possible, le déplacement est refusé (RG-08).
+  - **Au clavier** : les flèches déplacent l'article sélectionné de 50 mm, et de 500 mm avec Maj (valeurs provisoires). Avec l'aimantation active, l'article s'arrête au contact d'une paroi ou d'un autre article.
+  - **Relancer le calcul** : crée une nouvelle version du plan. Si la version actuelle est ajustée à la main, et seulement dans ce cas, une confirmation prévient que les ajustements seront perdus (RG-22). L'ancienne version reste consultable en lecture seule, depuis un sélecteur de version sur la page du plan ; elle ne se restaure pas.
 - Dépassement : alerte et proposition de report (RG-10, RG-11).
 - Articles mal calés : un bandeau les signale (« 2 articles mal calés : A10, A11 (C2) »), avec un bouton qui les sélectionne dans les vues. Les blocs concernés portent l'icône triangle (RG-19).
 - Équilibre de la charge (RG-20) : une carte « Équilibre de la charge » montre la répartition gauche / droite en pourcentages et en tonnes, et le statut en texte et icône. Un tableau repliable donne l'équilibre au départ puis après chaque livraison. La vue de dessus montre le centre de gravité et l'axe du camion. Tout se met à jour à chaque déplacement.
@@ -169,7 +178,7 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
   - Un plan déséquilibré n'est pas refusé : il est signalé, et le préparateur décide.
   - Le calcul automatique cherche le meilleur équilibre, une fois que tous les articles rentrent et sont calés.
   - La distance au fond est affichée sans être jugée : la répartition sur les essieux est hors V1.
-- **RG-08** : un déplacement manuel qui enfreint une règle de placement est bloqué. L'article revient à sa place et un message explique la règle enfreinte.
+- **RG-08** : un déplacement manuel qui enfreint une règle de placement est bloqué. L'article revient à sa place et un message explique la règle enfreinte. Il en va de même quand aucun ordre de chargement ne permet de charger les articles dans leur nouvelle disposition : ce qui porte un article doit être chargé avant lui, et chaque article doit pouvoir être amené à sa place depuis les portes (RG-07).
 - **RG-09** : un déplacement manuel qui crée un chevauchement ou fait sortir un article de la caisse est toujours bloqué, avec un message.
 
 ### Dépassement
@@ -223,6 +232,7 @@ Les pages suivent l'arborescence validée dans la note de cadrage. Les référen
     - retirer une commande entière (RG-13) ;
     - enregistrer un modèle de camion utilisé par une tournée en cours ;
     - changer le camion d'une tournée dont le plan est déjà calculé : le plan est marqué « à recalculer » (bouton de ton neutre) ;
+    - relancer le calcul d'un plan ajusté à la main, ou reporter une commande entière, ce qui relance le calcul : la confirmation prévient que les ajustements seront perdus, la version ajustée restant consultable (bouton de ton neutre, puisque rien n'est supprimé) ;
     - quitter un formulaire qui contient des modifications non enregistrées, signalées par la mention « Modifications non enregistrées » (RG-21).
   - Forme :
     - un titre en question (« Supprimer « Poutre lamellé-collé » ? ») ;
@@ -307,7 +317,7 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
   - les contrastes sont suffisants, touche Tetris comprise : au moins 4,5:1 pour les textes et 3:1 pour les contours utiles ;
   - les couleurs de commandes restent distinctes pour les formes courantes de daltonisme ;
   - les articles atténués et les silhouettes gardent un code de commande lisible.
-- **Clavier** : toute l'application est utilisable au clavier. Pour l'ajustement manuel, un article sélectionné se déplace aux flèches, en alternative au glisser-déposer. Les raccourcis clavier sont personnalisables à tout moment.
+- **Clavier** : toute l'application est utilisable au clavier. Pour l'ajustement manuel, un article sélectionné se déplace aux flèches, par pas de 50 mm, ou de 500 mm avec Maj, en alternative au glisser-déposer. Les raccourcis clavier sont personnalisables à tout moment.
 - **Messages** : les blocages, alertes et signalements sont annoncés aux technologies d'assistance. Ils ne reposent jamais sur la couleur seule.
 - **Mode quai** :
   - les zones tactiles sont larges ;
@@ -323,7 +333,7 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
 | Prototype | Le prototype est accepté quand… |
 | --- | --- |
 | 1 · Catalogue, commandes et calcul 2D | Pour une tournée d'essai de plusieurs commandes, le plan ne présente aucun chevauchement, respecte les règles de placement applicables et l'ordre de livraison. Un dépassement est signalé et le report fonctionne. Les cinq vues et la vue par étape montrent le plan, avec le fond et les portes toujours indiqués. L'indicateur d'équilibre donne le statut « À surveiller » pour le jeu d'essai « couloirs ». |
-| 2 · Ajustement manuel | Un article peut être déplacé à la main. Tout déplacement interdit est bloqué avec un message clair. |
+| 2 · Ajustement manuel | Un article peut être déplacé à la main. Tout déplacement interdit est bloqué avec un message clair. Un déplacement accepté est enregistré aussitôt et peut être annulé ; l'ordre de chargement est recalculé. Le détail des critères est dans la fiche du prototype 2. |
 | 3 · Mode quai | Un chargement complet peut être déroulé étape par étape sur tablette. |
 | 4 · Signalement et recalcul | Un chargement est déroulé avec un problème signalé. Le retrait, la revérification et la nouvelle simulation fonctionnent comme le décrit le parcours de la section 6. |
 | En continu | Le porteur sait expliquer le fonctionnement de l'algorithme de placement. Chaque prototype respecte les exigences d'accessibilité de la section 7. Chaque formulaire applique RG-21 et chaque action destructrice RG-22. |
@@ -334,11 +344,14 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
 - [ ] **Validation métier, sanglage, valeurs réelles** : reportés de la note de cadrage.
 - [ ] **Seuils de calage** : part couverte d'une face (50 % provisoire) et écart toléré pour considérer deux faces en contact (20 mm provisoire), à confirmer avec un professionnel.
 - [ ] **Seuils d'équilibre** : 55 / 45 et 60 / 40, provisoires, à confirmer avec un professionnel.
+- [ ] **Pas de déplacement au clavier** : 50 mm, et 500 mm avec Maj, provisoires, à confirmer à l'usage.
+- [ ] **Quart de tour à plat** (point important) : un article ne peut pas être tourné à plat, longueur et largeur échangées. Une palette ne peut donc pas être posée en travers, ni par le calcul ni à la main. À reprendre après la V1, ou plus tôt si un jeu d'essai le montre.
+- [ ] **Modifier une position dans le tableau des placements** : reporté après le prototype 2.
 
 ## 10. État du projet
 
-- **Étape atteinte** : Cahier des charges fonctionnel V5.9 du 15 novembre 2026 : tableaux triables, indication des modifications non enregistrées, aperçu de l'article sous trois faces, ajoutés pendant le développement du prototype 1 (étape 8b). V5.8 du 4 novembre 2026 : formes non rectangulaires, poids par commande, dimensions mesurées, calage, équilibre, zone « Articles à placer », vérification des saisies et confirmations validés. La V5.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3 et le cahier des charges technique V3.9 sont rédigés.
-- **Prochaine étape** : suite du développement du prototype 1 avec Claude Code (étape 10, plan de chargement), d'après les maquettes validées le 4 novembre 2026. La V5.10 du 16 novembre 2026 précise la préparation d'une tournée (étape 9).
+- **Étape atteinte** : prototype 1 terminé et fusionné, étiquette `v0.1.0` sur `main` (catalogue, commandes, calcul et plan 2D en lecture). Cahier des charges fonctionnel V5.11 du 19 novembre 2026 : ajustement manuel précisé pour le prototype 2. V5.10 du 16 novembre 2026 : préparation d'une tournée. V5.9 du 15 novembre 2026 : tableaux triables, indication des modifications non enregistrées, aperçu de l'article sous trois faces, ajoutés pendant le développement du prototype 1 (étape 8b). V5.8 du 4 novembre 2026 : formes non rectangulaires, poids par commande, dimensions mesurées, calage, équilibre, zone « Articles à placer », vérification des saisies et confirmations validés. La V5.2 était validée le 2 novembre 2026. Le brief V4, la note de cadrage V5.3 et le cahier des charges technique V3.9 sont rédigés.
+- **Prochaine étape** : développement du prototype 2, ajustement manuel, avec Claude Code (étapes P2-1 à P2-8 de `docs/sessions-claude-code.md`), d'après la fiche `docs/prototypes/prototype-2.md` et les captures 04f à 04i.
 - **Profil du client** : technique (développeur), sans connaissance du métier.
 - **Direction artistique** : piste retenue (charte graphique V2) ; ligne directrice pour le maquettiste.
 - **Décisions prises** :
@@ -369,7 +382,9 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
   - tableaux triables par colonne, modèles de camions triés par nom par défaut ;
   - dans tous les tableaux, ligne cliquable vers la fiche de l'élément, sans bouton « Ouvrir » ;
   - modifications non enregistrées signalées près du bouton d'enregistrement ;
-  - aperçu de l'article sous trois faces (dessus, face, côté).
+  - aperçu de l'article sous trois faces (dessus, face, côté) ;
+  - ajustement manuel (19 novembre 2026) : chaque déplacement accepté s'enregistre aussitôt dans la version actuelle, marquée « ajustée à la main » ; « Relancer le calcul » crée une nouvelle version, après confirmation sur un plan ajusté, l'ancienne restant consultable ; « Annuler le dernier déplacement » par un bouton et Ctrl + Z ; ordre de chargement recalculé après chaque déplacement, déplacement refusé si aucun ordre n'est possible (RG-08) ; pas au clavier de 50 mm, 500 mm avec Maj, arrêt au contact avec l'aimantation ;
+  - précisions de l'ajustement manuel (19 novembre 2026, détail dans `docs/prototypes/prototype-2.md`) : rotation parmi les orientations autorisées, quart de tour à plat en point ouvert ; pose au plus bas en vue de dessus ; annulation sur plusieurs niveaux pendant la visite de la page ; confirmation de relance seulement sur un plan ajusté, de ton neutre ; anciennes versions en lecture seule ; ajustement de la seule version actuelle d'une tournée en préparation ; cinq meilleures places proposées sans glisser ; article sans place laissé dans la zone avec un message ; modification d'une position dans le tableau reportée.
 - **Priorités** : définitives, voir la section 2.
 - **Points à arbitrer** : aucun.
 - **Informations à définir** :
@@ -379,4 +394,5 @@ L'application vise le niveau **AA des WCAG 2.2**, le référentiel international
   - validation métier ;
   - nom et logo de l'application ;
   - seuils de calage ;
-  - seuils d'équilibre.
+  - seuils d'équilibre ;
+  - pas de déplacement au clavier.

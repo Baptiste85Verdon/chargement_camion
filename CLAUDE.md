@@ -16,7 +16,7 @@ Lis-les avant de coder ; en cas de doute, ils l'emportent sur ta mémoire et sur
 | `docs/design-system.md` | Règles d'usage des jetons et des composants |
 | `src/styles/plan-de-chargement.tokens.json` | Source unique des couleurs, typographies, espacements, rayons, épaisseurs, ombre |
 | `docs/maquettes/` | Maquette validée : captures par écran (`captures/`, index dans `README.md`) et archive cliquable |
-| `docs/prototypes/prototype-1.md` | Fiche du prototype en cours : périmètre, RG, étapes, critères |
+| `docs/prototypes/prototype-2.md` | Fiche du prototype en cours (celle du prototype 1, terminé, reste dans le même dossier) : périmètre, RG, étapes, critères |
 | `docs/sessions-claude-code.md` | Découpage en sessions et étape en cours |
 | `docs/conventions-git.md` | Branches, commits, demandes de fusion |
 | `tests/jeux-essai/` | Jeux d'essai « couloirs » et « fenêtres isolées », avec résultats attendus |

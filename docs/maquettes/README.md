@@ -69,6 +69,12 @@ Relevés en relisant les captures. On ne retouche pas la maquette : on corrige d
 - **04b, camion trop chargé** (recette, étape 11) : avec 8 palettes de tuiles en plus dans T-2026-118, le plan calculé laisse, outre 2 articles en trop, 3 articles mal calés et 62 / 38 au pire moment. La capture montre un dépassement plus léger, sans article mal calé. Ce n'est pas un défaut : le bandeau et l'indicateur le signalent, voir le point ouvert « Camion trop chargé » du cahier technique (section 10).
 - **02 et 02e, choix du camion** (recette, étape 11) : la capture aligne les quatre cartes de camion sur une ligne. Dans le code, elles passent sur deux lignes (trois, puis une).
 - **03b, lignes de la commande** (recette, étape 11) : la capture affiche l'unité « mm » dans chaque champ de dimension propre et la pose (« À plat ») sous la référence de l'article. Le code n'affiche ni l'une ni l'autre.
+- **04f et 04h, pas de déplacement** (préparation du prototype 2) : la barre d'outils et la carte de l'article sélectionné annoncent un pas de 100 mm. Le pas décidé est de 50 mm, et de 500 mm avec Maj (cahier technique 5.3).
+- **04f à 04i, bouton « Relancer la simulation »** (préparation du prototype 2) : la page du plan dit « Relancer le calcul ». La « nouvelle simulation » est réservée au mode quai (RG-15, RG-16) : garder « Relancer le calcul ».
+- **04h, ordre de chargement** (préparation du prototype 2) : l'article retiré (A12) y reste, grisé, à l'étape 12. Un article à placer n'a pas de position, donc pas de rang (cahier technique 5.7 et 4.8) : il sort de l'ordre de chargement et n'apparaît que dans la zone « Articles à placer ».
+- **04g et 04i, panneau des raccourcis** (préparation du prototype 2) : il ne contient pas « Annuler le dernier déplacement ». Ce raccourci, Ctrl + Z, y figure avec la mention « Fixe », comme les flèches (cahier technique 5.6 et 5.18).
+- **04f et 04h, bouton « Tourner de 90° »** (décision du 19 novembre 2026) : le quart de tour à plat n'existe pas en V1. Le bouton s'appelle « Changer d'orientation » et passe à l'orientation autorisée suivante (cahier technique 5.5).
+- **04h, places proposées** (décision du 19 novembre 2026) : le bandeau annonce « 60 positions permises » et les vues en marquent autant. Au plus les 5 meilleures places sont proposées, classées par le score du placeur (cahier technique 5.3).
 
 ## Écarts validés avec la maquette
 
