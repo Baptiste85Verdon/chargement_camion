@@ -66,3 +66,24 @@ export const SANS_RANG = 0
  * « À surveiller » jusqu'à 60 %, « Déséquilibré » au-delà.
  */
 export const SEUILS_EQUILIBRE = { equilibre: 55, aSurveiller: 60 } as const
+
+/**
+ * Pas d'un déplacement au clavier, en millimètres (cahier technique 5.3) :
+ * `PAS_CLAVIER` avec une flèche, `PAS_CLAVIER_GRAND` avec Maj + flèche.
+ * Valeurs provisoires, décidées le 19 novembre 2026 (section 10).
+ */
+export const PAS_CLAVIER = 50
+export const PAS_CLAVIER_GRAND = 500
+
+/**
+ * Distance d'aimantation, en pixels à l'écran (cahier technique 5.2, étape 4).
+ * L'interface la convertit en millimètres selon le zoom ; les fonctions du
+ * domaine reçoivent le seuil en millimètres. Valeur provisoire (section 10).
+ */
+export const SEUIL_AIMANTATION_PX = 10
+
+/**
+ * Nombre maximal de places proposées par « Choisir une place » (cahier
+ * technique 5.3 ; décision 10 du prototype 2).
+ */
+export const MAX_PLACES_PROPOSEES = 5
