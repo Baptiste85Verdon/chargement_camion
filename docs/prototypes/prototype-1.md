@@ -85,7 +85,7 @@ Le prototype 1 est accepté quand :
 - [x] Chaque formulaire applique RG-21, et chaque suppression passe par une confirmation (RG-22).
 - [x] axe-core ne trouve aucune erreur sur les pages du prototype, et un parcours complet est possible au clavier seul.
 - [x] Chaque RG du tableau ci-dessus a au moins un test qui porte son numéro.
-- [ ] Le porteur sait expliquer le validateur, le placeur et `optimiser`.
+- [ ] Le porteur sait expliquer le validateur, le placeur et `optimiser` : à faire avant la soutenance.
 
 ## Avancement
 
