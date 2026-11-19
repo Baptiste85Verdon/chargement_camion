@@ -253,6 +253,7 @@ L'ordre suit la règle du projet : le domaine d'abord, en TDD, puis les données
   - au clavier : flèches et Maj + flèches, Entrée valide, Échap annule ; arrêt au contact avec l'aimantation ; R et Suppr, aux valeurs par défaut, n'agissent que quand l'article a le focus, ce qui reste conforme aux WCAG (critère 2.1.4) tant qu'ils ne sont pas personnalisables (étape P2-7) ;
   - « Choisir une place » : marques « + » dans les vues, un clic ou un toucher place l'article ;
   - zone « Articles à placer » : « Placer », « Tout placer » ;
+  - orientation dans la zone (décision du 19 novembre 2026, relecture de l'étape P2-3) : un article de la zone reprend l'orientation qu'il avait avant son retrait, sinon la première autorisée ; on peut la changer dans la zone, par le bouton « Changer d'orientation » et la touche R, avant de le placer. Elle est passée à `proposerPlaces` (option `orientation`) et à `placerDepuisZone` (paramètre `orientations`) ;
   - interrupteur d'aimantation, choix mémorisé ;
   - message de refus dans un bandeau annoncé par `aria-live`, l'article reprend sa place ; focus replacé sur l'article.
 - Enregistrement immédiat de chaque changement accepté, mention « ajustée à la main » ; « Annuler le dernier déplacement » par un bouton et Ctrl + Z.
