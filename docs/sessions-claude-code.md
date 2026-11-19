@@ -1,4 +1,4 @@
-# Sessions Claude Code — prototype 1
+# Sessions Claude Code — prototypes 1 et 2
 
 Une session = une étape = une branche = une demande de fusion. Le déroulé est décrit dans `CLAUDE.md` (« Début de chaque session »), il suffit donc de très peu de mots :
 
@@ -194,3 +194,94 @@ Pas de branche : c'est la mise en route. Message à coller une seule fois, au to
 - Vérifier chaque critère d'acceptation de `docs/prototypes/prototype-1.md`, compléter les tests manquants, vérifier que chaque RG du prototype a un test portant son numéro.
 - Parcours clavier complet et passage axe-core ; captures des écrans comparées aux maquettes, avec la liste des écarts.
 - Après la fusion : étiquette `v0.1.0`.
+
+---
+
+## Prototype 2 · Ajustement manuel
+
+Fiche : `docs/prototypes/prototype-2.md`. Avant l'étape P2-1, le porteur tranche les « Points à trancher avant de coder » de la fiche ; chaque étape rappelle ceux qui la concernent. Si une question est encore ouverte au début d'une étape : s'arrêter et la poser, sans décider seul.
+
+L'ordre suit la règle du projet : le domaine d'abord, en TDD, puis les données, puis l'interface, et une recette pour finir. Chaque étape peut être fusionnée seule : à sa fusion, l'application reste utilisable et sans régression.
+
+## Étape P2-1 · Domaine : ordre de chargement
+
+- [ ] Fait — branche `feat/p2-ordre-chargement`
+- Cahier technique : sections 4.2 (règle 7), 4.7 et 4.8. Cahier fonctionnel : RG-07, RG-08. Point à trancher : 3 (départage).
+- `ordonnerChargement(plan, unites, camion)`, en TDD : contraintes d'appui (ce qui porte est chargé avant), contraintes d'accès (un article gênant au sens de la règle 7 est chargé après), tri topologique, départage, `null` en cas de cycle.
+- Réutiliser la géométrie de la règle 7 du validateur plutôt que la recopier (remaniement à part si besoin).
+- Tests de référence : sur « couloirs », l'ordre rendu est réalisable et respecte les deux contraintes ; une palette posée à la main sur une autre est chargée après elle ; une disposition sans ordre possible rend `null` (test « RG-08 : … »).
+- Rien ne change dans l'interface.
+
+## Étape P2-2 · Domaine : déplacement et rotation
+
+- [ ] Fait — branche `feat/p2-deplacement`
+- Cahier technique : sections 4.2, 5.2 (étape 5), 5.5 et 5.7. Cahier fonctionnel : RG-04, RG-06 à RG-09, RG-19. Points à trancher : 1 (rotation), 2 (hauteur d'un article déplacé).
+- Fonctions pures, en TDD, un test par règle :
+  - déplacer une unité vers une position : RG-06 et RG-09 d'abord (chevauchement, hors caisse), puis les autres règles du validateur (RG-04, RG-07, RG-19), puis `ordonnerChargement` ; le résultat est soit le nouveau plan avec ses rangs, soit un refus avec les règles enfreintes ;
+  - changer d'orientation, parmi les orientations autorisées, contrôlé comme un déplacement ;
+  - retirer une unité vers la zone « Articles à placer », et l'y remettre.
+- Messages de refus : un texte par règle, en langage courant, avec le numéro de RG (capture 04f) ; textes dans `src/textes/fr.ts`. Vérifier que chaque message cite la bonne RG (écarts connus de la maquette).
+- Tests de référence sur « couloirs » : A12 posé sur A11 refusé (fragile, RG-04, RG-08) ; chevauchement et sortie de la caisse refusés (RG-09) ; fenêtre debout déplacée sans calage refusée (RG-19) ; article de C1 placé derrière C3 dans sa bande refusé (RG-07) ; un déplacement permis rend un plan accepté par le validateur, avec un ordre recalculé.
+
+## Étape P2-3 · Domaine : aimantation, pas au clavier et places proposées
+
+- [ ] Fait — branche `feat/p2-aimantation`
+- Cahier technique : sections 4.3, 5.2 (étape 4), 5.3 et 5.7. Points à trancher : 7 (distance d'aimantation), 9 (placement automatique), 10 (places proposées).
+- Fonctions pures, en TDD :
+  - aimantation : une position proche d'une paroi ou du bord d'un article, à moins du seuil, s'y colle ;
+  - pas au clavier : `PAS_CLAVIER` (50 mm) et `PAS_CLAVIER_GRAND` (500 mm) dans `constantes.ts` ; avec l'aimantation, un pas qui entrerait dans une paroi ou un article est raccourci jusqu'au contact ; sans elle, le pas est entier ;
+  - places proposées pour « Choisir une place » (capture 04h) : positions permises pour une unité, dans son orientation actuelle ;
+  - placement automatique d'un ou de tous les articles de la zone (« Placer », « Tout placer »), sans déplacer les autres.
+- Mesurer le temps de calcul des places proposées sur « couloirs » et le noter dans la demande de fusion.
+
+## Étape P2-4 · Données : version ajustée à la main
+
+- [ ] Fait — branche `feat/p2-donnees-ajustement`
+- Cahier technique : sections 3, 6.1 et 7.1. Cahier fonctionnel : RG-21 (raccourcis), RG-22.
+- Migration : colonne « ajustée à la main » de `plan_chargement` ; fonction SQL qui enregistre en une seule opération la disposition ajustée de la dernière version (placements modifiés, supprimés et ajoutés, rangs, marque), avec ses `GRANT` au rôle `anon` et un commentaire sur les politiques à durcir avec les comptes (`CLAUDE.md`, section Supabase).
+- Dépôts : `PlanRepository.ajuster`, et l'obtention d'une version donnée pour la consulter ; implémentations Supabase et en mémoire, tests de contrat. Refus d'ajuster une version qui n'est pas la dernière.
+- Préférences de l'appareil (aimantation, raccourcis) : lecture et écriture dans le stockage local, protégées par `try/catch`, avec une valeur par défaut si rien n'est lu.
+- `validerRaccourcis` dans `domaine/validation.ts`, en TDD : une touche ne sert qu'à une action, message « La touche R sert déjà à … » (RG-21, capture 04i).
+- Rien ne change encore dans l'interface.
+
+## Étape P2-5 · Plan : ajuster au clavier et sans glisser
+
+- [ ] Fait — branche `feat/p2-ajustement-clavier`
+- Captures 04f, 04h. Cahier technique : sections 5.3, 5.5, 5.7, 5.18 et 6. Cahier fonctionnel : 4.4, RG-08, RG-09, RG-22. Points à trancher : 4 (annulation), 5 (confirmation de relance), 8 (plans ajustables).
+- Le chemin accessible d'abord, sans glisser-déposer :
+  - carte de l'article sélectionné : changer d'orientation, « Choisir une place », « Retirer du plan » ;
+  - au clavier : flèches et Maj + flèches, Entrée valide, Échap annule ; arrêt au contact avec l'aimantation ; R et Suppr, aux valeurs par défaut, n'agissent que quand l'article a le focus, ce qui reste conforme aux WCAG (critère 2.1.4) tant qu'ils ne sont pas personnalisables (étape P2-7) ;
+  - « Choisir une place » : marques « + » dans les vues, un clic ou un toucher place l'article ;
+  - zone « Articles à placer » : « Placer », « Tout placer » ;
+  - interrupteur d'aimantation, choix mémorisé ;
+  - message de refus dans un bandeau annoncé par `aria-live`, l'article reprend sa place ; focus replacé sur l'article.
+- Enregistrement immédiat de chaque changement accepté, mention « ajustée à la main » ; « Annuler le dernier déplacement » par un bouton et Ctrl + Z.
+- « Relancer le calcul » et « Reporter toute la commande » sur un plan ajusté : confirmation qui prévient que les ajustements seront perdus (RG-22).
+- Ordre de chargement, bandeau de calage et indicateur d'équilibre mis à jour à chaque changement.
+- Tests de composants et de bout en bout : déplacement permis puis refusé, annulation, rechargement de la page ; axe-core sur la page en cours d'ajustement.
+
+## Étape P2-6 · Plan : glisser-déposer
+
+- [ ] Fait — branche `feat/p2-glisser-deposer`
+- Captures 04, 04f. Cahier technique : sections 5.1, 5.2, 5.4 et 5.7. Point à trancher : 2 (hauteur d'un article déplacé).
+- Pointer Events : souris, doigt et stylet avec le même code. Dans chaque vue, l'article suit le pointeur sur les deux axes montrés.
+- Validation continue pendant le geste : contour, icône et court texte, jamais la couleur seule ; `ombre-flottant` sur l'article saisi, seule ombre du plan ; aimantation.
+- Dépôt dans le camion ou dans la zone « Articles à placer », sortie de la zone vers le camion ; animation d'emboîtement, désactivée avec `prefers-reduced-motion`.
+- Mêmes fonctions du domaine et même enregistrement qu'à l'étape P2-5 : le glisser n'est qu'une autre façon de proposer une position.
+- Tests de bout en bout du glisser-déposer avec Playwright (souris et toucher).
+
+## Étape P2-7 · Plan : raccourcis personnalisables et anciennes versions
+
+- [ ] Fait — branche `feat/p2-raccourcis-versions`
+- Captures 04g, 04i. Cahier technique : sections 5.6 et 5.18. Cahier fonctionnel : RG-21. Point à trancher : 6 (anciennes versions).
+- Panneau « Raccourcis clavier », ouvert par le bouton et par la touche « ? » : modifier un raccourci, refus immédiat d'une touche déjà prise, sous le raccourci et dans le résumé (RG-21), Échap annule la modification, « Rétablir les raccourcis par défaut » ; choix mémorisé sur l'appareil. Les flèches restent fixes ; Ctrl + Z selon le point à trancher 4.
+- Tous les raccourcis du plan passent par ce réglage, y compris ceux de l'étape P2-5.
+- Consultation des anciennes versions du plan, en lecture seule.
+- Tests de composants du panneau ; axe-core avec le panneau ouvert.
+
+## Étape P2-8 · Recette du prototype 2
+
+- [ ] Fait — branche `test/p2-recette`
+- Vérifier chaque critère d'acceptation de `docs/prototypes/prototype-2.md`, compléter les tests manquants, vérifier que chaque RG du prototype a un test portant son numéro.
+- Parcours clavier complet de l'ajustement et passage axe-core ; parcours au toucher ; captures des écrans comparées aux maquettes 04f à 04i, avec la liste des écarts.
+- Après la fusion : étiquette `v0.2.0`.
