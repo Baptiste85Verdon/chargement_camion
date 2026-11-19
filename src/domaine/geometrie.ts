@@ -64,3 +64,15 @@ export function surfaceCommuneYZ(a: Boite, b: Boite): number {
 export function estPoseSur(dessus: Boite, dessous: Boite): boolean {
   return dessus.z0 === dessous.z1 && surfaceCommuneXY(dessus, dessous) > 0
 }
+
+/**
+ * Règle 7 du validateur (RG-07) : `b` gêne la sortie de `a` par les portes.
+ * C'est le cas s'il est posé sur `a`, ou s'il est entre `a` et les portes
+ * dans la même bande en largeur et que son bas est plus bas que le dessus
+ * de `a` : pour sortir `a`, il faudrait le faire passer par-dessus `b`.
+ * Partagée par le validateur et par `ordonnerChargement` (4.8).
+ */
+export function gene(b: Boite, a: Boite): boolean {
+  const devant = b.x0 >= a.x1 && recouvrement(a.y0, a.y1, b.y0, b.y1) > 0 && b.z0 < a.z1
+  return devant || estPoseSur(b, a)
+}
