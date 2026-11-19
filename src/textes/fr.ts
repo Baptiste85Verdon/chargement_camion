@@ -342,6 +342,124 @@ export const textes = {
       enTrop: 'en trop (RG-10)',
       note: "Les articles en trop peuvent être reportés en liste d'attente (RG-11).",
     },
+    // Ajustement refusé (RG-08, RG-09, capture 04f). Les numéros de règle
+    // viennent de `reglesCitees` (domaine), jamais d'ici. `a` est l'article
+    // changé, `b` l'autre article en cause, déjà mis en forme par `citer`.
+    ajustement: {
+      citer: (nom: string, repere: string, code: string) => `« ${nom} » (${repere}, ${code})`,
+      titreDeplacement: (raison: string) => `Déplacement refusé : ${raison}`,
+      titreRetrait: (raison: string) => `Retrait refusé : ${raison}`,
+      reprendSaPlace: "L'article reprend sa place.",
+      retirerAussi: (reperes: string) => `Retirer aussi ${reperes}`,
+      refus: {
+        horsCaisse: {
+          raison: 'hors de la caisse',
+          explication: (a: string) =>
+            `${a} dépasserait d'une paroi, du plancher ou du plafond. Rien ne sort de la caisse.`,
+        },
+        chevauchement: {
+          raison: 'place occupée',
+          explication: (a: string, b: string) =>
+            `${a} occuperait une partie de la place de ${b}. Choisissez une place libre.`,
+        },
+        orientationInterdite: {
+          raison: 'orientation interdite',
+          explication: (a: string) =>
+            `${a} ne se transporte pas dans cette orientation. Choisissez une orientation autorisée.`,
+        },
+        orientationUnique: {
+          raison: 'une seule orientation',
+          explication: (a: string) => `${a} n'a qu'une orientation autorisée.`,
+        },
+        paroiAbsente: {
+          raison: 'paroi trop loin',
+          explication: (a: string) =>
+            `${a}, contre une paroi, doit toucher la paroi gauche ou la paroi droite.`,
+        },
+        appuiInsuffisant: {
+          raison: 'appui insuffisant',
+          explication: (a: string) =>
+            `${a} reposerait sur trop peu de sa base. Il doit être au plancher ou bien appuyé sur d'autres articles.`,
+        },
+        surFragile: {
+          raison: 'article fragile',
+          explication: (a: string, b: string) =>
+            `${a} reposerait sur ${b}. Un article fragile ne supporte rien au-dessus de lui.`,
+        },
+        fragileCharge: {
+          raison: 'article fragile',
+          explication: (a: string, b: string) =>
+            `${b} reposerait sur ${a}. Un article fragile ne supporte rien au-dessus de lui.`,
+        },
+        surNonPorteur: {
+          raison: 'dessus non porteur',
+          explication: (a: string, b: string) =>
+            `${a} reposerait sur ${b}, dont le dessus ne peut rien porter.`,
+        },
+        nonPorteurCharge: {
+          raison: 'dessus non porteur',
+          explication: (a: string, b: string) =>
+            `${b} reposerait sur ${a}, dont le dessus ne peut rien porter.`,
+        },
+        surPlusLeger: {
+          raison: 'lourd sur léger',
+          explication: (a: string, b: string) =>
+            `${a} reposerait sur ${b}, plus léger que lui. Les articles lourds vont en dessous.`,
+        },
+        sousPlusLourd: {
+          raison: 'lourd sur léger',
+          explication: (a: string, b: string) =>
+            `${b} reposerait sur ${a}, plus léger que lui. Les articles lourds vont en dessous.`,
+        },
+        accesBloque: {
+          raison: 'accès au déchargement',
+          explication: (a: string, b: string) =>
+            `${b}, livré plus tard, barrerait le passage de ${a} vers les portes.`,
+        },
+        bloqueAcces: {
+          raison: 'accès au déchargement',
+          explication: (a: string, b: string) =>
+            `${a} barrerait le passage de ${b}, livré plus tôt, vers les portes.`,
+        },
+        deboutNonCale: {
+          raison: 'article debout non calé',
+          explication: (a: string) =>
+            `${a} ne s'appuierait ni contre une paroi, ni contre des articles couvrant la moitié d'une grande face.`,
+        },
+        deboutHorsPlancher: {
+          raison: 'article debout hors du plancher',
+          explication: (a: string) => `${a} est posé debout : il doit reposer sur le plancher.`,
+        },
+        surDebout: {
+          raison: 'article debout',
+          explication: (a: string, b: string) =>
+            `${a} reposerait sur ${b}, posé debout. Rien ne se pose sur un article debout.`,
+        },
+        deboutCharge: {
+          raison: 'article debout',
+          explication: (a: string, b: string) =>
+            `${b} reposerait sur ${a}, posé debout. Rien ne se pose sur un article debout.`,
+        },
+        lourdEnHauteur: {
+          raison: 'article lourd en hauteur',
+          explication: (a: string) =>
+            `${a} est trop lourd pour être posé si haut. Placez-le plus près du plancher.`,
+        },
+        ordreImpossible: {
+          raison: 'aucun ordre de chargement',
+          explication: (a: string) =>
+            `Avec ${a} à cette place, aucun ordre ne permet d'amener chaque article à sa place depuis les portes.`,
+        },
+      },
+      // Retrait refusé (5.7, décision 12 du prototype 2) : `retire` est
+      // l'article retiré, `article` celui qui perdrait son appui ou son calage.
+      retrait: {
+        appuiInsuffisant: (retire: string, article: string) =>
+          `${retire} porte ${article} : retirez d'abord ${article}.`,
+        deboutNonCale: (retire: string, article: string) =>
+          `Sans ${retire}, ${article} n'est plus calé.`,
+      },
+    },
     // Article sélectionné
     selection: 'Article sélectionné',
     selectionMultiple: (n: number) => `${n} articles sélectionnés`,
