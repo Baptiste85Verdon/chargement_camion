@@ -142,15 +142,29 @@ describe('« Placer » et « Tout placer » (cahier technique 5.7)', () => {
     expect(resultat.plan.map((p) => p.uniteId).sort()).toEqual(['P1', 'Q'])
   })
 
-  it('place l’article là où `placer` l’aurait mis', () => {
-    // `placer` seul n'essaie pas le point contre la paroi opposée (réservé
-    // aux variantes d'`optimiser`, 4.4) : Q va contre P1, au fond, et non
-    // contre la paroi droite comme la première place proposée.
+  it('place l’article sur la première place proposée', () => {
+    // Ce que « Choisir une place » montre en tête est ce que fait « Placer » :
+    // Q va au fond, contre la paroi droite.
     const unites = [colis('P1'), colis('Q')]
     const plan = [poser('P1', 0, 0, 0, 1)]
+    const premiere = proposerPlaces(plan, 'Q', unites, camion)[0]
     const resultat = placerDepuisZone(plan, ['Q'], unites, camion)
-    expect(resultat.plan.find((p) => p.uniteId === 'Q')).toMatchObject({ x: 0, y: 1000, z: 0 })
+    expect(resultat.plan.find((p) => p.uniteId === 'Q')).toMatchObject({ x: 0, y: 1400, z: 0 })
+    expect(resultat.plan.find((p) => p.uniteId === 'Q')).toMatchObject({ ...premiere })
     expect(resultat.places).toEqual(['Q'])
+  })
+
+  it('place un article de la zone dans l’orientation demandée, sinon la première autorisée', () => {
+    const fenetre: Unite = {
+      ...colis('F', { l: 1500, w: 1350, h: 180 }),
+      orientations: ['aPlat', 'debout'],
+    }
+    const unites = [colis('P1'), fenetre]
+    const plan = [poser('P1', 0, 0, 0, 1)]
+    const aPlat = placerDepuisZone(plan, ['F'], unites, camion)
+    expect(aPlat.plan.find((p) => p.uniteId === 'F')?.orientation).toBe('aPlat')
+    const debout = placerDepuisZone(plan, ['F'], unites, camion, { F: 'debout' })
+    expect(debout.plan.find((p) => p.uniteId === 'F')?.orientation).toBe('debout')
   })
 
   it('« Tout placer » place tous les articles de la zone, rangs renumérotés', () => {

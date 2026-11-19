@@ -1,16 +1,16 @@
 // Places proposées et placement automatique depuis la zone « Articles à
 // placer » (cahier technique 5.3 et 5.7 ; décisions 9 et 10 du prototype 2).
 //
-// Les deux s'appuient sur le placeur au lieu de refaire sa recherche :
 // - `proposerPlaces` essaie les points candidats du placeur autour des autres
 //   articles, garde ceux que l'ajustement manuel accepte (validateur, puis
 //   ordre de chargement), et les classe avec le score du placeur ;
-// - `placerDepuisZone` appelle `placer` avec le plan actuel comme fixes :
-//   aucun autre article ne bouge.
+// - `placerDepuisZone` pose chaque article sur la première place proposée :
+//   ce que « Choisir une place » montre en tête est ce que fait « Placer ».
+//   Aucun autre article ne bouge.
 //
-// Dans les deux cas, chaque place passe par `deplacer` ou `remettre` : une
-// place proposée ou choisie automatiquement est exactement une place que
-// l'opérateur aurait pu obtenir à la main.
+// Chaque place passe par `deplacer` ou `remettre` : une place proposée ou
+// choisie automatiquement est exactement une place que l'opérateur aurait pu
+// obtenir à la main.
 import { deplacer, type Pose, remettre, type ResultatAjustement } from './ajustement'
 import { MAX_PLACES_PROPOSEES, SANS_RANG } from './constantes'
 import { boiteDe, trouverUnite } from './geometrie'
@@ -19,7 +19,6 @@ import {
   contexteDe,
   creerEssai,
   type Essai,
-  placer,
   poserAuPoint,
   pointsCandidats,
   trierUnites,
@@ -122,28 +121,29 @@ export interface ResultatPlacementZone {
 /**
  * « Placer » (un article) et « Tout placer » (5.7 ; décision 9 du prototype 2).
  * Les articles de la zone sont pris dans l'ordre du placeur (4.3, étape 2).
- * Pour chacun :
- * 1. `placer` lui cherche une place, avec les placements actuels comme
- *    fixes : aucun autre article ne bouge ;
- * 2. la place trouvée passe par `remettre`, comme une remise à la main :
- *    contrôle des autres articles et ordre de chargement recalculé (4.8).
- * Un article sans place, ou dont la place est refusée, reste dans la zone.
+ * Chacun est posé sur la première place que propose `proposerPlaces`, dans
+ * son orientation : celle de `orientations` (l'orientation qu'il avait avant
+ * son retrait, ou celle choisie dans la zone), sinon la première autorisée.
+ * La pose passe par `remettre`, comme une remise à la main : l'ordre de
+ * chargement est recalculé (4.8) et aucun autre article ne bouge.
+ * Un article sans place proposée reste dans la zone (RG-10).
  */
 export function placerDepuisZone(
   plan: Placement[],
   uniteIds: string[],
   unites: Unite[],
   camion: Camion,
+  orientations: Partial<Record<string, Orientation>> = {},
 ): ResultatPlacementZone {
   let courant = plan
   const places: string[] = []
   const restants: string[] = []
   for (const unite of trierUnites(uniteIds.map((id) => trouverUnite(id, unites)))) {
-    const dansLePlan = unites.filter((u) => courant.some((p) => p.uniteId === u.id))
-    const trouve = placer([...dansLePlan, unite], camion, courant).placements.find(
-      (p) => p.uniteId === unite.id,
-    )
-    const resultat = trouve && remettre(courant, unite.id, trouve, unites, camion)
+    const [premiere] = proposerPlaces(courant, unite.id, unites, camion, {
+      orientation: orientations[unite.id],
+      max: 1,
+    })
+    const resultat = premiere && remettre(courant, unite.id, premiere, unites, camion)
     if (resultat?.accepte) {
       courant = resultat.plan
       places.push(unite.id)
