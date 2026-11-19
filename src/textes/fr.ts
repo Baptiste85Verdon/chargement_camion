@@ -459,6 +459,14 @@ export const textes = {
         deboutNonCale: (retire: string, article: string) =>
           `Sans ${retire}, ${article} n'est plus calé.`,
       },
+      // « Placer » et « Tout placer » (cahier technique 5.7, décision 9).
+      placementZone: {
+        orientation: { aPlat: 'à plat', debout: 'debout', contreParoi: 'contre une paroi' },
+        autreOrientation: (repere: string, obtenue: string, demandee: string) =>
+          `${repere} placé ${obtenue} : aucune place ${demandee}.`,
+        sansPlace: (repere: string) =>
+          `${repere} reste dans la zone : aucune place, dans aucune orientation autorisée.`,
+      },
     },
     // Article sélectionné
     selection: 'Article sélectionné',

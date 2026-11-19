@@ -50,4 +50,18 @@ describe("messages de refus d'un ajustement", () => {
     )
     expect(ajustement.retirerAussi('A05')).toBe('Retirer aussi A05')
   })
+
+  it("RG-10 : « Placer » dit quand l'article change d'orientation, faute de place dans la sienne", () => {
+    const { placementZone } = ajustement
+    expect(
+      placementZone.autreOrientation(
+        'A05',
+        placementZone.orientation.contreParoi,
+        placementZone.orientation.aPlat,
+      ),
+    ).toBe('A05 placé contre une paroi : aucune place à plat.')
+    expect(placementZone.sansPlace('A05')).toBe(
+      'A05 reste dans la zone : aucune place, dans aucune orientation autorisée.',
+    )
+  })
 })
