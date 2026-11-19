@@ -13,7 +13,7 @@ import {
   surfaceCommuneYZ,
   trouverUnite,
 } from './geometrie'
-import type { Camion, Placement, Unite } from './types'
+import type { Camion, Orientation, Placement, Unite } from './types'
 import { valider } from './validateur'
 
 /** Sens de parcours en largeur : depuis la paroi gauche ou depuis la paroi droite. */
@@ -32,7 +32,7 @@ export interface ResultatPlaceur<U extends Unite = Unite> {
  * point vers la droite (son y vaut celui du point) ; avec l'ancrage `droite`,
  * elle s'étend vers la gauche et son bord droit vient sur le point.
  */
-interface PointCandidat {
+export interface PointCandidat {
   x: number
   y: number
   z: number
@@ -40,7 +40,7 @@ interface PointCandidat {
 }
 
 /** Un essai accepté par le validateur, avec les quatre critères de son score. */
-interface Essai {
+export interface Essai {
   placement: Placement
   boite: Boite
   /** Compacité : bord avant de toute la charge, côté portes. Plus petit, mieux c'est. */
@@ -160,6 +160,104 @@ function estEnAppuiComplet(b: Boite, autres: Boite[]): boolean {
   return appui >= base
 }
 
+/**
+ * Ce que le score d'un essai doit savoir de la charge déjà posée : ses boîtes,
+ * son bord avant côté portes, et de quoi calculer son centre de gravité en y.
+ */
+export interface ContexteEssai {
+  boites: Boite[]
+  front: number
+  sommePoids: number
+  sommePoidsY: number
+}
+
+/** Le contexte d'une charge posée : `boites[i]` est la boîte de `poids[i]`. */
+export function contexteDe(boites: Boite[], poids: number[]): ContexteEssai {
+  let sommePoids = 0
+  let sommePoidsY = 0
+  for (const [i, b] of boites.entries()) {
+    const p = poids[i] ?? 0
+    sommePoids += p
+    sommePoidsY += p * ((b.y0 + b.y1) / 2)
+  }
+  return { boites, front: Math.max(0, ...boites.map((b) => b.x1)), sommePoids, sommePoidsY }
+}
+
+/**
+ * L'unité posée au point candidat, dans l'orientation donnée : son placement
+ * et sa boîte. Avec l'ancrage `droite`, son bord droit vient sur le point.
+ */
+export function poserAuPoint(
+  point: PointCandidat,
+  unite: Unite,
+  orientation: Orientation,
+  rang: number,
+): { placement: Placement; boite: Boite } {
+  const { l, w, h } = encombrement(unite.dims, orientation)
+  const y = point.ancrage === 'gauche' ? point.y : point.y - w
+  return {
+    placement: { uniteId: unite.id, x: point.x, y, z: point.z, orientation, rang },
+    boite: { x0: point.x, x1: point.x + l, y0: y, y1: y + w, z0: point.z, z1: point.z + h },
+  }
+}
+
+/** Note un essai déjà accepté par le validateur : les quatre critères de 4.3, étape 4. */
+export function creerEssai(
+  placement: Placement,
+  boite: Boite,
+  poids: number,
+  contexte: ContexteEssai,
+  camion: Camion,
+): Essai {
+  const cgY =
+    (contexte.sommePoidsY + poids * ((boite.y0 + boite.y1) / 2)) / (contexte.sommePoids + poids)
+  return {
+    placement,
+    boite,
+    front: Math.max(contexte.front, boite.x1),
+    appuiComplet: estEnAppuiComplet(boite, contexte.boites),
+    contact: surfaceDeContact(boite, contexte.boites, camion),
+    ecartAxe: Math.abs(cgY - camion.largeur / 2),
+  }
+}
+
+/**
+ * Tous les points candidats autour d'une charge déjà posée, comme le placeur
+ * les crée (4.3, étapes 3 et 5) : les deux coins de départ, puis, autour de
+ * chaque boîte, les trois points de chaque sens de parcours et le point
+ * contre la paroi opposée. Sans doublon, du fond vers les portes, puis du bas
+ * vers le haut.
+ */
+export function pointsCandidats(boites: Boite[], camion: Camion): PointCandidat[] {
+  const points = new Map<string, PointCandidat>()
+  const ajouter = (p: PointCandidat) => points.set(cleDe(p), p)
+  for (const sens of ['gaucheDroite', 'droiteGauche'] as const) {
+    ajouter(coinDeDepart(sens, camion))
+    for (const b of boites) {
+      for (const p of pointsAutourDe(b, sens)) ajouter(p)
+      ajouter(pointParoiOpposee(b, sens, camion))
+    }
+  }
+  return ordonner([...points.values()], 'gaucheDroite')
+}
+
+/**
+ * Classe des essais du meilleur au moins bon, avec le choix du placeur
+ * (`meilleurEssai`) : on prend le meilleur, on le met de côté, et on
+ * recommence avec les autres. Le premier est donc celui que le placeur
+ * aurait retenu.
+ */
+export function classerEssais(essais: Essai[]): Essai[] {
+  const restants = [...essais]
+  const classes: Essai[] = []
+  while (restants.length > 0) {
+    const meilleur = meilleurEssai(restants)
+    classes.push(meilleur)
+    restants.splice(restants.indexOf(meilleur), 1)
+  }
+  return classes
+}
+
 /** `e` passe-t-il avant `retenu`, à compacité proche ? Appui complet, puis calage, puis équilibre. */
 function estMieuxQue(e: Essai, retenu: Essai): boolean {
   if (e.appuiComplet !== retenu.appuiComplet) return e.appuiComplet
@@ -177,7 +275,7 @@ function estMieuxQue(e: Essai, retenu: Essai): boolean {
  * (permis dès `SEUIL_APPUI`) le ferme par-dessus, et un article long qui
  * viendrait plus tard ne pourrait plus s'y glisser au plancher.
  */
-function meilleurEssai(essais: Essai[]): Essai {
+export function meilleurEssai(essais: Essai[]): Essai {
   const meilleurFront = Math.min(...essais.map((e) => e.front))
   return essais
     .filter((e) => e.front - meilleurFront < ECART_COMPACITE)
@@ -215,15 +313,10 @@ export function placerVariante<U extends Unite>(
   for (const b of boites)
     ajouterPoints([...pointsApres(b, 'gaucheDroite'), ...pointsApres(b, 'droiteGauche')])
 
-  let front = Math.max(0, ...boites.map((b) => b.x1))
-  let sommePoids = 0
-  let sommePoidsY = 0
-  for (const [i, p] of fixes.entries()) {
-    const poids = trouverUnite(p.uniteId, unites).poids
-    const b = boites[i] as Boite
-    sommePoids += poids
-    sommePoidsY += poids * ((b.y0 + b.y1) / 2)
-  }
+  const contexte = contexteDe(
+    boites,
+    fixes.map((p) => trouverUnite(p.uniteId, unites).poids),
+  )
   let rang = Math.max(0, ...fixes.map((p) => p.rang)) + 1
 
   const dejaPlacees = new Set(fixes.map((p) => p.uniteId))
@@ -237,34 +330,9 @@ export function placerVariante<U extends Unite>(
     const essais: Essai[] = []
     for (const point of candidats) {
       for (const orientation of unite.orientations) {
-        const { l, w, h } = encombrement(unite.dims, orientation)
-        const y = point.ancrage === 'gauche' ? point.y : point.y - w
-        const placement: Placement = {
-          uniteId: unite.id,
-          x: point.x,
-          y,
-          z: point.z,
-          orientation,
-          rang,
-        }
+        const { placement, boite } = poserAuPoint(point, unite, orientation, rang)
         if (valider(placement, plan, unites, camion).length > 0) continue
-        const boite: Boite = {
-          x0: point.x,
-          x1: point.x + l,
-          y0: y,
-          y1: y + w,
-          z0: point.z,
-          z1: point.z + h,
-        }
-        const cgY = (sommePoidsY + unite.poids * (y + w / 2)) / (sommePoids + unite.poids)
-        essais.push({
-          placement,
-          boite,
-          front: Math.max(front, boite.x1),
-          appuiComplet: estEnAppuiComplet(boite, boites),
-          contact: surfaceDeContact(boite, boites, camion),
-          ecartAxe: Math.abs(cgY - camion.largeur / 2),
-        })
+        essais.push(creerEssai(placement, boite, unite.poids, contexte, camion))
       }
     }
 
@@ -276,9 +344,9 @@ export function placerVariante<U extends Unite>(
     plan.push(retenu.placement)
     boites.push(retenu.boite)
     ajouterPoints(pointsApres(retenu.boite, sens))
-    front = retenu.front
-    sommePoids += unite.poids
-    sommePoidsY += unite.poids * ((retenu.boite.y0 + retenu.boite.y1) / 2)
+    contexte.front = retenu.front
+    contexte.sommePoids += unite.poids
+    contexte.sommePoidsY += unite.poids * ((retenu.boite.y0 + retenu.boite.y1) / 2)
     rang++
   }
 
