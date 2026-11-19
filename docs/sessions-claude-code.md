@@ -205,7 +205,7 @@ L'ordre suit la règle du projet : le domaine d'abord, en TDD, puis les données
 
 ## Étape P2-1 · Domaine : ordre de chargement
 
-- [ ] Fait — branche `feat/p2-ordre-chargement`
+- [x] Fait — branche `feat/p2-ordre-chargement`
 - Cahier technique : sections 4.2 (règle 7), 4.7 et 4.8. Cahier fonctionnel : RG-07, RG-08. Décision de la fiche : 3 (départage).
 - `ordonnerChargement(plan, unites, camion)`, en TDD : contraintes d'appui (ce qui porte est chargé avant), contraintes d'accès (un article gênant au sens de la règle 7 est chargé après), tri topologique, départage, `null` en cas de cycle.
 - Réutiliser la géométrie de la règle 7 du validateur plutôt que la recopier (remaniement à part si besoin).
