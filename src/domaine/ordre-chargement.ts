@@ -10,7 +10,7 @@
 //    contraintes forment un cycle et aucun ordre n'existe (RG-08).
 import { SANS_RANG } from './constantes'
 import { type Boite, boiteDe, estPoseSur, gene, trouverUnite } from './geometrie'
-import type { Camion, Placement, Unite } from './types'
+import type { Placement, Unite } from './types'
 
 /** Le placement a-t-il un ancien rang ? Un article remis depuis la zone n'en a pas. */
 export function aUnRang(p: Placement): boolean {
@@ -59,16 +59,9 @@ interface Noeud {
  * Recalcule les rangs de chargement du `plan` à partir des seules positions.
  * Rend les placements dans l'ordre de chargement, rangs renumérotés 1, 2…,
  * ou `null` si aucun ordre n'est possible (RG-08). Le plan reçu n'est pas
- * modifié. `camion` n'est pas utilisé : il fait partie de la signature
- * commune des fonctions du domaine (cahier technique 4.7).
+ * modifié.
  */
-export function ordonnerChargement(
-  plan: Placement[],
-  unites: Unite[],
-  // Signature du cahier technique (4.7), gardée pour les appelants.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _camion: Camion,
-): Placement[] | null {
+export function ordonnerChargement(plan: Placement[], unites: Unite[]): Placement[] | null {
   const noeuds: Noeud[] = plan.map((placement) => ({
     placement,
     boite: boiteDe(placement, trouverUnite(placement.uniteId, unites)),

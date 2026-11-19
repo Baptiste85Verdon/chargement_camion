@@ -3,9 +3,7 @@ import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
 import { SANS_RANG } from './constantes'
 import { boiteDe, gene, trouverUnite } from './geometrie'
 import { aUnRang, ordonnerChargement } from './ordre-chargement'
-import type { Camion, Dimensions, Placement, Unite } from './types'
-
-const camion: Camion = { longueur: 7200, largeur: 2400, hauteur: 2500 }
+import type { Dimensions, Placement, Unite } from './types'
 
 /** Une unité à plat ; seules ses dimensions comptent pour l'ordre. */
 function colis(id: string, dims: Dimensions = { l: 1200, w: 1000, h: 1000 }): Unite {
@@ -56,26 +54,26 @@ describe('aUnRang', () => {
 
 describe('ordonnerChargement : contraintes (RG-07)', () => {
   it('RG-07 : rend un ordre vide pour un plan vide', () => {
-    expect(ordonnerChargement([], [], camion)).toEqual([])
+    expect(ordonnerChargement([], [])).toEqual([])
   })
 
   it('RG-07 : charge une palette posée à la main sur une autre après elle', () => {
     const unites = [colis('P1'), colis('P2')]
     // P2, posée sur P1, avait le rang 1 : elle doit maintenant passer après.
     const plan = [poser('P1', 0, 0, 0, 2), poser('P2', 0, 0, 1000, 1)]
-    expect(ordre(ordonnerChargement(plan, unites, camion))).toEqual(['P1', 'P2'])
+    expect(ordre(ordonnerChargement(plan, unites))).toEqual(['P1', 'P2'])
   })
 
   it('RG-07 : charge un article avant celui qui le gênerait, devant lui dans sa bande', () => {
     const unites = [colis('FOND'), colis('DEVANT')]
     const plan = [poser('FOND', 0, 0, 0, 2), poser('DEVANT', 1200, 500, 0, 1)]
-    expect(ordre(ordonnerChargement(plan, unites, camion))).toEqual(['FOND', 'DEVANT'])
+    expect(ordre(ordonnerChargement(plan, unites))).toEqual(['FOND', 'DEVANT'])
   })
 
   it("RG-07 : garde l'ancien ordre quand l'article de devant est dans une autre bande", () => {
     const unites = [colis('FOND'), colis('DEVANT')]
     const plan = [poser('FOND', 0, 0, 0, 2), poser('DEVANT', 1200, 1000, 0, 1)]
-    expect(ordre(ordonnerChargement(plan, unites, camion))).toEqual(['DEVANT', 'FOND'])
+    expect(ordre(ordonnerChargement(plan, unites))).toEqual(['DEVANT', 'FOND'])
   })
 
   it("RG-07 : un article devant, dont le bas est au niveau du dessus de l'autre, ne le gêne pas", () => {
@@ -93,7 +91,7 @@ describe('ordonnerChargement : contraintes (RG-07)', () => {
       poser('PLANCHE', 1200, 0, 500, 1),
     ]
     // Seule contrainte : SUPPORT avant PLANCHE. BAS peut venir en dernier.
-    expect(ordre(ordonnerChargement(plan, unites, camion))).toEqual(['SUPPORT', 'PLANCHE', 'BAS'])
+    expect(ordre(ordonnerChargement(plan, unites))).toEqual(['SUPPORT', 'PLANCHE', 'BAS'])
   })
 })
 
@@ -101,7 +99,7 @@ describe('ordonnerChargement : départage', () => {
   it("garde l'ancien ordre quand aucune contrainte ne s'y oppose", () => {
     const unites = [colis('A'), colis('B'), colis('C', { l: 1200, w: 400, h: 1000 })]
     const plan = [poser('A', 0, 0, 0, 3), poser('B', 0, 1000, 0, 1), poser('C', 0, 2000, 0, 2)]
-    expect(ordre(ordonnerChargement(plan, unites, camion))).toEqual(['B', 'C', 'A'])
+    expect(ordre(ordonnerChargement(plan, unites))).toEqual(['B', 'C', 'A'])
   })
 
   it('charge les articles remis depuis la zone après les autres, du fond vers les portes, puis du bas vers le haut', () => {
@@ -120,7 +118,7 @@ describe('ordonnerChargement : départage', () => {
       poser('PORTEUR', 0, 0, 0, 2),
       poser('ANCIEN', 0, 1800, 0, 1),
     ]
-    expect(ordre(ordonnerChargement(plan, unites, camion))).toEqual([
+    expect(ordre(ordonnerChargement(plan, unites))).toEqual([
       'ANCIEN',
       'PORTEUR',
       'REMIS_BAS',
@@ -136,7 +134,7 @@ describe('ordonnerChargement : départage', () => {
       poser('B', 0, 1000, 0, SANS_RANG),
       poser('C', 0, 2000, 0, 5),
     ]
-    const resultat = ordonnerChargement(plan, unites, camion)
+    const resultat = ordonnerChargement(plan, unites)
     expect(resultat?.map((p) => p.rang)).toEqual([1, 2, 3])
     expect(resultat?.every(aUnRang)).toBe(true)
   })
@@ -144,7 +142,7 @@ describe('ordonnerChargement : départage', () => {
   it('ne change que le rang des placements', () => {
     const unites = [colis('P1'), colis('P2')]
     const plan = [poser('P1', 0, 0, 0, 2), poser('P2', 0, 0, 1000, 1)]
-    expect(ordonnerChargement(plan, unites, camion)).toEqual([
+    expect(ordonnerChargement(plan, unites)).toEqual([
       { ...plan[0], rang: 1 },
       { ...plan[1], rang: 2 },
     ])
@@ -154,7 +152,7 @@ describe('ordonnerChargement : départage', () => {
     const unites = [colis('P1'), colis('P2')]
     const plan = [poser('P1', 0, 0, 0, 2), poser('P2', 0, 0, 1000, 1)]
     const copie = structuredClone(plan)
-    ordonnerChargement(plan, unites, camion)
+    ordonnerChargement(plan, unites)
     expect(plan).toEqual(copie)
   })
 })
@@ -177,7 +175,7 @@ describe('ordonnerChargement : aucun ordre possible (RG-08)', () => {
       poser('PLANCHE', 1000, 0, 500, 3),
       poser('HAUT', 1000, 0, 700, 4),
     ]
-    expect(ordonnerChargement(plan, unites, camion)).toBeNull()
+    expect(ordonnerChargement(plan, unites)).toBeNull()
   })
 })
 
@@ -185,7 +183,7 @@ describe('ordonnerChargement : jeu « couloirs » (référence)', () => {
   const jeu = chargerJeuEssai('couloirs')
 
   it("RG-07 : reconnaît l'ordre de référence comme réalisable et le garde tel quel", () => {
-    const resultat = ordonnerChargement(jeu.placements, jeu.unites, jeu.camion)
+    const resultat = ordonnerChargement(jeu.placements, jeu.unites)
     expect(resultat).not.toBeNull()
     expect(contraintesNonRespectees(resultat ?? [], jeu.unites)).toEqual([])
     expect(ordre(resultat)).toEqual(ordre([...jeu.placements].sort((a, b) => a.rang - b.rang)))
@@ -196,7 +194,7 @@ describe('ordonnerChargement : jeu « couloirs » (référence)', () => {
     const plan = jeu.placements.map((p) =>
       p.uniteId === 'A01' ? { ...p, x: 1200, y: 0, z: 1050 } : p,
     )
-    const resultat = ordonnerChargement(plan, jeu.unites, jeu.camion)
+    const resultat = ordonnerChargement(plan, jeu.unites)
     expect(resultat).not.toBeNull()
     const rangDe = (id: string) => resultat?.find((p) => p.uniteId === id)?.rang ?? 0
     expect(rangDe('A03')).toBeLessThan(rangDe('A01'))
