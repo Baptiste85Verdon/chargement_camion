@@ -3,8 +3,9 @@
 // retirer vers la zone « Articles à placer », remettre) suit le même chemin :
 //
 // 1. on construit le plan tel qu'il serait après le changement ;
-// 2. on le passe au validateur : une règle enfreinte par ce changement, et
-//    qui ne l'était pas avant, le fait refuser (RG-08) ; un chevauchement ou
+// 2. on le passe au validateur : l'article changé est validé entièrement à
+//    sa nouvelle place, et pour les autres articles, une règle qui n'était
+//    pas enfreinte avant le changement le fait refuser (RG-08) ; un chevauchement ou
 //    une sortie de la caisse est cité seul, car il est toujours bloqué (RG-09) ;
 // 3. on recalcule l'ordre de chargement (4.8) : s'il n'en existe aucun, le
 //    changement est refusé aussi (RG-08) ;
@@ -68,18 +69,26 @@ function cle(e: RegleEnfreinte): string {
 }
 
 /**
- * Les règles que `nouveau` enfreint et que `ancien` n'enfreignait pas. Un
- * changement n'est jugé que sur ce qu'il casse : un défaut déjà présent ne
- * bloque pas un déplacement qui n'y touche pas.
+ * Les règles que `nouveau` enfreint et qui font refuser le changement.
+ * - L'article changé (`uniteId`) est toujours validé entièrement à sa
+ *   nouvelle place : un défaut qu'il avait déjà ne l'excuse pas.
+ * - Pour les autres articles, on ne garde que ce que `ancien` n'enfreignait
+ *   pas : un défaut déjà présent ailleurs ne bloque pas un changement qui
+ *   n'y touche pas.
+ * Pour un retrait, il n'y a pas d'article changé dans `nouveau` : seule la
+ * comparaison compte.
  */
 function nouvellesEnfreintes(
   ancien: Placement[],
   nouveau: Placement[],
   unites: Unite[],
   camion: Camion,
+  uniteId?: string,
 ): RegleEnfreinte[] {
   const avant = new Set(validerPlan(ancien, unites, camion).map(cle))
-  return validerPlan(nouveau, unites, camion).filter((e) => !avant.has(cle(e)))
+  return validerPlan(nouveau, unites, camion).filter(
+    (e) => e.uniteId === uniteId || !avant.has(cle(e)),
+  )
 }
 
 /**
@@ -94,7 +103,7 @@ function controler(
   unites: Unite[],
   camion: Camion,
 ): ResultatAjustement {
-  const enfreintes = nouvellesEnfreintes(ancien, nouveau, unites, camion)
+  const enfreintes = nouvellesEnfreintes(ancien, nouveau, unites, camion, uniteId)
   if (enfreintes.length > 0) {
     // RG-09 : un chevauchement ou une sortie de la caisse est cité seul ;
     // les autres règles qu'il entraîne n'apporteraient que du bruit. Seul

@@ -195,6 +195,31 @@ describe('deplacer : autres règles de placement (RG-04, RG-07, RG-08, RG-19)', 
     const plan = [poser('FLOTTANT', 0, 0, 500, 1), poser('P2', 1200, 0, 0, 2)]
     expect(deplacer(plan, 'P2', { x: 2400, y: 0, z: 0 }, unites, camion).accepte).toBe(true)
   })
+
+  it('RG-08 : refuse un article déjà en défaut déplacé vers une autre place en défaut', () => {
+    // FLOTTANT est mal appuyé depuis le départ. L'article changé est
+    // toujours validé entièrement à sa nouvelle place : son défaut, le même
+    // qu'avant, le fait refuser.
+    const unites = [colis('FLOTTANT'), colis('P2')]
+    const plan = [poser('FLOTTANT', 0, 0, 500, 1), poser('P2', 1200, 0, 0, 2)]
+    expect(
+      enfreintesDe(deplacer(plan, 'FLOTTANT', { x: 2400, y: 0, z: 500 }, unites, camion)),
+    ).toEqual([{ regle: 'RG-04', motif: 'appuiInsuffisant', uniteId: 'FLOTTANT' }])
+  })
+
+  it("RG-08 : refuse de tourner un article déjà en défaut s'il le reste", () => {
+    const plaque: Unite = {
+      ...colis('PL', { l: 2500, w: 1200, h: 250 }),
+      orientations: ['aPlat', 'contreParoi'],
+    }
+    // PL flotte à 500 mm, à plat ; contre une paroi, il flotterait encore.
+    const plan = [poser('PL', 0, 0, 500, 1)]
+    expect(enfreintesDe(changerOrientation(plan, 'PL', [plaque], camion))).toContainEqual({
+      regle: 'RG-04',
+      motif: 'appuiInsuffisant',
+      uniteId: 'PL',
+    })
+  })
 })
 
 describe('deplacer : ordre de chargement (RG-07, RG-08)', () => {
