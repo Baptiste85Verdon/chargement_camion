@@ -225,7 +225,7 @@ L'ordre suit la règle du projet : le domaine d'abord, en TDD, puis les données
 
 ## Étape P2-3 · Domaine : aimantation, pas au clavier et places proposées
 
-- [ ] Fait — branche `feat/p2-aimantation`
+- [x] Fait — branche `feat/p2-aimantation`
 - Cahier technique : sections 4.3, 5.2 (étape 4), 5.3 et 5.7. Décisions de la fiche : 7 (distance d'aimantation), 9 (placement automatique), 10 (places proposées).
 - Fonctions pures, en TDD :
   - aimantation : une position proche d'une paroi ou du bord d'un article, à moins du seuil, s'y colle ;
