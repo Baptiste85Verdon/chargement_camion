@@ -42,6 +42,7 @@ export type CodeProbleme =
   | 'dateInvalide'
   | 'commandeRequise'
   | 'plusGrandSansDepassement'
+  | 'toucheDejaPrise'
 
 export interface Probleme {
   /** Champ du formulaire : `nom`, `dimsEmballees`, `lignes.0.quantite`… */
@@ -567,4 +568,113 @@ export function validerSignalement(saisie: SaisieSignalement, prevu: Unite): Res
   }
 
   return { erreurs, avertissements }
+}
+
+// --- Raccourcis clavier -------------------------------------------------------------
+
+/** Actions du plan dont le raccourci se modifie (cahier technique 5.6, capture 04g). */
+export const ACTIONS_RACCOURCIS = [
+  'changerOrientation',
+  'retirer',
+  'deselectionner',
+  'aimantation',
+  'modeAffichage',
+  'etapeSuivante',
+  'etapePrecedente',
+  'afficherRaccourcis',
+] as const
+
+export type ActionRaccourci = (typeof ACTIONS_RACCOURCIS)[number]
+
+/**
+ * La touche de chaque action : la valeur `key` de l'évènement clavier
+ * (`'r'`, `'Delete'`, `'PageDown'`…), ou `null` quand le raccourci est
+ * désactivé (WCAG 2.1.4 : un raccourci d'une seule touche doit pouvoir
+ * être modifié ou désactivé).
+ */
+export type Raccourcis = Record<ActionRaccourci, string | null>
+
+/** Les touches proposées au premier usage, et par « Rétablir les raccourcis par défaut ». */
+export const RACCOURCIS_PAR_DEFAUT: Readonly<Raccourcis> = {
+  changerOrientation: 'r',
+  retirer: 'Delete',
+  deselectionner: 'Escape',
+  aimantation: 'a',
+  modeAffichage: 'e',
+  etapeSuivante: 'PageDown',
+  etapePrecedente: 'PageUp',
+  afficherRaccourcis: '?',
+}
+
+/**
+ * Touches fixes, qui ne se modifient pas : les flèches déplacent l'article
+ * sélectionné. Ctrl + Z (annuler) est une combinaison, pas une touche seule :
+ * elle n'entre jamais en conflit avec un raccourci d'une seule touche.
+ */
+const TOUCHES_FIXES: readonly string[] = ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown']
+
+/** Deux touches identiques ? Une lettre vaut sa majuscule : « r » et « R » sont la même touche. */
+function memeTouche(a: string, b: string): boolean {
+  const normaliser = (t: string) => (t.length === 1 ? t.toLowerCase() : t)
+  return normaliser(a) === normaliser(b)
+}
+
+/** Le nom d'une touche tel qu'il s'affiche : « R », « Suppr », « Pg suiv. »… */
+export function nomTouche(touche: string): string {
+  const nom = textes.raccourcis.touches[touche]
+  if (nom !== undefined) return nom
+  return touche.length === 1 ? touche.toUpperCase() : touche
+}
+
+/**
+ * Une touche ne sert qu'à une action (RG-21, capture 04i).
+ *
+ * Avec `modifie`, seul ce raccourci est contrôlé : c'est lui qui reçoit le
+ * message, qui nomme l'action qui avait déjà la touche. Sans `modifie`,
+ * toute la liste est contrôlée, par exemple des raccourcis relus sur
+ * l'appareil : chaque action reçoit une erreur si sa touche est fixe ou
+ * déjà prise par une action placée avant elle.
+ */
+export function validerRaccourcis(
+  raccourcis: Raccourcis,
+  modifie?: ActionRaccourci,
+): ResultatValidation {
+  const m = textes.validation.raccourcis
+  const noms = textes.raccourcis.actions
+  const erreurs: Probleme[] = []
+
+  const aControler = modifie === undefined ? ACTIONS_RACCOURCIS : [modifie]
+  for (const action of aControler) {
+    const touche = raccourcis[action]
+    if (touche === null) continue
+
+    if (TOUCHES_FIXES.some((fixe) => memeTouche(fixe, touche))) {
+      erreurs.push({
+        champ: action,
+        code: 'toucheDejaPrise',
+        message: m.toucheFixe(nomTouche(touche), noms.deplacer),
+      })
+      continue
+    }
+
+    // Les concurrents : toutes les autres actions si un seul raccourci est
+    // modifié, sinon celles qui précèdent (le premier garde sa touche).
+    const rang = ACTIONS_RACCOURCIS.indexOf(action)
+    const concurrents = ACTIONS_RACCOURCIS.filter((autre, i) =>
+      modifie === undefined ? i < rang : autre !== action,
+    )
+    const autre = concurrents.find((a) => {
+      const sienne = raccourcis[a]
+      return sienne !== null && memeTouche(sienne, touche)
+    })
+    if (autre !== undefined) {
+      erreurs.push({
+        champ: action,
+        code: 'toucheDejaPrise',
+        message: m.toucheDejaPrise(nomTouche(touche), noms[autre]),
+      })
+    }
+  }
+
+  return { erreurs, avertissements: [] }
 }
