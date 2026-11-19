@@ -214,7 +214,7 @@ L'ordre suit la règle du projet : le domaine d'abord, en TDD, puis les données
 
 ## Étape P2-2 · Domaine : déplacement et rotation
 
-- [ ] Fait — branche `feat/p2-deplacement`
+- [x] Fait — branche `feat/p2-deplacement`
 - Cahier technique : sections 4.2, 5.2 (étape 5), 5.5 et 5.7. Cahier fonctionnel : RG-04, RG-06 à RG-09, RG-19. Décisions de la fiche : 1 (rotation), 2 (hauteur d'un article déplacé).
 - Fonctions pures, en TDD, un test par règle :
   - déplacer une unité vers une position : RG-06 et RG-09 d'abord (chevauchement, hors caisse), puis les autres règles du validateur (RG-04, RG-07, RG-19), puis `ordonnerChargement` ; le résultat est soit le nouveau plan avec ses rangs, soit un refus avec les règles enfreintes ;

@@ -103,7 +103,7 @@ export interface Camion {
 }
 
 /** Numéro de la règle de gestion enfreinte. */
-export type NumeroRegle = 'RG-04' | 'RG-06' | 'RG-07' | 'RG-18' | 'RG-19'
+export type NumeroRegle = 'RG-04' | 'RG-06' | 'RG-07' | 'RG-08' | 'RG-09' | 'RG-18' | 'RG-19'
 
 /**
  * Motif précis, sous forme de code : l'interface le traduit en message
@@ -128,6 +128,9 @@ export type MotifRegle =
   | 'surDebout'
   | 'deboutCharge'
   | 'lourdEnHauteur'
+  // Ajustement manuel (RG-08) : ni le validateur ni le placeur ne les rendent.
+  | 'orientationUnique'
+  | 'ordreImpossible'
 
 /** Une règle enfreinte par un placement : ce que renvoie le validateur. */
 export interface RegleEnfreinte {
