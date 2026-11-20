@@ -14,6 +14,7 @@
 import type { Pose, Position } from './ajustement'
 import { PAS_CLAVIER, PAS_CLAVIER_GRAND } from './constantes'
 import { type Boite, boiteDe, recouvrement, trouverUnite } from './geometrie'
+import type { Vue } from './projection'
 import type { Camion, Placement, Unite } from './types'
 
 /** Un axe du repère : x du fond vers les portes, y depuis la paroi gauche, z depuis le plancher. */
@@ -148,4 +149,50 @@ export function avancer(
   }
   position[axe] += sens * longueur
   return position
+}
+
+/**
+ * L'axe et le sens d'une flèche du clavier dans une vue (5.3) : les flèches
+ * agissent sur les deux axes que montre la vue, dans le sens où l'article
+ * bouge à l'écran (tableau de 5.8). Par exemple, dans la vue droite, le fond
+ * est à droite : → rapproche l'article du fond (x diminue). `null` pour une
+ * touche qui n'est pas une flèche.
+ */
+export function flecheVersPas(vue: Vue, touche: string): { axe: Axe; sens: 1 | -1 } | null {
+  // Pour chaque vue : l'axe et le sens de →, puis ceux de ↑.
+  const reperes: Record<Vue, [[Axe, 1 | -1], [Axe, 1 | -1]]> = {
+    dessus: [
+      ['x', 1],
+      ['y', 1],
+    ],
+    gauche: [
+      ['x', 1],
+      ['z', 1],
+    ],
+    droite: [
+      ['x', -1],
+      ['z', 1],
+    ],
+    avant: [
+      ['y', -1],
+      ['z', 1],
+    ],
+    arriere: [
+      ['y', 1],
+      ['z', 1],
+    ],
+  }
+  const [[horizontal, droite], [vertical, haut]] = reperes[vue]
+  switch (touche) {
+    case 'ArrowRight':
+      return { axe: horizontal, sens: droite }
+    case 'ArrowLeft':
+      return { axe: horizontal, sens: droite === 1 ? -1 : 1 }
+    case 'ArrowUp':
+      return { axe: vertical, sens: haut }
+    case 'ArrowDown':
+      return { axe: vertical, sens: haut === 1 ? -1 : 1 }
+    default:
+      return null
+  }
 }
