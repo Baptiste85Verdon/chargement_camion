@@ -780,7 +780,6 @@ describe('validerRaccourcis', () => {
     ['Tab', 'Tab (et Maj + Tab)'],
     ['Enter', 'Entrée'],
     [' ', 'Espace'],
-    ['Escape', 'Échap'],
   ])('RG-21 : refuse %s, réservée à la navigation au clavier (%s)', (touche) => {
     const resultat = validerRaccourcis(raccourcis({ aimantation: touche }), 'aimantation')
     expect(resultat.erreurs).toEqual([
@@ -788,6 +787,18 @@ describe('validerRaccourcis', () => {
         champ: 'aimantation',
         code: 'toucheReservee',
         message: 'Cette touche sert à naviguer au clavier, elle ne peut pas être attribuée.',
+      },
+    ])
+  })
+
+  it('RG-21 : refuse Échap, raccourci fixe de « Désélectionner »', () => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: 'Escape' }), 'aimantation')
+    expect(resultat.erreurs).toEqual([
+      {
+        champ: 'aimantation',
+        code: 'toucheDejaPrise',
+        message:
+          'La touche Échap sert déjà à « Désélectionner », un raccourci fixe. Choisissez une autre touche.',
       },
     ])
   })

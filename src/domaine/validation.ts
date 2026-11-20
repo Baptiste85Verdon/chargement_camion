@@ -606,19 +606,25 @@ export const RACCOURCIS_PAR_DEFAUT: Readonly<Raccourcis> = {
 }
 
 /**
- * Touches fixes, qui ne se modifient pas : les flèches déplacent l'article
- * sélectionné. Ctrl + Z (annuler) est une combinaison, pas une touche seule :
- * elle n'entre jamais en conflit avec un raccourci d'une seule touche.
+ * Raccourcis fixes, qui ne se modifient pas : chaque touche et l'action
+ * qu'elle déclenche. Ctrl + Z (« Annuler le dernier déplacement ») est aussi
+ * un raccourci fixe, mais c'est une combinaison : un raccourci modifiable est
+ * une touche seule, il ne peut donc jamais la prendre.
  */
-const TOUCHES_FIXES: readonly string[] = ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown']
+const TOUCHES_FIXES: ReadonlyMap<string, 'deplacer' | 'deselectionner'> = new Map([
+  ['ArrowLeft', 'deplacer'],
+  ['ArrowUp', 'deplacer'],
+  ['ArrowRight', 'deplacer'],
+  ['ArrowDown', 'deplacer'],
+  ['Escape', 'deselectionner'],
+])
 
 /**
  * Touches de la navigation au clavier, qu'aucun raccourci ne peut prendre :
  * Tab (et Maj + Tab, la même touche) passe d'un élément à l'autre, Entrée et
- * Espace activent un bouton, Échap ferme un panneau ou désélectionne
- * l'article (raccourci fixe « Désélectionner »).
+ * Espace activent un bouton.
  */
-const TOUCHES_NAVIGATION: readonly string[] = ['Tab', 'Enter', ' ', 'Escape']
+const TOUCHES_NAVIGATION: readonly string[] = ['Tab', 'Enter', ' ']
 
 /** Deux touches identiques ? Une lettre vaut sa majuscule : « r » et « R » sont la même touche. */
 function memeTouche(a: string, b: string): boolean {
@@ -660,11 +666,12 @@ export function validerRaccourcis(
       erreurs.push({ champ: action, code: 'toucheReservee', message: m.toucheNavigation })
       continue
     }
-    if (TOUCHES_FIXES.some((fixe) => memeTouche(fixe, touche))) {
+    const fixe = [...TOUCHES_FIXES].find(([t]) => memeTouche(t, touche))
+    if (fixe !== undefined) {
       erreurs.push({
         champ: action,
         code: 'toucheDejaPrise',
-        message: m.toucheFixe(nomTouche(touche), noms.deplacer),
+        message: m.toucheFixe(nomTouche(touche), noms[fixe[1]]),
       })
       continue
     }
