@@ -566,6 +566,147 @@ export function verifierContratDepots(nom: string, fabrique: () => Depots | Prom
         const { plan: suivante } = await depots.plans.enregistrerVersion(t.id, [])
         expect(suivante.aRecalculer).toBe(false)
       })
+
+      describe('ajustement à la main (5.18)', () => {
+        /** Une tournée, une ligne de trois unités, et une version qui en place deux. */
+        async function versionCalculee() {
+          const article = await depots.articles.enregistrer(ba13)
+          const t = await tournee()
+          const { lignes } = await depots.commandes.enregistrer(
+            { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+            [ligne(article.id, { quantite: 3 })],
+          )
+          const ligneId = lignes[0]?.id ?? ''
+          const version = await depots.plans.enregistrerVersion(t.id, [
+            { ...poser(ligneId, 1), numeroUnite: 1 },
+            { ...poser(ligneId, 2), numeroUnite: 2, z: 250 },
+          ])
+          return { t, ligneId, ...version }
+        }
+
+        it('une version calculée n’est pas ajustée à la main', async () => {
+          const { plan } = await versionCalculee()
+          expect(plan.ajusteALaMain).toBe(false)
+        })
+
+        it('modifie, supprime et ajoute des placements en une opération, et marque la version', async () => {
+          const { t, ligneId, plan, placements } = await versionCalculee()
+          const [u1, u2] = placements
+          if (!u1 || !u2) throw new Error('version incomplète')
+
+          // L'unité 2 descend au plancher et passe au rang 1 ; l'unité 1 est
+          // retirée ; l'unité 3, qui était à placer, est remise au rang 2.
+          const ajuste = await depots.plans.ajuster(plan.id, [
+            { ...u2, x: 2500, z: 0, rang: 1 },
+            { ...poser(ligneId, 2), numeroUnite: 3, y: 1200 },
+          ])
+
+          expect(ajuste.plan).toEqual({ ...plan, ajusteALaMain: true })
+          expect(ajuste.placements.map((p) => [p.rang, p.numeroUnite, p.x, p.y, p.z])).toEqual([
+            [1, 2, 2500, 0, 0],
+            [2, 3, 0, 1200, 0],
+          ])
+          // Le placement déplacé garde son identifiant (ses signalements le citent).
+          expect(ajuste.placements[0]?.id).toBe(u2.id)
+          expect(ajuste.placements.every((p) => p.planId === plan.id)).toBe(true)
+          expect(await depots.plans.obtenirDernier(t.id)).toEqual(ajuste)
+        })
+
+        it('échange les rangs de deux placements', async () => {
+          const { plan, placements } = await versionCalculee()
+          const [u1, u2] = placements
+          if (!u1 || !u2) throw new Error('version incomplète')
+          const ajuste = await depots.plans.ajuster(plan.id, [
+            { ...u1, rang: 2 },
+            { ...u2, rang: 1 },
+          ])
+          expect(ajuste.placements.map((p) => [p.rang, p.numeroUnite])).toEqual([
+            [1, 2],
+            [2, 1],
+          ])
+        })
+
+        it('accepte de retirer tous les articles', async () => {
+          const { t, plan } = await versionCalculee()
+          const ajuste = await depots.plans.ajuster(plan.id, [])
+          expect(ajuste).toEqual({ plan: { ...plan, ajusteALaMain: true }, placements: [] })
+          expect((await depots.plans.obtenirDernier(t.id))?.placements).toEqual([])
+        })
+
+        it('refuse d’ajuster une version qui n’est pas la dernière, sans rien changer', async () => {
+          const { t, plan, placements } = await versionCalculee()
+          await depots.plans.enregistrerVersion(t.id, [])
+          await expect(depots.plans.ajuster(plan.id, placements.slice(1))).rejects.toMatchObject({
+            code: 'contrainte',
+          })
+          expect(await depots.plans.obtenirVersion(plan.id)).toEqual({ plan, placements })
+        })
+
+        it('refuse un placement d’une autre version, sans rien changer', async () => {
+          const { t, placements } = await versionCalculee()
+          const derniere = await depots.plans.enregistrerVersion(t.id, [])
+          const etranger = placements[0]
+          if (!etranger) throw new Error('version incomplète')
+          await expect(
+            depots.plans.ajuster(derniere.plan.id, [{ ...etranger, rang: 1 }]),
+          ).rejects.toMatchObject({ code: 'introuvable' })
+          expect(await depots.plans.obtenirVersion(derniere.plan.id)).toEqual(derniere)
+        })
+
+        it('refuse un placement d’une ligne qui n’est pas de la tournée, sans rien changer', async () => {
+          const { plan, placements } = await versionCalculee()
+          const ailleurs = await tournee('T-2026-119')
+          const { lignes } = await depots.commandes.enregistrer(
+            { tourneeId: ailleurs.id, numero: 'CMD-9', destination: 'Autre', rangLivraison: 1 },
+            [ligne((await depots.articles.lister())[0]?.id ?? '')],
+          )
+          await expect(
+            depots.plans.ajuster(plan.id, [...placements, poser(lignes[0]?.id ?? '', 3)]),
+          ).rejects.toMatchObject({ code: 'introuvable' })
+          expect(await depots.plans.obtenirVersion(plan.id)).toEqual({ plan, placements })
+        })
+
+        it('refuse deux placements au même rang, sans rien changer', async () => {
+          const { plan, placements } = await versionCalculee()
+          const [u1, u2] = placements
+          if (!u1 || !u2) throw new Error('version incomplète')
+          await expect(
+            depots.plans.ajuster(plan.id, [u1, { ...u2, rang: 1 }]),
+          ).rejects.toMatchObject({ code: 'doublon' })
+          expect(await depots.plans.obtenirVersion(plan.id)).toEqual({ plan, placements })
+        })
+
+        it('refuse une version inconnue', async () => {
+          await expect(
+            depots.plans.ajuster('00000000-0000-4000-8000-000000000000', []),
+          ).rejects.toMatchObject({ code: 'introuvable' })
+        })
+
+        it('la version suivante repart non ajustée ; la version ajustée reste consultable', async () => {
+          const { t, plan } = await versionCalculee()
+          const ajuste = await depots.plans.ajuster(plan.id, [])
+          const { plan: suivante } = await depots.plans.enregistrerVersion(t.id, [])
+          expect(suivante.ajusteALaMain).toBe(false)
+          expect(await depots.plans.obtenirVersion(plan.id)).toEqual(ajuste)
+        })
+      })
+
+      it('obtient une version donnée avec ses placements par rang, ou null', async () => {
+        const article = await depots.articles.enregistrer(ba13)
+        const t = await tournee()
+        const { lignes } = await depots.commandes.enregistrer(
+          { tourneeId: t.id, numero: 'CMD-1', destination: 'Client', rangLivraison: 1 },
+          [ligne(article.id)],
+        )
+        const ligneId = lignes[0]?.id ?? ''
+        const v1 = await depots.plans.enregistrerVersion(t.id, [
+          { ...poser(ligneId, 2), numeroUnite: 2 },
+          poser(ligneId, 1),
+        ])
+        await depots.plans.enregistrerVersion(t.id, [])
+        expect(await depots.plans.obtenirVersion(v1.plan.id)).toEqual(v1)
+        expect(await depots.plans.obtenirVersion('00000000-0000-4000-8000-000000000000')).toBeNull()
+      })
     })
 
     describe('archivage (RG-21)', () => {

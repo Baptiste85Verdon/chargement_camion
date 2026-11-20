@@ -13,7 +13,9 @@ import {
   ligneCommandeVersLigne,
   orientation,
   placementDepuisLigne,
+  placementPourAjustement,
   placementVersLigne,
+  planDepuisLigne,
   tourneeDepuisLigne,
   tourneeVersLigne,
 } from './supabase-lignes'
@@ -172,6 +174,51 @@ describe('conversions Supabase', () => {
       id: 'x1',
       planId: 'p1',
     })
+  })
+
+  it('plan : marques « à recalculer » et « ajustée à la main »', () => {
+    expect(
+      planDepuisLigne({
+        id: 'p1',
+        tournee_id: 't1',
+        version: 3,
+        calcule_le: '2026-11-19T08:00:00+00:00',
+        a_recalculer: false,
+        ajuste_a_la_main: true,
+      }),
+    ).toEqual({
+      id: 'p1',
+      tourneeId: 't1',
+      version: 3,
+      calculeLe: '2026-11-19T08:00:00+00:00',
+      aRecalculer: false,
+      ajusteALaMain: true,
+    })
+  })
+
+  it('prépare un placement pour la fonction ajuster_plan, avec son id s’il existe', () => {
+    const placement = {
+      ligneCommandeId: 'l1',
+      numeroUnite: 1,
+      x: 0,
+      y: 1200,
+      z: 0,
+      orientation: 'debout' as const,
+      rang: 4,
+      statut: 'aFaire' as const,
+    }
+    expect(placementPourAjustement({ ...placement, id: 'x1' })).toEqual({
+      id: 'x1',
+      ligne_commande_id: 'l1',
+      numero_unite: 1,
+      x: 0,
+      y: 1200,
+      z: 0,
+      orientation: 'debout',
+      rang: 4,
+      statut: 'a_faire',
+    })
+    expect(placementPourAjustement(placement)).not.toHaveProperty('id')
   })
 
   it('refuse une valeur inconnue venant de la base, plutôt que de la laisser passer', () => {

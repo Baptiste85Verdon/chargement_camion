@@ -970,6 +970,41 @@ export const textes = {
    * Messages de vérification des saisies (RG-21, cahier technique 6.1).
    * Chacun dit ce qui ne va pas et comment corriger, sans point d'exclamation.
    */
+  /** Raccourcis clavier du plan (cahier technique 5.6, RG-21, captures 04g et 04i). */
+  raccourcis: {
+    actions: {
+      deplacer: "Déplacer l'article sélectionné",
+      annuler: 'Annuler le dernier déplacement',
+      changerOrientation: "Changer d'orientation",
+      retirer: 'Retirer vers « Articles à placer »',
+      /** Raccourci fixe : Échap. */
+      deselectionner: 'Désélectionner',
+      aimantation: "Activer ou désactiver l'aimantation",
+      modeAffichage: 'Plan complet ou par étape',
+      etapeSuivante: 'Étape suivante',
+      etapePrecedente: 'Étape précédente',
+      afficherRaccourcis: 'Afficher les raccourcis',
+    },
+    /** Noms des touches qui ne s'écrivent pas d'un seul caractère. */
+    touches: {
+      ' ': 'Espace',
+      Delete: 'Suppr',
+      Backspace: 'Retour arrière',
+      Escape: 'Échap',
+      Enter: 'Entrée',
+      Tab: 'Tab',
+      PageDown: 'Pg suiv.',
+      PageUp: 'Pg préc.',
+      Home: 'Début',
+      End: 'Fin',
+      Insert: 'Inser',
+      ArrowLeft: '←',
+      ArrowUp: '↑',
+      ArrowRight: '→',
+      ArrowDown: '↓',
+    } as Record<string, string>,
+  },
+
   validation: {
     nombre: {
       entierPositif: 'Indiquez un nombre entier de millimètres, par exemple 1 250.',
@@ -1021,6 +1056,13 @@ export const textes = {
       dateInvalide: 'Indiquez une date de livraison valide, par exemple 05/11/2026.',
       camion: 'Choisissez le camion de la tournée.',
       commandeRequise: 'Ajoutez au moins une commande avant de lancer le calcul.',
+    },
+    raccourcis: {
+      toucheDejaPrise: (touche: string, action: string) =>
+        `La touche ${touche} sert déjà à « ${action} ». Choisissez une autre touche, ou modifiez d'abord ce raccourci.`,
+      toucheNavigation: 'Cette touche sert à naviguer au clavier, elle ne peut pas être attribuée.',
+      toucheFixe: (touche: string, action: string) =>
+        `La touche ${touche} sert déjà à « ${action} », un raccourci fixe. Choisissez une autre touche.`,
     },
     signalement: {
       type: 'Choisissez le type de problème.',

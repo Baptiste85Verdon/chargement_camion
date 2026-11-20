@@ -115,6 +115,12 @@ export interface PlanChargement {
    * calcul (RG-22). Il reste lisible, mais un nouveau calcul est attendu.
    */
   aRecalculer: boolean
+  /**
+   * La disposition calculée a été modifiée à la main (cahier technique
+   * 5.18) : déplacement, rotation, retrait, remise ou placement automatique.
+   * Seule la dernière version d'une tournée peut l'être.
+   */
+  ajusteALaMain: boolean
 }
 
 /** Statut d'une étape de chargement (section 3). */

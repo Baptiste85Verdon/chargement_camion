@@ -144,6 +144,13 @@ export interface PlanAvecPlacements {
 /** Placement à enregistrer avec un nouveau plan. */
 export type PlacementAEnregistrer = Omit<PlacementEnregistre, 'id' | 'planId'>
 
+/**
+ * Placement de la disposition ajustée à la main : avec `id`, un placement
+ * déjà enregistré dans la version, gardé ; sans `id`, une unité remise
+ * depuis la zone « Articles à placer ».
+ */
+export type PlacementAAjuster = PlacementAEnregistrer & { id?: string }
+
 export interface PlanRepository {
   /** Versions calculées pour une tournée, de la plus ancienne à la plus récente. */
   listerVersions(tourneeId: string): Promise<PlanChargement[]>
@@ -154,6 +161,27 @@ export interface PlanRepository {
     tourneeId: string,
     placements: PlacementAEnregistrer[],
   ): Promise<PlanAvecPlacements>
+  /** Une version donnée et ses placements par rang, ou `null` si elle n'existe pas. */
+  obtenirVersion(planId: string): Promise<PlanAvecPlacements | null>
+  /**
+   * Enregistre la disposition ajustée à la main (cahier technique 5.18), en
+   * une seule opération « tout ou rien » (fonction SQL `ajuster_plan`).
+   * `placements` est la disposition complète de la version, après le
+   * changement :
+   * - un placement avec `id` est gardé ; il ne change que de position,
+   *   d'orientation et de rang : il reste la même unité, avec son statut ;
+   * - un placement sans `id` est ajouté (unité remise dans le camion) ;
+   * - un placement de la version absent de la liste est supprimé (unité
+   *   retirée vers la zone « Articles à placer »).
+   * La version est marquée « ajustée à la main ». Rend la version et ses
+   * placements par rang.
+   * Rejette, sans rien changer : `introuvable` si la version n'existe pas,
+   * si un `id` n'est pas un placement de cette version ou si une ligne n'est
+   * pas de la tournée ; `contrainte` si la version n'est pas la dernière de
+   * sa tournée ; `doublon` si deux placements ont le même rang ou la même
+   * unité.
+   */
+  ajuster(planId: string, placements: PlacementAAjuster[]): Promise<PlanAvecPlacements>
   /** Marque une version « à recalculer » : le camion de la tournée a changé (RG-22). */
   marquerARecalculer(planId: string): Promise<void>
   /** Change le statut d'une étape de chargement (mode quai). */

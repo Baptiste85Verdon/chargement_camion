@@ -28,6 +28,7 @@ import {
   ligneCommandeDepuisLigne,
   ligneCommandePourEnregistrement,
   placementDepuisLigne,
+  placementPourAjustement,
   placementVersLigne,
   planDepuisLigne,
   statutPlacement,
@@ -276,20 +277,54 @@ function depotPlans(client: SupabaseClient): PlanRepository {
     return lignes.map(planDepuisLigne)
   }
 
+  async function placementsDuPlan(planId: string) {
+    const lignes = resultat<LignePlacement[]>(
+      await client
+        .from('placement')
+        .select('*')
+        .eq('plan_id', planId)
+        .order('rang', { ascending: true }),
+    )
+    return lignes.map(placementDepuisLigne)
+  }
+
   return {
     listerVersions,
 
     async obtenirDernier(tourneeId) {
       const plan = (await listerVersions(tourneeId)).at(-1)
       if (!plan) return null
-      const placements = resultat<LignePlacement[]>(
-        await client
-          .from('placement')
-          .select('*')
-          .eq('plan_id', plan.id)
-          .order('rang', { ascending: true }),
+      return { plan, placements: await placementsDuPlan(plan.id) }
+    },
+
+    async obtenirVersion(planId) {
+      // maybeSingle : aucune ligne n'est pas une erreur, la version n'existe pas.
+      const { data, error } = await client
+        .from('plan_chargement')
+        .select('*')
+        .eq('id', planId)
+        .maybeSingle<LignePlan>()
+      if (error) throw traduireErreur(error)
+      if (!data) return null
+      return { plan: planDepuisLigne(data), placements: await placementsDuPlan(planId) }
+    },
+
+    /**
+     * Une seule requête : la fonction SQL `ajuster_plan` (migration
+     * …_ajustement_manuel.sql) fait tout dans une transaction. Si un contrôle
+     * échoue, rien n'est enregistré.
+     */
+    async ajuster(planId, placements) {
+      const reponse = resultat<{ plan: LignePlan; placements: LignePlacement[] }>(
+        await client.rpc('ajuster_plan', {
+          p_plan_id: planId,
+          p_placements: placements.map(placementPourAjustement),
+        }),
       )
-      return { plan, placements: placements.map(placementDepuisLigne) }
+      return {
+        plan: planDepuisLigne(reponse.plan),
+        placements: reponse.placements.map(placementDepuisLigne),
+      }
     },
 
     /**

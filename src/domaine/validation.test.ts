@@ -4,17 +4,22 @@ import { describe, expect, it } from 'vitest'
 import type { Commande, FicheArticle, ModeleCamion, Tournee } from './modele'
 import type { Unite } from './types'
 import {
+  ACTIONS_RACCOURCIS,
+  RACCOURCIS_PAR_DEFAUT,
   lireKilogrammes,
   lireMillimetres,
+  nomTouche,
   validerArticle,
   validerCamion,
   validerCommande,
+  validerRaccourcis,
   validerSignalement,
   validerSuppressionCamion,
   validerTournee,
   type SaisieArticle,
   type SaisieCamion,
   type SaisieCommande,
+  type Raccourcis,
   type SaisieLigne,
   type SaisieSignalement,
 } from './validation'
@@ -710,5 +715,114 @@ describe('validerSignalement (RG-21, signalement)', () => {
       prevu,
     )
     expect(resultat.avertissements).toEqual([])
+  })
+})
+
+// --- Raccourcis clavier -------------------------------------------------------------
+
+describe('validerRaccourcis', () => {
+  const raccourcis = (modif: Partial<Raccourcis> = {}): Raccourcis => ({
+    ...RACCOURCIS_PAR_DEFAUT,
+    ...modif,
+  })
+
+  it('RG-21 : accepte les raccourcis par défaut', () => {
+    expect(validerRaccourcis(raccourcis())).toEqual({ erreurs: [], avertissements: [] })
+  })
+
+  it('RG-21 : refuse une touche qui sert déjà à une autre action, en la nommant', () => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: 'r' }), 'aimantation')
+    expect(resultat.erreurs).toEqual([
+      {
+        champ: 'aimantation',
+        code: 'toucheDejaPrise',
+        message:
+          "La touche R sert déjà à « Changer d'orientation ». Choisissez une autre touche, ou modifiez d'abord ce raccourci.",
+      },
+    ])
+  })
+
+  it('RG-21 : compare les lettres sans tenir compte des majuscules', () => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: 'R' }), 'aimantation')
+    expect(codes(resultat.erreurs)).toEqual(['toucheDejaPrise'])
+  })
+
+  it('RG-21 : refuse une flèche, réservée au déplacement, qui ne se modifie pas', () => {
+    const resultat = validerRaccourcis(raccourcis({ retirer: 'ArrowLeft' }), 'retirer')
+    expect(resultat.erreurs).toEqual([
+      {
+        champ: 'retirer',
+        code: 'toucheDejaPrise',
+        message:
+          "La touche ← sert déjà à « Déplacer l'article sélectionné », un raccourci fixe. Choisissez une autre touche.",
+      },
+    ])
+  })
+
+  it('RG-21 : ne signale que le raccourci modifié, pas celui qui avait la touche avant', () => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: 'r' }), 'aimantation')
+    expect(champs(resultat.erreurs)).toEqual(['aimantation'])
+  })
+
+  it('RG-21 : accepte des raccourcis désactivés, même plusieurs', () => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: null, modeAffichage: null }))
+    expect(resultat.erreurs).toEqual([])
+  })
+
+  it('RG-21 : sans raccourci modifié, signale chaque touche déjà prise plus haut dans la liste', () => {
+    const resultat = validerRaccourcis(
+      raccourcis({ aimantation: 'r', modeAffichage: 'r', etapeSuivante: 'ArrowDown' }),
+    )
+    expect(champs(resultat.erreurs)).toEqual(['aimantation', 'modeAffichage', 'etapeSuivante'])
+  })
+
+  it.each([
+    ['Tab', 'Tab (et Maj + Tab)'],
+    ['Enter', 'Entrée'],
+    [' ', 'Espace'],
+  ])('RG-21 : refuse %s, réservée à la navigation au clavier (%s)', (touche) => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: touche }), 'aimantation')
+    expect(resultat.erreurs).toEqual([
+      {
+        champ: 'aimantation',
+        code: 'toucheReservee',
+        message: 'Cette touche sert à naviguer au clavier, elle ne peut pas être attribuée.',
+      },
+    ])
+  })
+
+  it('RG-21 : refuse Échap, raccourci fixe de « Désélectionner »', () => {
+    const resultat = validerRaccourcis(raccourcis({ aimantation: 'Escape' }), 'aimantation')
+    expect(resultat.erreurs).toEqual([
+      {
+        champ: 'aimantation',
+        code: 'toucheDejaPrise',
+        message:
+          'La touche Échap sert déjà à « Désélectionner », un raccourci fixe. Choisissez une autre touche.',
+      },
+    ])
+  })
+
+  it('RG-21 : refuse une touche de navigation aussi à la relecture de toute la liste', () => {
+    const resultat = validerRaccourcis(raccourcis({ retirer: 'Enter', etapeSuivante: 'Tab' }))
+    expect(champs(resultat.erreurs)).toEqual(['retirer', 'etapeSuivante'])
+    expect(codes(resultat.erreurs)).toEqual(['toucheReservee', 'toucheReservee'])
+  })
+
+  it('RG-21 : « Désélectionner » est un raccourci fixe sur Échap, hors des raccourcis modifiables', () => {
+    expect(ACTIONS_RACCOURCIS).not.toContain('deselectionner')
+    expect(Object.values(RACCOURCIS_PAR_DEFAUT)).not.toContain('Escape')
+  })
+
+  it('nomme les touches comme sur le clavier', () => {
+    expect(nomTouche('r')).toBe('R')
+    expect(nomTouche('?')).toBe('?')
+    expect(nomTouche('Delete')).toBe('Suppr')
+    expect(nomTouche('Escape')).toBe('Échap')
+    expect(nomTouche('PageDown')).toBe('Pg suiv.')
+    expect(nomTouche('PageUp')).toBe('Pg préc.')
+    expect(nomTouche('ArrowUp')).toBe('↑')
+    expect(nomTouche(' ')).toBe('Espace')
+    expect(nomTouche('F2')).toBe('F2')
   })
 })

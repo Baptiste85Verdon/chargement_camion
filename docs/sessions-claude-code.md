@@ -236,7 +236,7 @@ L'ordre suit la règle du projet : le domaine d'abord, en TDD, puis les données
 
 ## Étape P2-4 · Données : version ajustée à la main
 
-- [ ] Fait — branche `feat/p2-donnees-ajustement`
+- [x] Fait — branche `feat/p2-donnees-ajustement`
 - Cahier technique : sections 3, 6.1 et 7.1. Cahier fonctionnel : RG-21 (raccourcis), RG-22.
 - Migration : colonne « ajustée à la main » de `plan_chargement` ; fonction SQL qui enregistre en une seule opération la disposition ajustée de la dernière version (placements modifiés, supprimés et ajoutés, rangs, marque), avec ses `GRANT` au rôle `anon` et un commentaire sur les politiques à durcir avec les comptes (`CLAUDE.md`, section Supabase).
 - Dépôts : `PlanRepository.ajuster`, et l'obtention d'une version donnée pour la consulter ; implémentations Supabase et en mémoire, tests de contrat. Refus d'ajuster une version qui n'est pas la dernière.
