@@ -180,3 +180,45 @@ export function lirePlan(
   const places = new Set(placements.map((p) => p.uniteId))
   return { unites, placements, aPlacer: unites.filter((u) => !places.has(u.id)) }
 }
+
+/**
+ * Placement de la disposition ajustée à la main : avec `id`, un placement
+ * déjà enregistré, gardé ; sans `id`, une unité remise depuis la zone
+ * « Articles à placer ».
+ */
+export type PlacementAjuste = PlacementCalcule & { id?: string }
+
+/**
+ * Traduit un plan ajusté à la main (cahier technique 5.18) en disposition à
+ * enregistrer, l'inverse de `lirePlan`. Chaque unité retrouve son placement
+ * enregistré par sa ligne et son numéro :
+ * - trouvé : il garde son identifiant et son statut ; seuls sa position, son
+ *   orientation et son rang changent ;
+ * - pas trouvé : l'unité est remise depuis la zone, son placement est nouveau
+ *   et reste à faire.
+ * Une unité absente du plan (retirée vers la zone) n'apparaît pas : le dépôt
+ * supprime son placement.
+ */
+export function dispositionAjustee(
+  plan: Placement[],
+  enregistres: PlacementEnregistre[],
+  unites: UnitePreparee[],
+): PlacementAjuste[] {
+  const parUnite = new Map(enregistres.map((e) => [`${e.ligneCommandeId}-${e.numeroUnite}`, e]))
+  const parId = new Map(unites.map((u) => [u.id, u]))
+  return plan.map((p) => {
+    const unite = parId.get(p.uniteId)
+    if (!unite) throw new Error(`Unité inconnue : ${p.uniteId}`)
+    const deja = parUnite.get(p.uniteId)
+    const place = {
+      ligneCommandeId: unite.ligneCommandeId,
+      numeroUnite: unite.numero,
+      x: p.x,
+      y: p.y,
+      z: p.z,
+      orientation: p.orientation,
+      rang: p.rang,
+    }
+    return deja ? { id: deja.id, ...place, statut: deja.statut } : { ...place, statut: 'aFaire' }
+  })
+}

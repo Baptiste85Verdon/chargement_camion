@@ -14,6 +14,7 @@
  * zéro quand on change de vue.
  */
 import { computed, ref, useId, watch } from 'vue'
+import type { Pose } from '@/domaine/ajustement'
 import { composerVue, profondeurVue, type Tranche } from '@/domaine/contenu-vue'
 import { type Vue, VUES, dimensionsVue, vuesOuVisible } from '@/domaine/projection'
 import type { Camion, Placement, Unite } from '@/domaine/types'
@@ -42,10 +43,19 @@ const props = defineProps<{
   selection: readonly string[]
   centreGravite?: { x: number; y: number } | null
   enEvidence: number | null
+  /** Places proposées par « Choisir une place » (5.3). */
+  places?: readonly { uniteId: string; pose: Pose; libelle: string }[]
+  /** Article déplacé au clavier (5.3). */
+  enDeplacement?: string | null
 }>()
 
 const vue = defineModel<Vue>('vue', { required: true })
-const emit = defineEmits<{ selectionner: [uniteId: string] }>()
+const emit = defineEmits<{
+  selectionner: [uniteId: string]
+  /** Une touche pressée sur un article, et la vue qui a le focus (5.3). */
+  touche: [uniteId: string, evenement: KeyboardEvent, vue: Vue]
+  choisirPlace: [rang: number]
+}>()
 
 const t = textes.plan
 const idListe = useId()
@@ -197,7 +207,11 @@ const mm = (v: number) => formaterMillimetres(v)
       :en-evidence="props.enEvidence"
       :filtre-actif="filtreActif"
       :titre="t.titresVues[vue]"
+      :places="props.places"
+      :en-deplacement="props.enDeplacement"
       @selectionner="emit('selectionner', $event)"
+      @touche="(id, e) => emit('touche', id, e, vue)"
+      @choisir-place="emit('choisirPlace', $event)"
     />
 
     <div v-if="caches.length" class="cadre__caches">

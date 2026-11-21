@@ -246,7 +246,7 @@ L'ordre suit la règle du projet : le domaine d'abord, en TDD, puis les données
 
 ## Étape P2-5 · Plan : ajuster au clavier et sans glisser
 
-- [ ] Fait — branche `feat/p2-ajustement-clavier`
+- [x] Fait — branche `feat/p2-ajustement-clavier`
 - Captures 04f, 04h. Cahier technique : sections 5.3, 5.5, 5.7, 5.18 et 6. Cahier fonctionnel : 4.4, RG-08, RG-09, RG-22. Décisions de la fiche : 4 (annulation), 5 (confirmation de relance), 8 (plans ajustables).
 - Le chemin accessible d'abord, sans glisser-déposer :
   - carte de l'article sélectionné : changer d'orientation, « Choisir une place », « Retirer du plan » ;

@@ -4,6 +4,7 @@ import type { Commande, FicheArticle, LigneDeCommande, ModeleCamion } from './mo
 import {
   calculerPlan,
   deplacer,
+  dispositionAjustee,
   lignesReportees,
   lirePlan,
   regrouperParLigne,
@@ -233,5 +234,104 @@ describe('regrouperParLigne', () => {
       { ligneCommandeId: 'l1', commandeId: 'c1', quantite: 2 },
       { ligneCommandeId: 'l2', commandeId: 'c2', quantite: 1 },
     ])
+  })
+})
+
+describe('dispositionAjustee (cahier technique 5.18)', () => {
+  const commandes = [
+    { commande: commande('c1', 1), lignes: [ligne('l1', 'c1', 1)] },
+    { commande: commande('c2', 2), lignes: [ligne('l2', 'c2', 2)] },
+  ]
+  const enregistres = [
+    {
+      id: 'p-l1-1',
+      planId: 'plan',
+      ligneCommandeId: 'l1',
+      numeroUnite: 1,
+      x: 0,
+      y: 0,
+      z: 0,
+      orientation: 'aPlat' as const,
+      rang: 1,
+      statut: 'charge' as const,
+    },
+    {
+      id: 'p-l2-1',
+      planId: 'plan',
+      ligneCommandeId: 'l2',
+      numeroUnite: 1,
+      x: 1200,
+      y: 0,
+      z: 0,
+      orientation: 'aPlat' as const,
+      rang: 2,
+      statut: 'aFaire' as const,
+    },
+  ]
+  const { unites } = lirePlan(commandes, [palette], enregistres)
+
+  it('RG-08 : garde l’identifiant et le statut d’un placement déplacé, avec sa nouvelle position et son rang', () => {
+    const disposition = dispositionAjustee(
+      [
+        { uniteId: 'l2-1', x: 0, y: 1400, z: 0, orientation: 'aPlat', rang: 1 },
+        { uniteId: 'l1-1', x: 0, y: 0, z: 0, orientation: 'aPlat', rang: 2 },
+      ],
+      enregistres,
+      unites,
+    )
+    expect(disposition).toEqual([
+      {
+        id: 'p-l2-1',
+        ligneCommandeId: 'l2',
+        numeroUnite: 1,
+        x: 0,
+        y: 1400,
+        z: 0,
+        orientation: 'aPlat',
+        rang: 1,
+        statut: 'aFaire',
+      },
+      {
+        id: 'p-l1-1',
+        ligneCommandeId: 'l1',
+        numeroUnite: 1,
+        x: 0,
+        y: 0,
+        z: 0,
+        orientation: 'aPlat',
+        rang: 2,
+        statut: 'charge',
+      },
+    ])
+  })
+
+  it('RG-08 : une unité remise depuis la zone n’a pas d’identifiant, et reste à faire', () => {
+    const disposition = dispositionAjustee(
+      [
+        { uniteId: 'l1-1', x: 0, y: 0, z: 0, orientation: 'aPlat', rang: 1 },
+        { uniteId: 'l2-2', x: 2400, y: 0, z: 0, orientation: 'aPlat', rang: 2 },
+      ],
+      enregistres,
+      unites,
+    )
+    expect(disposition[1]).toEqual({
+      ligneCommandeId: 'l2',
+      numeroUnite: 2,
+      x: 2400,
+      y: 0,
+      z: 0,
+      orientation: 'aPlat',
+      rang: 2,
+      statut: 'aFaire',
+    })
+  })
+
+  it('RG-08 : une unité retirée n’apparaît plus dans la disposition', () => {
+    const disposition = dispositionAjustee(
+      [{ uniteId: 'l1-1', x: 0, y: 0, z: 0, orientation: 'aPlat', rang: 1 }],
+      enregistres,
+      unites,
+    )
+    expect(disposition.map((p) => p.id)).toEqual(['p-l1-1'])
   })
 })

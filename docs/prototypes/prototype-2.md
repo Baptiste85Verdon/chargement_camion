@@ -91,17 +91,17 @@ Les cahiers ne tranchaient pas ces questions. Le porteur les a tranchées le 19 
 Le prototype 2 est accepté quand :
 
 - [ ] Un article peut être déplacé à la main dans les vues, à la souris, au doigt et au clavier, ainsi que d'un clic sur une des 5 meilleures places proposées (cahier fonctionnel, section 8). En vue de dessus, l'article déplacé se pose au plus bas.
-- [ ] Tout déplacement interdit est bloqué : l'article reprend sa place et un message clair, annoncé aux lecteurs d'écran, cite la règle enfreinte (RG-08, RG-09). Sur « couloirs », sont refusés au moins : A12 posé sur A11 (fragile, capture 04f), un chevauchement, une sortie de la caisse, une fenêtre debout sans calage (RG-19), un article de C1 placé derrière un article de C3 dans sa bande (RG-07).
-- [ ] Un déplacement qui ne laisse aucun ordre de chargement possible est refusé avec un message (RG-08).
-- [ ] « Changer d'orientation » (bouton et touche R) ne passe que par les orientations autorisées, et une orientation qui enfreint une règle est refusée avec un message.
-- [ ] Un article retiré rejoint la zone « Articles à placer » ; il peut être remis à la main, ou par « Placer » et « Tout placer », sans que les autres articles bougent. Un article sans place reste dans la zone, avec un message. Un retrait qui laisserait un article sans appui ou sans calage est refusé, avec un message qui nomme les articles en cause et propose de les retirer aussi, en une seule action annulable.
-- [ ] L'aimantation est activée par défaut, se désactive et se réactive, et le choix survit au rechargement de la page. Au clavier, avec l'aimantation active, l'article s'arrête au contact.
-- [ ] Au clavier, le pas est de 50 mm, et de 500 mm avec Maj.
-- [ ] Un déplacement accepté est enregistré aussitôt : il est encore là après rechargement de la page, et la version est marquée « ajustée à la main ».
-- [ ] « Annuler le dernier déplacement » fonctionne par le bouton et par Ctrl + Z, sur plusieurs niveaux pendant la visite de la page, et chaque annulation est enregistrée.
-- [ ] Seule la version actuelle d'une tournée en préparation, non « à recalculer », s'ajuste ; sinon la page dit pourquoi.
-- [ ] Après chaque déplacement, l'ordre de chargement est recalculé : ce qui porte est chargé avant ce qui est posé dessus, et RG-07 est respectée. Sur « couloirs », l'ordre de référence est reconnu comme réalisable.
-- [ ] Le bandeau de calage et l'indicateur d'équilibre se mettent à jour à chaque déplacement (RG-19, RG-20).
+- [x] Tout déplacement interdit est bloqué : l'article reprend sa place et un message clair, annoncé aux lecteurs d'écran, cite la règle enfreinte (RG-08, RG-09). Sur « couloirs », sont refusés au moins : A12 posé sur A11 (fragile, capture 04f), un chevauchement, une sortie de la caisse, une fenêtre debout sans calage (RG-19), un article de C1 placé derrière un article de C3 dans sa bande (RG-07).
+- [x] Un déplacement qui ne laisse aucun ordre de chargement possible est refusé avec un message (RG-08).
+- [x] « Changer d'orientation » (bouton et touche R) ne passe que par les orientations autorisées, et une orientation qui enfreint une règle est refusée avec un message.
+- [x] Un article retiré rejoint la zone « Articles à placer » ; il peut être remis à la main, ou par « Placer » et « Tout placer », sans que les autres articles bougent. Un article sans place reste dans la zone, avec un message. Un retrait qui laisserait un article sans appui ou sans calage est refusé, avec un message qui nomme les articles en cause et propose de les retirer aussi, en une seule action annulable.
+- [x] L'aimantation est activée par défaut, se désactive et se réactive, et le choix survit au rechargement de la page. Au clavier, avec l'aimantation active, l'article s'arrête au contact.
+- [x] Au clavier, le pas est de 50 mm, et de 500 mm avec Maj.
+- [x] Un déplacement accepté est enregistré aussitôt : il est encore là après rechargement de la page, et la version est marquée « ajustée à la main ».
+- [x] « Annuler le dernier déplacement » fonctionne par le bouton et par Ctrl + Z, sur plusieurs niveaux pendant la visite de la page, et chaque annulation est enregistrée.
+- [x] Seule la version actuelle d'une tournée en préparation, non « à recalculer », s'ajuste ; sinon la page dit pourquoi.
+- [x] Après chaque déplacement, l'ordre de chargement est recalculé : ce qui porte est chargé avant ce qui est posé dessus, et RG-07 est respectée. Sur « couloirs », l'ordre de référence est reconnu comme réalisable.
+- [x] Le bandeau de calage et l'indicateur d'équilibre se mettent à jour à chaque déplacement (RG-19, RG-20).
 - [ ] « Relancer le calcul » crée une nouvelle version ; sur un plan ajusté, et seulement dans ce cas, une confirmation de ton neutre prévient que les ajustements seront perdus (RG-22) ; l'ancienne version reste consultable en lecture seule depuis le sélecteur de version.
 - [ ] Les raccourcis se modifient dans le panneau, une touche déjà prise, celle d'un raccourci fixe (flèches, Échap) ou une touche de navigation (Tab, Maj + Tab, Entrée, Espace) est refusée tout de suite avec un message sous le raccourci (RG-21, capture 04i), et le choix survit au rechargement. Les flèches, Échap (« Désélectionner ») et Ctrl + Z y figurent avec la mention « Fixe ».
 - [ ] axe-core ne trouve aucune erreur sur la page du plan en cours d'ajustement, et tout l'ajustement est possible au clavier seul.

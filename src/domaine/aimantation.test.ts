@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { chargerJeuEssai } from '../../tests/jeux-essai/charger'
-import { aimanter, avancer, pasClavier } from './aimantation'
+import { aimanter, avancer, flecheVersPas, pasClavier } from './aimantation'
 import { PAS_CLAVIER, PAS_CLAVIER_GRAND } from './constantes'
 import type { Camion, Dimensions, Placement, Unite } from './types'
 
@@ -212,5 +212,32 @@ describe('pas au clavier (cahier technique 5.3)', () => {
     it('A12 avance d’un grand pas entier vers les portes', () => {
       expect(pas('x', 1)).toEqual({ x: 4200, y: 1240, z: 0 })
     })
+  })
+})
+
+describe('flèches au clavier selon la vue (cahier technique 5.3 et 5.8)', () => {
+  it('RG-09 : en vue de dessus, les flèches déplacent en x (vers les portes à droite) et en y (paroi droite en haut)', () => {
+    expect(flecheVersPas('dessus', 'ArrowRight')).toEqual({ axe: 'x', sens: 1 })
+    expect(flecheVersPas('dessus', 'ArrowLeft')).toEqual({ axe: 'x', sens: -1 })
+    expect(flecheVersPas('dessus', 'ArrowUp')).toEqual({ axe: 'y', sens: 1 })
+    expect(flecheVersPas('dessus', 'ArrowDown')).toEqual({ axe: 'y', sens: -1 })
+  })
+
+  it('RG-09 : dans les vues de côté, les flèches déplacent en x et en z ; la vue droite est en miroir', () => {
+    expect(flecheVersPas('gauche', 'ArrowRight')).toEqual({ axe: 'x', sens: 1 })
+    expect(flecheVersPas('gauche', 'ArrowUp')).toEqual({ axe: 'z', sens: 1 })
+    expect(flecheVersPas('droite', 'ArrowRight')).toEqual({ axe: 'x', sens: -1 })
+    expect(flecheVersPas('droite', 'ArrowDown')).toEqual({ axe: 'z', sens: -1 })
+  })
+
+  it('RG-09 : dans les vues avant et arrière, les flèches déplacent en y et en z', () => {
+    // Depuis le fond, la paroi gauche est à droite ; depuis les portes, à gauche.
+    expect(flecheVersPas('avant', 'ArrowRight')).toEqual({ axe: 'y', sens: -1 })
+    expect(flecheVersPas('arriere', 'ArrowRight')).toEqual({ axe: 'y', sens: 1 })
+    expect(flecheVersPas('arriere', 'ArrowUp')).toEqual({ axe: 'z', sens: 1 })
+  })
+
+  it('ignore une touche qui n’est pas une flèche', () => {
+    expect(flecheVersPas('dessus', 'r')).toBeNull()
   })
 })
