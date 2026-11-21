@@ -2,69 +2,18 @@
 // 04, 04a, 04b ; cahier technique 5.7, 5.16, 5.17 ; RG-10, RG-11, RG-19, RG-20).
 // Base d'exemple : la tournée T-2026-118, avec le plan de référence d'un jeu
 // d'essai (« couloirs » ou « fenêtres isolées ») ou un plan calculé.
-import { type DOMWrapper, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { flushPromises } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { PlacementEnregistre } from '@/domaine/modele'
 import { vuesOuVisible } from '@/domaine/projection'
 import { calculerPlan } from '@/domaine/tournee'
 import type { Depots, PlacementAEnregistrer } from '@/donnees/depots'
 import { textes } from '@/textes/fr'
-import { chargerJeuEssai, type NomJeuEssai } from '../jeux-essai/charger'
-import couloirs from '../jeux-essai/couloirs.json'
-import couloirsSansC4 from '../jeux-essai/couloirs-sans-c4.json'
-import fenetresIsolees from '../jeux-essai/fenetres-isolees.json'
+import { chargerJeuEssai } from '../jeux-essai/charger'
 import { depotsDemarrage, monterPage } from './monter-page'
+import { annonces, bouton, carte, ouvrirAvec, ouvrirJeu, T118, texte } from './plan-aides'
 
-const T118 = 'b0000000-0000-4000-8000-000000000118'
 const t = textes.plan
-const JSON_JEUX = {
-  couloirs,
-  'couloirs-sans-c4': couloirsSansC4,
-  'fenetres-isolees': fenetresIsolees,
-}
-
-/**
- * Traduit le plan d'un jeu d'essai en placements de la base d'exemple : chaque
- * unité (A01…) retrouve la ligne de sa commande (C1…) par le nom de l'article,
- * et prend le numéro d'unité suivant dans cette ligne.
- */
-async function placementsDuJeu(depots: Depots, nom: NomJeuEssai) {
-  const [commandes, articles] = await Promise.all([
-    depots.commandes.listerParTournee(T118),
-    depots.articles.lister({ avecArchives: true }),
-  ])
-  const nomArticle = new Map(articles.map((a) => [a.id, a.nom]))
-  const jeu = chargerJeuEssai(nom)
-  const numeros = new Map<string, number>()
-  return JSON_JEUX[nom].unites.map((u): PlacementAEnregistrer => {
-    const commande = commandes.find((c) => `C${c.commande.rangLivraison}` === u.commande)
-    const debut = u.article.split(',')[0] ?? ''
-    const ligne = commande?.lignes.find((l) => nomArticle.get(l.articleId)?.startsWith(debut))
-    if (!ligne) throw new Error(`Ligne introuvable pour ${u.id}`)
-    const numero = (numeros.get(ligne.id) ?? 0) + 1
-    numeros.set(ligne.id, numero)
-    const p = jeu.placements.find((x) => x.uniteId === u.id)
-    if (!p) throw new Error(`Placement introuvable pour ${u.id}`)
-    return {
-      ligneCommandeId: ligne.id,
-      numeroUnite: numero,
-      x: p.x,
-      y: p.y,
-      z: p.z,
-      orientation: p.orientation,
-      rang: p.rang,
-      statut: 'aFaire',
-    }
-  })
-}
-
-async function ouvrirAvec(placements: (depots: Depots) => Promise<PlacementAEnregistrer[]>) {
-  const depots = depotsDemarrage()
-  await depots.plans.enregistrerVersion(T118, await placements(depots))
-  return { ...(await monterPage(`/tournees/${T118}/plan`, depots)), depots }
-}
-
-const ouvrirJeu = (nom: NomJeuEssai) => ouvrirAvec((d) => placementsDuJeu(d, nom))
 
 /** Le plan calculé par l'application, sans les placements que `retirer` désigne. */
 async function planCalculeSans(depots: Depots, retirer: (p: PlacementAEnregistrer) => boolean) {
@@ -86,33 +35,6 @@ const C4 = 'd0000000-0000-4000-8000-000000000004'
 /** Éléments en attente venus de T-2026-118 : la base d'exemple en contient déjà d'autres. */
 const attenteDeT118 = async (depots: Depots) =>
   (await depots.attente.lister()).filter((e) => e.tourneeOrigineId === T118)
-
-/** Texte lisible, espaces fines insécables ramenées à des espaces simples. */
-const texte = (w: { text(): string } | undefined) => (w?.text() ?? '').replace(/\s+/g, ' ')
-
-/** Une page, une carte ou un bandeau : tout ce qui contient des boutons. */
-type Racine = { findAll(selecteur: string): DOMWrapper<Element>[] }
-
-function bouton(racine: Racine, libelle: string) {
-  const trouve = racine.findAll('button').find((b) => texte(b).trim() === libelle)
-  if (!trouve) throw new Error(`Bouton « ${libelle} » introuvable`)
-  return trouve
-}
-
-const carte = (page: VueWrapper, titre: string) => {
-  const trouvee = page
-    .findAll('section.carte')
-    .find((s) => s.find('.carte__titre').text().startsWith(titre))
-  if (!trouvee) throw new Error(`Carte « ${titre} » introuvable`)
-  return trouvee
-}
-
-/** Messages de la zone aria-live de la page. */
-const annonces = (page: VueWrapper) =>
-  page
-    .findAll('[role="status"]')
-    .map((s) => texte(s))
-    .join(' | ')
 
 beforeEach(() => {
   localStorage.clear()

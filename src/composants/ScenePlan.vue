@@ -31,7 +31,8 @@ import {
 import { type Cote, coter, coterCaisse } from '@/domaine/cotes'
 import { libellesTraverses, ordonneeLibre } from '@/composants/evitement'
 import { trouverUnite } from '@/domaine/geometrie'
-import { type Vue, dimensionsVue } from '@/domaine/projection'
+import type { Pose } from '@/domaine/ajustement'
+import { type Vue, dimensionsVue, projeter } from '@/domaine/projection'
 import type { Camion, Placement, Unite } from '@/domaine/types'
 import { textes } from '@/textes/fr'
 import Icone from './Icone.vue'
@@ -61,10 +62,26 @@ const props = defineProps<{
    * la paroi gauche). Dessiné sur la vue de dessus seulement (5.17).
    */
   centreGravite?: { x: number; y: number } | null
+  /**
+   * Places proposées par « Choisir une place » (5.3, capture 04h) : une
+   * marque « + » au centre de l'article posé à chacune.
+   */
+  places?: readonly { uniteId: string; pose: Pose; libelle: string }[]
+  /**
+   * Article déplacé au clavier (5.3) : son bouton reste présent même s'il
+   * passe derrière un autre article, pour garder le focus et les flèches.
+   */
+  enDeplacement?: string | null
 }>()
 
 const cadrage = defineModel<Cadrage>('cadrage', { required: true })
-const emit = defineEmits<{ selectionner: [uniteId: string] }>()
+const emit = defineEmits<{
+  selectionner: [uniteId: string]
+  /** Une touche pressée sur un article : flèches, Entrée, R, Suppr (5.3, 5.5). */
+  touche: [uniteId: string, evenement: KeyboardEvent]
+  /** Une marque « + » choisie : son rang dans `places`. */
+  choisirPlace: [rang: number]
+}>()
 
 const t = textes.plan
 const id = useId()
@@ -174,7 +191,28 @@ const zones = computed(
       props.contenu.blocs.map((b) => [b.uniteId, zoneVisible(b.uniteId, props.contenu.blocs)]),
     ),
 )
-const visibles = computed(() => props.contenu.blocs.filter((b) => zones.value.get(b.uniteId)))
+const visibles = computed(() =>
+  props.contenu.blocs.filter(
+    (b) => zones.value.get(b.uniteId) || b.uniteId === props.enDeplacement,
+  ),
+)
+
+/** Centre de chaque place proposée dans cette vue, en mm du `viewBox`. */
+const marques = computed(() =>
+  (props.places ?? []).map((place) => {
+    const { rect } = projeter(
+      { uniteId: place.uniteId, ...place.pose, rang: 0 },
+      trouverUnite(place.uniteId, props.unites),
+      props.camion,
+      props.vue,
+    )
+    return {
+      libelle: place.libelle,
+      x: rect.x + rect.largeur / 2,
+      y: rect.y + rect.hauteur / 2,
+    }
+  }),
+)
 
 const minuscule = (texte: string) => texte.charAt(0).toLocaleLowerCase('fr') + texte.slice(1)
 
@@ -791,6 +829,7 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
             class="calque__bouton"
             :aria-label="nomBloc(b)"
             :aria-pressed="props.selection.includes(b.uniteId)"
+            :data-unite="b.uniteId"
             :style="{
               left: pctX(b.rect.x),
               top: pctY(b.rect.y),
@@ -798,11 +837,25 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
               height: pctH(b.rect.hauteur),
             }"
             @click="emit('selectionner', b.uniteId)"
+            @keydown="emit('touche', b.uniteId, $event)"
             @mouseenter="survol = b.uniteId"
             @mouseleave="survol = null"
             @focus="survol = b.uniteId"
             @blur="survol = null"
           />
+
+          <!-- Places proposées (5.3) : un clic ou un toucher y pose l'article. -->
+          <button
+            v-for="(m, rang) in marques"
+            :key="`place-${rang}`"
+            type="button"
+            class="calque__place"
+            :aria-label="m.libelle"
+            :style="{ left: pctX(m.x), top: pctY(m.y) }"
+            @click="emit('choisirPlace', rang)"
+          >
+            <Icone nom="plus" :taille="16" />
+          </button>
         </div>
       </div>
 
@@ -1250,6 +1303,35 @@ const ratio = computed(() => taille.value.largeur / taille.value.hauteur)
 /* Focus clavier : double anneau décalé de 2 px (5.14), cumulable avec la sélection. */
 .calque__bouton:focus-visible {
   z-index: 1;
+  outline: var(--focus) solid var(--action);
+  outline-offset: var(--focus);
+  box-shadow: 0 0 0 var(--focus) var(--surface);
+}
+
+/* Place proposée (capture 04h) : une marque « + » au-dessus des articles. */
+.calque__place {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: var(--cible-mini);
+  height: var(--cible-mini);
+  padding: 0;
+  color: var(--action);
+  cursor: pointer;
+  pointer-events: auto;
+  background: var(--surface);
+  border: 1px solid var(--action);
+  border-radius: var(--rayon-controle);
+  transform: translate(-50%, -50%);
+}
+
+.calque__place:hover {
+  background: var(--info-fond);
+}
+
+.calque__place:focus-visible {
+  z-index: 3;
   outline: var(--focus) solid var(--action);
   outline-offset: var(--focus);
   box-shadow: 0 0 0 var(--focus) var(--surface);

@@ -349,6 +349,8 @@ export const textes = {
       citer: (nom: string, repere: string, code: string) => `« ${nom} » (${repere}, ${code})`,
       titreDeplacement: (raison: string) => `Déplacement refusé : ${raison}`,
       titreRetrait: (raison: string) => `Retrait refusé : ${raison}`,
+      titreOrientation: (raison: string) => `Changement d'orientation refusé : ${raison}`,
+      titreRemise: (raison: string) => `Placement refusé : ${raison}`,
       reprendSaPlace: "L'article reprend sa place.",
       retirerAussi: (reperes: string) => `Retirer aussi ${reperes}`,
       refus: {
@@ -466,6 +468,92 @@ export const textes = {
           `${repere} placé ${obtenue} : aucune place ${demandee}.`,
         sansPlace: (repere: string) =>
           `${repere} reste dans la zone : aucune place, dans aucune orientation autorisée.`,
+      },
+    },
+    // Ajustement manuel (cahier technique 5.3, 5.5, 5.7 et 5.18)
+    manuel: {
+      ajusteeALaMain: 'ajustée à la main',
+      aimantation: 'Aimantation',
+      pas: 'pas de 50 mm, 500 mm avec Maj',
+      annuler: 'Annuler le dernier déplacement',
+      changerOrientation: "Changer d'orientation",
+      choisirPlace: 'Choisir une place',
+      retirer: 'Retirer du plan',
+      choisir: 'Choisir',
+      placer: 'Placer',
+      toutPlacer: 'Tout placer',
+      fermer: 'Fermer le message',
+      aideClavier:
+        "Au clavier : les flèches déplacent l'article de 50 mm (500 mm avec Maj), Entrée valide, Échap annule. R change d'orientation, Suppr le retire du plan.",
+      // Pourquoi le plan ne s'ajuste pas (décision 8 du prototype 2).
+      nonAjustable: {
+        statut: "Seul le plan d'une tournée en préparation s'ajuste à la main.",
+        aRecalculer:
+          'Ce plan a été calculé pour un autre camion : relancez le calcul avant de l’ajuster.',
+      },
+      // Déplacement au clavier en cours (5.3) : Entrée valide, Échap annule.
+      enCours: {
+        titre: (repere: string) => `Déplacement de ${repere}`,
+        position: (fond: string, paroi: string, plancher: string) =>
+          `${fond} mm du fond, ${paroi} mm de la paroi gauche, ${plancher} mm du plancher.`,
+        permise: 'Position permise : Entrée pour valider, Échap pour annuler.',
+        refusee: (raison: string) =>
+          `Position refusée, ${raison} : continuez avec les flèches, ou Échap pour annuler.`,
+        valider: 'Valider la position',
+        annuler: 'Annuler',
+      },
+      // « Choisir une place » (5.3, capture 04h).
+      places: {
+        titre: (repere: string, code: string) => `Placement de ${repere} (${code})`,
+        aide: (n: number) =>
+          `${n} ${n > 1 ? 'places proposées, marquées' : 'place proposée, marquée'} « + » dans les vues. Cliquez ou touchez une place pour y placer l'article. Échap annule.`,
+        aucune:
+          "Aucune place permise dans cette orientation. Changez d'orientation, ou retirez d'abord un autre article.",
+        place: (n: number, total: number, fond: string, paroi: string, plancher: string) =>
+          `Place ${n} sur ${total} : ${fond} mm du fond, ${paroi} mm de la paroi gauche, ${plancher} mm du plancher`,
+        annuler: 'Annuler',
+      },
+      // Messages annoncés après un changement accepté.
+      // Ce que « Annuler le dernier déplacement » annule.
+      historique: {
+        deplacement: (repere: string) => `Déplacement de ${repere}`,
+        orientation: (repere: string) => `Changement d'orientation de ${repere}`,
+        retrait: (reperes: string) => `Retrait de ${reperes}`,
+        remise: (repere: string) => `Placement de ${repere}`,
+        placementZone: 'Placement des articles de la zone',
+      },
+      fait: {
+        deplace: (repere: string) => `${repere} déplacé. Le plan est enregistré.`,
+        oriente: (repere: string, orientation: string) =>
+          `${repere} posé ${orientation}. Le plan est enregistré.`,
+        retire: (reperes: string, n: number) =>
+          `${reperes} ${n > 1 ? 'retirés' : 'retiré'} vers « Articles à placer ». Le plan est enregistré.`,
+        remis: (repere: string) => `${repere} placé dans le camion. Le plan est enregistré.`,
+        places: (n: number) =>
+          `${n} ${n > 1 ? 'articles placés' : 'article placé'} dans le camion. Le plan est enregistré.`,
+        annule: (libelle: string) => `${libelle} annulé. Le plan est enregistré.`,
+        rienAAnnuler: 'Aucun changement à annuler depuis votre arrivée sur la page.',
+        orientationZone: (repere: string, orientation: string) =>
+          `${repere} sera placé ${orientation}.`,
+        deplacementAnnule: 'Déplacement annulé : l’article reprend sa place.',
+        aimantation: (active: boolean) =>
+          active ? 'Aimantation activée.' : 'Aimantation désactivée.',
+      },
+      retire: 'retiré',
+      aPlacer: 'à placer',
+      // Noms accessibles des boutons de la zone : le texte visible, puis l'article.
+      zone: {
+        choisirSuite: (repere: string) => ` une place pour ${repere}`,
+        placerSuite: (repere: string) => ` ${repere}`,
+        orientation: (repere: string) => `Changer d'orientation de ${repere}`,
+        pose: (orientation: string) => `sera placé ${orientation}`,
+      },
+      // Relancer le calcul ou reporter une commande d'un plan ajusté (RG-22, 5.18).
+      confirmationRelance: {
+        titre: 'Relancer le calcul ?',
+        consequence: (version: number) =>
+          `Le nouveau calcul ne reprendra pas vos ajustements. La version ${version}, ajustée à la main, restera consultable.`,
+        action: 'Relancer le calcul',
       },
     },
     // Article sélectionné

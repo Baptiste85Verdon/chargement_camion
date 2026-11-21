@@ -53,6 +53,21 @@ const TRACES = {
     chemin('m21 21-4.3-4.3'),
   ],
   moins: [chemin('M5 12h14')],
+  /** Flèche en cercle : « Changer d'orientation » (Lucide « rotate-ccw »). */
+  tourner: [chemin('M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'), chemin('M3 3v5h5')],
+  /** Mire : « Choisir une place » (Lucide « crosshair »). */
+  cible: [
+    cercleExterieur,
+    chemin('M22 12h-4'),
+    chemin('M6 12H2'),
+    chemin('M12 6V2'),
+    chemin('M12 22v-4'),
+  ],
+  /** Flèche de retour : « Annuler le dernier déplacement » (Lucide « undo-2 »). */
+  annuler: [
+    chemin('M9 14 4 9l5-5'),
+    chemin('M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11'),
+  ],
   /** Ajuster : la vue entière (Lucide « maximize »). */
   ajuster: [
     chemin('M8 3H5a2 2 0 0 0-2 2v3'),
